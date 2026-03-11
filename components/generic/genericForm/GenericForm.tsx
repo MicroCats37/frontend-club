@@ -1,0 +1,405 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+	type DefaultValues,
+	type FieldValues,
+	type UseFormReturn,
+	useForm,
+} from "react-hook-form";
+import type z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+import {
+	type FieldWrapperProps,
+	type FormField,
+	type FormSection,
+	GenericInput,
+	type SectionWrapperProps,
+} from "./GenericInput";
+
+// =====================================================================
+// WRAPPERS INTERNOS POR DEFECTO
+// =====================================================================
+
+// 1. Ghost (Invisible): Para formularios planos/simples
+const GhostWrapper: React.FC<SectionWrapperProps> = ({
+	children,
+	title,
+	className,
+}) => (
+	<div className={`w-full ${className || ""}`}>
+		{title && <h3 className="text-lg font-semibold mb-4">{title}</h3>}
+		{children}
+	</div>
+);
+
+// 2. Card (Estándar): Diseño con borde y sombra
+const CardWrapper: React.FC<SectionWrapperProps> = ({
+	children,
+	title,
+	description,
+	icon: Icon,
+	className,
+}) => (
+	<div className={`border rounded-xl p-5 bg-card shadow-sm ${className || ""}`}>
+		<div className="flex flex-col gap-1 mb-4 pb-2 border-b">
+			<div className="flex items-center gap-2">
+				{Icon && (
+					<div className="p-2 bg-primary/10 rounded-lg text-primary">
+						<Icon className="w-5 h-5" />
+					</div>
+				)}
+				<h3 className="font-semibold text-lg tracking-tight">{title}</h3>
+			</div>
+			{description && (
+				<p className="text-sm text-muted-foreground ml-1">{description}</p>
+			)}
+		</div>
+		{children}
+	</div>
+);
+
+// =====================================================================
+// COMPONENTE PRINCIPAL
+// =====================================================================
+
+type CustomFieldRenderer<T extends FieldValues> = (
+	methods: UseFormReturn<T>,
+) => React.ReactNode;
+
+export interface GenericFormProps<T extends FieldValues> {
+	// A. DATOS (Modo Automático)
+	formSections?: FormSection[]; // Estructura compleja
+	fields?: FormField[]; // Estructura simple (plana)
+
+	// B. CONTROL LÓGICO
+	schema: z.ZodType<T, any, any>;
+	onSubmit: (data: T) => any | Promise<any>;
+	initialData?: DefaultValues<T>;
+
+	// C. PERSONALIZACIÓN UI (Modo Híbrido)
+	title?: string;
+	description?: string;
+	submitButtonText?: string;
+	cancelButtonText?: string;
+	onCancel?: () => void;
+	isLoading?: boolean;
+	activateSubmitButton?: boolean;
+
+	// Inyecciones UI (Wrappers y Custom Footer)
+	globalSectionWrapper?: React.ComponentType<SectionWrapperProps>; // Cambia todas las Cards
+	globalFieldWrapper?: React.ComponentType<FieldWrapperProps>; // Cambia todos los Inputs
+	renderFooter?: (props: {
+		// Cambia los botones
+		isSubmitting: boolean;
+		onCancel?: () => void;
+		onSubmit: () => void;
+		methods: UseFormReturn<T>;
+	}) => React.ReactNode;
+
+	formClassName?: string; // Clases para el tag <form>
+
+	// D. CONTROL TOTAL (Modo Manual)
+	// Si usas esto, tú dibujas TODO el HTML dentro (inputs, layouts y botones).
+	children?: (props: {
+		methods: UseFormReturn<T>;
+		isSubmitting: boolean;
+		onSubmit: () => void;
+	}) => React.ReactNode;
+
+	// E. EXTRAS
+	onFieldChange?: (fieldName: string, value: any) => void;
+	customFields?: Record<string, CustomFieldRenderer<T>>;
+}
+
+export const GenericForm = <T extends FieldValues>({
+	formSections,
+	fields,
+	schema,
+	onSubmit,
+	title,
+	description,
+	initialData,
+	submitButtonText = "Enviar",
+	cancelButtonText = "Cancelar",
+	onCancel,
+	onFieldChange,
+	customFields = {},
+	isLoading = false,
+	activateSubmitButton = true,
+
+	// Custom injections
+	globalSectionWrapper,
+	globalFieldWrapper,
+	renderFooter,
+	formClassName,
+	children, // Render prop para modo manual
+}: GenericFormProps<T>) => {
+	// 1. NORMALIZACIÓN (Solo importa si NO usamos 'children')
+	const { normalizedSections, allFieldsFlat } = useMemo(() => {
+		// Si estamos en modo manual total (children), solo necesitamos una lista plana para validación básica
+		// pero si no nos pasan nada, asumimos vacío.
+		let sections: FormSection[] = [];
+		let flatFields: FormField[] = [];
+
+		if (formSections && formSections.length > 0) {
+			sections = formSections;
+			flatFields = formSections.flatMap((s) => s.fields);
+		} else if (fields && fields.length > 0) {
+			// Modo simple: convertimos a sección fantasma
+			sections = [{ title: "", fields: fields, wrapper: GhostWrapper }];
+			flatFields = fields;
+		}
+		return { normalizedSections: sections, allFieldsFlat: flatFields };
+	}, [formSections, fields]);
+
+	// 2. SETUP DE REACT HOOK FORM
+	const defaultValues = { ...initialData } as DefaultValues<T>;
+
+	// Rellenamos defaults basados en configuración si no existen en initialData
+	allFieldsFlat.forEach((field) => {
+		if (
+			defaultValues &&
+			!(field.name in defaultValues) &&
+			field.defaultValue !== undefined
+		) {
+			defaultValues[field.name] =
+				field.type === "radio" || field.type === "select"
+					? String(field.defaultValue)
+					: field.defaultValue;
+		}
+	});
+
+	const methods = useForm<T>({
+		resolver: zodResolver(schema),
+		defaultValues,
+	});
+
+	const {
+		register,
+		handleSubmit,
+		watch,
+		control,
+		formState: { errors, isSubmitting },
+	} = methods;
+
+	const [submissionMessage, setSubmissionMessage] = useState<{
+		type: "success" | "error";
+		message: string;
+	} | null>(null);
+
+	useEffect(() => {
+		if (onFieldChange) {
+			const subscription = watch((value, { name }) => {
+				if (name) onFieldChange(name, value[name as string]);
+			});
+			return () => subscription.unsubscribe();
+		}
+	}, [watch, onFieldChange]);
+
+	// 3. HANDLER DE SUBMIT
+	const handleFormSubmit = async (data: FieldValues) => {
+		setSubmissionMessage(null);
+		const processedData: any = {};
+
+		// Procesamiento de tipos (Number, Boolean) antes de enviar
+		for (const key in data) {
+			// Buscamos la config del campo (si existe en modo automático)
+			const fieldConfig = allFieldsFlat.find((f) => f.name === key);
+
+			// Si no hay config (modo manual total sin fields definidos), pasamos el dato crudo
+			if (!fieldConfig) {
+				processedData[key] = data[key];
+				continue;
+			}
+
+			if (fieldConfig.type === "custom") {
+				processedData[key] = data[key];
+				continue;
+			}
+
+			if (fieldConfig.type === "number") {
+				processedData[key] =
+					data[key] === null || data[key] === ""
+						? undefined
+						: Number(data[key]);
+			} else if (fieldConfig.type === "checkbox") {
+				processedData[key] = Boolean(data[key]);
+			} else if (
+				fieldConfig.type === "radio" ||
+				fieldConfig.type === "select"
+			) {
+				const optionValue = fieldConfig.options?.find(
+					(opt) => String(opt.value) === String(data[key]),
+				)?.value;
+				processedData[key] = optionValue ?? data[key];
+			} else {
+				processedData[key] = data[key];
+			}
+		}
+
+		try {
+			await onSubmit(processedData as T);
+			//setSubmissionMessage({ type: "success", message: "¡Operación exitosa!" });
+		} catch (e: any) {
+			console.error(e);
+			//setSubmissionMessage({ type: "error", message: e.message || "Error al enviar." });
+		}
+	};
+
+	const isLocked = isSubmitting || isLoading;
+	const onSubmitFn = handleSubmit(handleFormSubmit, (errors) =>
+		console.error("🔥 Error de validación Zod:", errors),
+	);
+
+	// -------------------------------------------------------------------
+	// RENDERIZADO
+	// -------------------------------------------------------------------
+
+	// A. MODO MANUAL (CONTROL TOTAL DEL USUARIO)
+	// Si se pasa 'children' como función, GenericForm delega todo el renderizado.
+	if (children) {
+		return (
+			<Form {...methods}>
+				<form onSubmit={onSubmitFn} className={formClassName}>
+					{submissionMessage && (
+						<div
+							className={`p-4 mb-4 rounded-md font-medium text-sm ${submissionMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}
+						>
+							{submissionMessage.message}
+						</div>
+					)}
+
+					{children({
+						methods,
+						isSubmitting: isLocked,
+						onSubmit: onSubmitFn,
+					})}
+				</form>
+			</Form>
+		);
+	}
+
+	// B. MODO AUTOMÁTICO / HÍBRIDO (SECCIONES Y CARDS)
+	const DefaultFooter = (
+		<div className="flex justify-end gap-4 mt-6">
+			{onCancel && (
+				<Button
+					type="button"
+					variant="outline"
+					onClick={onCancel}
+					disabled={isLocked}
+				>
+					{cancelButtonText}
+				</Button>
+			)}
+			{activateSubmitButton && (
+				<Button type="submit" disabled={isLocked}>
+					{isLocked && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+					{submitButtonText}
+				</Button>
+			)}
+		</div>
+	);
+
+	return (
+		<div className="w-full mx-auto border-0 shadow-none py-0 bg-none opacity-100">
+			{(title || description) && (
+				<CardHeader className="px-0 pb-6">
+					{title && <CardTitle className="text-2xl">{title}</CardTitle>}
+					{description && <CardDescription>{description}</CardDescription>}
+				</CardHeader>
+			)}
+			<CardContent className="px-0 gap-2">
+				<Form {...methods}>
+					<form
+						onSubmit={onSubmitFn}
+						className={`space-y-6 ${formClassName || ""}`}
+					>
+						{submissionMessage && (
+							<div
+								className={`p-4 rounded-md font-medium text-sm ${submissionMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}
+							>
+								{submissionMessage.message}
+							</div>
+						)}
+
+						<fieldset disabled={isLocked} className="space-y-6">
+							{normalizedSections.map((section, idx) => {
+								// Prioridad Wrapper: Global -> Sección -> Default (Card/Ghost)
+								const Container =
+									globalSectionWrapper ||
+									section.wrapper ||
+									(formSections ? CardWrapper : GhostWrapper);
+
+								// Verificar si todos los campos de la sección están ocultos
+								const areAllFieldsHidden = section.fields.every(
+									(f) => f.hidden,
+								);
+								if (areAllFieldsHidden) return null;
+
+								return (
+									<Container
+										key={`section-${idx}`}
+										title={section.title}
+										description={section.description}
+										icon={section.icon}
+										className={section.className}
+									>
+										<div className=" grid grid-cols-1 md:grid-cols-12 gap-x-4">
+											{section.fields.map((field) => {
+												// Custom Fields
+												if (customFields[field.name]) {
+													if (field.hidden) return null; // Respetar propiedad hidden
+													return (
+														<div
+															key={field.name}
+															className={`w-full ${field.containerClassName || "col-span-12"}`}
+														>
+															{customFields[field.name](methods)}
+														</div>
+													);
+												}
+												// Generic Inputs
+												return (
+													<GenericInput
+														key={field.name}
+														field={field}
+														register={register as any}
+														control={control as any}
+														errors={errors}
+														FieldWrapper={globalFieldWrapper}
+													/>
+												);
+											})}
+										</div>
+									</Container>
+								);
+							})}
+						</fieldset>
+
+						{/* Footer Dinámico: O custom, o default */}
+						{renderFooter
+							? renderFooter({
+									isSubmitting: isLocked,
+									onCancel,
+									onSubmit: onSubmitFn,
+									methods,
+								})
+							: DefaultFooter}
+					</form>
+				</Form>
+			</CardContent>
+		</div>
+	);
+};

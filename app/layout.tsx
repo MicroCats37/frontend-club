@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+import Script from "next/script";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 const geistSans = Geist({
@@ -25,6 +26,12 @@ export default async function RootLayout({
 	const dehydratedState = dehydrate(queryClient);
 	return (
 		<html lang="en" suppressHydrationWarning>
+			<head>
+				<Script
+					src="https://sandbox-checkout.izipay.pe/payments/v1/js/index.js"
+					strategy="beforeInteractive"
+				/>
+			</head>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 				suppressHydrationWarning

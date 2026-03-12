@@ -28,6 +28,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetVisitaDetail } from "@/hooks/visitas/useGetVisitaDetail";
+import { IzipayModal } from "@/components/pagos/IzipayModal";
+import { ReceiptModal } from "@/components/visitas/ReceiptModal";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const StatusBadge = ({ estado }: { estado: string }) => {
 	const config: Record<
@@ -54,6 +59,11 @@ const StatusBadge = ({ estado }: { estado: string }) => {
 			className: "bg-rose-50 text-rose-700 border-rose-200",
 			icon: XCircle,
 		},
+		VENCIDA: {
+			label: "Vencido",
+			className: "bg-gray-100 text-gray-500 border-gray-300",
+			icon: Clock,
+		},
 	};
 
 	const item = config[estado] || config.PENDIENTE;
@@ -77,7 +87,16 @@ export default function VisitaDetailPage({
 }) {
 	const { id } = use(params);
 	const router = useRouter();
+	const queryClient = useQueryClient();
 	const { data: visita, isLoading, isError } = useGetVisitaDetail(id);
+
+	const [activeOrdenId, setActiveOrdenId] = useState<string | null>(null);
+	const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+
+	const handlePaymentSuccess = () => {
+		setActiveOrdenId(null);
+		queryClient.invalidateQueries({ queryKey: ["visita", id] });
+	};
 
 	if (isLoading) {
 		return (
@@ -142,7 +161,7 @@ export default function VisitaDetailPage({
 							<h1 className="text-4xl font-black text-[#2C3A2C] tracking-tighter">
 								{isBungalow ? "Detalle de Estadía" : "Visita de Día"}
 							</h1>
-							<StatusBadge estado={visita.estado} />
+							<StatusBadge estado={visita.pagado ? "CONFIRMADA" : visita.estado} />
 						</div>
 						<p className="text-gray-400 font-bold flex items-center gap-2 text-sm">
 							<QrCode className="h-4 w-4 text-amber-500" />
@@ -158,6 +177,7 @@ export default function VisitaDetailPage({
 					<Button
 						variant="outline"
 						className="rounded-2xl h-12 px-6 font-black text-xs uppercase tracking-widest border-gray-100"
+						onClick={() => setIsReceiptModalOpen(true)}
 					>
 						<Receipt className="mr-2 h-4 w-4" /> Descargar Boleta
 					</Button>
@@ -311,8 +331,8 @@ export default function VisitaDetailPage({
 									</div>
 								</div>
 
-								<div className="mt-12 pt-8 border-t border-white/10">
-									<div className="flex items-baseline justify-between gap-4 mb-4">
+								<div className="flex flex-col gap-4">
+									<div className="flex items-baseline justify-between gap-4">
 										<span className="text-3xl font-black">
 											S/{" "}
 											{Number(
@@ -327,6 +347,9 @@ export default function VisitaDetailPage({
 												: "PENDIENTE"}
 										</Badge>
 									</div>
+
+									{/* Botón removido a petición: El pago se unifica en Gestionar Pagos */}
+
 									<p className="text-[10px] font-bold text-white/30 uppercase tracking-tighter leading-tight">
 										El pago de alojamiento es independiente de los derechos de
 										ingreso al club.
@@ -338,119 +361,12 @@ export default function VisitaDetailPage({
 				)}
 
 				{/* 2. SECCION INGRESANTES / LISTA */}
+				{/* 2. SECCION INGRESANTES / LISTA - Oculto temporalmente */}
+				{/* 
 				<Card className="border-none shadow-sm bg-white rounded-[40px] overflow-hidden">
-					<div className="grid grid-cols-1 lg:grid-cols-3">
-						<div className="lg:col-span-2 p-8 border-r border-gray-50">
-							<div className="flex items-center gap-4 mb-8">
-								<div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-									<Users className="h-6 w-6" />
-								</div>
-								<div>
-									<h3 className="text-2xl font-black text-[#2C3A2C] tracking-tight">
-										Lista de Invitados
-									</h3>
-									<p className="text-gray-400 font-bold text-sm">
-										{ingresantes.length} personas registradas para ingreso
-									</p>
-								</div>
-							</div>
-
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								{ingresantes.map((ing) => (
-									<div
-										key={ing.id}
-										className="p-4 rounded-[28px] border-2 border-gray-50 flex items-center justify-between hover:border-amber-100 transition-all group"
-									>
-										<div className="flex items-center gap-4">
-											<div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-[#4A5D4A] font-black text-[10px]">
-												{ing.persona.nombres[0]}
-											</div>
-											<div>
-												<h4 className="font-black text-[#2C3A2C] text-sm group-hover:text-amber-600 transition-colors uppercase tracking-tight">
-													{ing.persona.nombre_completo}
-												</h4>
-												<Badge
-													variant="secondary"
-													className="text-[8px] font-black uppercase text-gray-400 bg-gray-50 border-gray-100 px-2 py-0 tracking-widest leading-normal"
-												>
-													{ing.tipo_entrada?.nombre || "Invitado"}
-												</Badge>
-											</div>
-										</div>
-										<div className="text-right">
-											<span
-												className={`text-xs font-black ${Number(ing.precio_entrada) === 0 ? "text-emerald-600" : "text-[#2C3A2C]"}`}
-											>
-												{Number(ing.precio_entrada) === 0
-													? "LIBRE"
-													: `S/ ${Number(ing.precio_entrada).toFixed(2)}`}
-											</span>
-										</div>
-									</div>
-								))}
-							</div>
-						</div>
-
-						<div className="bg-gray-50/50 p-8 flex flex-col justify-between border-l border-gray-100">
-							<div>
-								<h4 className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-									<Receipt className="h-3 w-3" /> Orden de Ingreso
-								</h4>
-
-								<div className="space-y-4">
-									<div className="flex justify-between items-center text-sm">
-										<span className="font-bold text-gray-400">
-											Total Personas
-										</span>
-										<span className="font-black text-[#2C3A2C]">
-											{ingresantes.length}
-										</span>
-									</div>
-									<div className="flex justify-between items-center text-sm">
-										<span className="font-bold text-gray-400">
-											Base Imponible
-										</span>
-										<span className="font-black text-[#2C3A2C]">
-											S/{" "}
-											{Number(
-												visita.lista_ingresantes?.monto_total || 0,
-											).toFixed(2)}
-										</span>
-									</div>
-									{isBungalow && (
-										<div className="bg-white p-3 rounded-2xl border border-amber-100 text-[10px] text-amber-700 font-bold leading-tight">
-											Para bungalows, el pago de entradas se gestiona en counter
-											al llegar.
-										</div>
-									)}
-								</div>
-							</div>
-
-							<div className="mt-12 pt-8 border-t border-gray-100">
-								<div className="flex items-baseline justify-between gap-4">
-									<div className="flex flex-col">
-										<span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-											A pagar ahora
-										</span>
-										<span className="text-3xl font-black text-[#2C3A2C]">
-											S/{" "}
-											{Number(
-												visita.lista_ingresantes?.monto_total || 0,
-											).toFixed(2)}
-										</span>
-									</div>
-									<Badge
-										className={`${visita.lista_ingresantes?.esta_pagada ? "bg-emerald-500" : "bg-amber-500"} text-white font-black px-3 py-1 rounded-lg border-none`}
-									>
-										{visita.lista_ingresantes?.esta_pagada
-											? "PAGADO"
-											: "PENDIENTE"}
-									</Badge>
-								</div>
-							</div>
-						</div>
-					</div>
-				</Card>
+                    ... (contenido oculto) ...
+                </Card> 
+                */}
 
 				{/* Grand Total Bar */}
 				<div className="bg-[#2C3A2C] p-8 rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-black/20 overflow-hidden relative">
@@ -458,19 +374,49 @@ export default function VisitaDetailPage({
 
 					<div>
 						<h4 className="text-white/40 text-xs font-black uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-							Monto Consolidado de Visita
+							{visita.pagado ? "Visita Cancelada" : "Monto Consolidado de Visita"}
 						</h4>
 						<div className="flex items-baseline gap-3">
 							<span className="text-white text-5xl font-black tracking-tighter">
-								S/ {Number(visita.monto_total || 0).toFixed(2)}
+								S/ {Number((visita as any).saldo_total ?? (visita.pagado ? 0 : visita.monto_total)).toFixed(2)}
 							</span>
-							<span className="text-white/40 font-bold mb-1">Total Final</span>
+							<span className="text-white/40 font-bold mb-1">
+								{visita.pagado ? "Saldo Restante" : "Total Pendiente"}
+							</span>
 						</div>
 					</div>
 
 					<div className="flex items-center gap-4 w-full md:w-auto">
-						<Button className="flex-1 md:flex-none h-14 px-8 rounded-2xl bg-white text-[#2C3A2C] hover:bg-white/90 font-black uppercase tracking-widest text-xs">
-							Gestionar Pagos
+						<Button
+							className="flex-1 md:flex-none h-14 px-8 rounded-2xl bg-white text-[#2C3A2C] hover:bg-white/90 font-black uppercase tracking-widest text-xs disabled:opacity-50"
+							onClick={() => {
+								// 1. Obtener IDs y Estados de forma segura (cast a any para flexibilidad con el schema nuevo)
+								const res = visita.reserva_asociada as any;
+								const lista = visita.lista_ingresantes as any;
+
+								const ordenAlojamientoId = res?.orden_cobro?.id || res?.orden_cobro_id;
+								const alojamientoPagado = res?.esta_pagada || res?.orden_cobro?.esta_pagada;
+
+								const ordenIngresoId = lista?.orden_cobro?.id || lista?.orden_cobro_id;
+								const ingresoPagado = lista?.esta_pagada || lista?.orden_cobro?.esta_pagada;
+
+								if (isBungalow && !alojamientoPagado && ordenAlojamientoId) {
+									// Verificar si está vencida
+									const ordenAlojamiento = res?.orden_cobro;
+									if (ordenAlojamiento?.estado === 'VENCIDA') {
+										toast.error("La sesión de pago ha vencido. Debes generar una nueva reserva.");
+										return;
+									}
+									setActiveOrdenId(ordenAlojamientoId);
+								} else if (!ingresoPagado && ordenIngresoId) {
+									setActiveOrdenId(ordenIngresoId);
+								} else {
+									toast.info("No hay pagos pendientes por realizar.");
+								}
+							}}
+							disabled={visita.pagado || (visita as any).reserva_asociada?.orden_cobro?.estado === 'VENCIDA'}
+						>
+							{visita.pagado ? "Pagado" : (visita as any).reserva_asociada?.orden_cobro?.estado === 'VENCIDA' ? "Vencido" : "Gestionar Pagos"}
 						</Button>
 						<Button
 							variant="outline"
@@ -481,6 +427,19 @@ export default function VisitaDetailPage({
 					</div>
 				</div>
 			</div>
+
+			<IzipayModal
+				isOpen={!!activeOrdenId}
+				onClose={() => setActiveOrdenId(null)}
+				ordenId={activeOrdenId || ""}
+				onSuccess={handlePaymentSuccess}
+			/>
+
+			<ReceiptModal
+				isOpen={isReceiptModalOpen}
+				onClose={() => setIsReceiptModalOpen(false)}
+				visita={visita}
+			/>
 		</div>
 	);
 }

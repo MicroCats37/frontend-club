@@ -9,6 +9,24 @@ export const VisitaEstadoEnum = z.enum([
 ]);
 
 // --- Base Schemas ---
+export const PagoSchema = z.object({
+	id: z.string().uuid(),
+	monto: z.union([z.number(), z.string()]),
+	metodo: z.string(),
+	referencia: z.string(),
+	created_at: z.string(),
+	metadatos: z.any().optional(),
+});
+
+export const OrdenCobroSchema = z.object({
+	id: z.string().uuid(),
+	monto_total: z.union([z.number(), z.string()]),
+	saldo_pendiente: z.union([z.number(), z.string()]),
+	esta_pagada: z.boolean(),
+	estado: z.string(),
+	fecha_limite_pago: z.string().nullable().optional(),
+	pagos: z.array(PagoSchema).optional().default([]),
+});
 
 export const PersonaDetalleSchema = z.object({
 	id: z.string().uuid(),
@@ -42,6 +60,7 @@ export const ListaIngresantesSchema = z.object({
 	id: z.string().uuid(),
 	titular_id: z.string().uuid(),
 	orden_cobro_id: z.string().uuid().nullable().optional(),
+	orden_cobro: OrdenCobroSchema.nullable().optional(),
 	fecha_valido_desde: z.string(),
 	fecha_valido_hasta: z.string(),
 	con_cargos_pendientes: z.boolean(),
@@ -64,6 +83,8 @@ export const BungalowReservadoSchema = z.object({
 
 export const ReservaMaestraDetailSchema = z.object({
 	id: z.string().uuid(),
+	orden_cobro_id: z.string().uuid().nullable().optional(),
+	orden_cobro: OrdenCobroSchema.nullable().optional(),
 	fecha_inicio: z.string(),
 	fecha_fin: z.string(),
 	bungalows_alquilados: z.array(BungalowReservadoSchema),

@@ -69,6 +69,9 @@ export const InputDatePicker: React.FC<InputComponentProps> = ({
 								}}
 								locale={es}
 								initialFocus
+								captionLayout="dropdown"
+								startMonth={new Date(new Date().getFullYear() - 100, 0)}
+								endMonth={new Date()}
 							/>
 						</PopoverContent>
 					</Popover>

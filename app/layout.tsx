@@ -1,11 +1,9 @@
-// app/layout.tsx - CONVERTIR A SERVIDOR
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-
-import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import Script from "next/script";
 import ReactQueryProvider from "@/providers/ReactQueryProvider";
+import AuthInitializer from "@/components/auth/AuthInitializer";
+import "./globals.css";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -17,28 +15,26 @@ const geistMono = Geist_Mono({
 	subsets: ["latin"],
 });
 
-export default async function RootLayout({
+export const metadata: Metadata = {
+	title: "CE CIP Lima | Sede Campestre",
+	description: "Portal de gestión - Centro de Esparcimiento CIP Lima",
+};
+
+export default function RootLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	const queryClient = new QueryClient();
-	const dehydratedState = dehydrate(queryClient);
 	return (
-		<html lang="en" suppressHydrationWarning>
-			<head>
-				<Script
-					src="https://sandbox-checkout.izipay.pe/payments/v1/js/index.js"
-					strategy="beforeInteractive"
-				/>
-			</head>
+		<html lang="es" suppressHydrationWarning>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 				suppressHydrationWarning
 			>
-				<Toaster></Toaster>
-				<ReactQueryProvider dehydratedState={dehydratedState}>
+				<ReactQueryProvider>
+					<AuthInitializer />
 					{children}
+					<Toaster position="top-right" richColors closeButton />
 				</ReactQueryProvider>
 			</body>
 		</html>

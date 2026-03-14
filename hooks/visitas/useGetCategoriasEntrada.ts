@@ -7,16 +7,20 @@ export interface CategoriaEntrada {
 	id: string;
 	nombre: string;
 	descripcion?: string;
-	con_derecho_bungalow: boolean;
 	activo: boolean;
+}
+
+export interface PaginatedResponse<T> {
+	results: T[];
+	count: number;
 }
 
 export function useGetCategoriasEntrada() {
 	return useQuery({
 		queryKey: ["admin", "categorias-entrada"],
 		queryFn: async () => {
-			const { data } = await api.get<CategoriaEntrada[]>(
-				"/api/pases/admin/categorias/",
+			const { data } = await api.get<PaginatedResponse<CategoriaEntrada>>(
+				"/api/pases/tipos/",
 			);
 			return data;
 		},

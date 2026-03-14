@@ -135,30 +135,30 @@ export default function RegisterPage() {
 		<AuthShell
 			title={
 				step === "CIP"
-					? "Registro"
+					? "Activar Cuenta"
 					: step === "CODE"
 						? "Verificación"
 						: "Seguridad"
 			}
 			description={
 				step === "CIP"
-					? "Ingresa tu CIP para validar tu colegiatura"
+					? "Valida tu CIP para configurar tu acceso"
 					: step === "CODE"
 						? `Hemos enviado un código a ${maskedContact}`
-						: "Define una contraseña segura para tu cuenta"
+						: "Define tu contraseña para entrar al portal"
 			}
 		>
 			<Card className="border-[#E0E7E0] shadow-sm overflow-hidden">
 				<CardContent className="pt-6">
 					{/* Progress Indicator */}
 					<div className="flex justify-between mb-8 px-4">
-						{["CIP", "CODE", "PASSWORD"].map((s, idx) => (
+						{["CIP", "CODIGO", "ACCESO"].map((s, idx) => (
 							<div key={s} className="flex flex-col items-center">
 								<div
 									className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-										step === s
+										step === (s === "CODIGO" ? "CODE" : s === "ACCESO" ? "PASSWORD" : s)
 											? "bg-primary text-white"
-											: idx < ["CIP", "CODE", "PASSWORD"].indexOf(step)
+											: idx < ["CIP", "CODIGO", "ACCESO"].indexOf(s === "CODIGO" && step === "CODE" ? "CODIGO" : s === "ACCESO" && step === "PASSWORD" ? "ACCESO" : step)
 												? "bg-primary/20 text-primary"
 												: "bg-gray-100 text-gray-400"
 									}`}
@@ -201,7 +201,7 @@ export default function RegisterPage() {
 							formSections={passwordSections}
 							onSubmit={handlePasswordSubmit}
 							isLoading={isRegistering}
-							submitButtonText="Completar Registro"
+							submitButtonText="Activar Acceso"
 						/>
 					)}
 

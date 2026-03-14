@@ -8,31 +8,34 @@ import {
 	CheckCircle2,
 	ChevronLeft,
 	Clock,
-	CreditCard,
 	History,
 	Home,
 	Info,
-	MapPin,
-	QrCode,
+	Plus,
 	Receipt,
 	Ticket,
 	Users,
 	XCircle,
+	Edit2,
+	Moon,
+	TrendingUp,
+	ShieldCheck,
+	QrCode,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { use } from "react";
+import { use, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetVisitaDetail } from "@/hooks/visitas/useGetVisitaDetail";
 import { IzipayModal } from "@/components/pagos/IzipayModal";
 import { ReceiptModal } from "@/components/visitas/ReceiptModal";
-import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { EditIngresantesModal } from "@/components/visitas/EditIngresantesModal";
 
 const StatusBadge = ({ estado }: { estado: string }) => {
 	const config: Record<
@@ -72,9 +75,9 @@ const StatusBadge = ({ estado }: { estado: string }) => {
 	return (
 		<Badge
 			variant="outline"
-			className={`px-4 py-1.5 flex items-center gap-2 font-black uppercase text-[11px] tracking-wider rounded-2xl shadow-sm ${item.className}`}
+			className={`px-3 md:px-4 py-1 flex md:py-1.5 items-center gap-2 font-black uppercase text-[9px] md:text-[11px] tracking-wider rounded-xl md:rounded-2xl shadow-sm ${item.className}`}
 		>
-			<Icon className="h-4 w-4" />
+			<Icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
 			{item.label}
 		</Badge>
 	);
@@ -92,15 +95,31 @@ export default function VisitaDetailPage({
 
 	const [activeOrdenId, setActiveOrdenId] = useState<string | null>(null);
 	const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
 	const handlePaymentSuccess = () => {
 		setActiveOrdenId(null);
 		queryClient.invalidateQueries({ queryKey: ["visita", id] });
 	};
 
+	const isBungalow = !!visita?.reserva_asociada;
+	const ingresantes = visita?.lista_ingresantes?.ingresantes || [];
+	const reservaBungalow = visita?.reserva_asociada;
+
+	const ocupacionPercent = useMemo(() => {
+		if (!reservaBungalow?.capacidad_total) return 0;
+		return Math.min((ingresantes.length / reservaBungalow.capacidad_total) * 100, 100);
+	}, [ingresantes.length, reservaBungalow?.capacidad_total]);
+
+	const isPaymentExpired = useMemo(() => {
+		if (visita?.pagado) return false;
+		if (!visita?.fecha_limite_pago) return false;
+		return new Date(visita.fecha_limite_pago) < new Date();
+	}, [visita?.fecha_limite_pago, visita?.pagado]);
+
 	if (isLoading) {
 		return (
-			<div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
+			<div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 px-4 md:px-6">
 				<Skeleton className="h-20 w-full rounded-3xl" />
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					<div className="lg:col-span-2 space-y-6">
@@ -115,316 +134,311 @@ export default function VisitaDetailPage({
 
 	if (isError || !visita) {
 		return (
-			<div className="max-w-md mx-auto py-20 text-center">
+			<div className="max-w-md mx-auto py-20 text-center px-4">
 				<div className="bg-rose-50 p-6 rounded-[32px] mb-6 inline-block">
 					<XCircle className="h-12 w-12 text-rose-500" />
 				</div>
-				<h2 className="text-2xl font-black text-[#2C3A2C]">
-					Error al cargar la visita
-				</h2>
-				<p className="text-gray-500 mt-2">
-					No pudimos encontrar la información solicitada o no tienes permisos
-					suficientes.
-				</p>
-				<Button
-					variant="outline"
-					className="mt-8 rounded-2xl px-8"
-					onClick={() => router.back()}
-				>
-					Volver atrás
-				</Button>
+				<h2 className="text-2xl font-black text-[#2C3A2C]">Error al cargar la visita</h2>
+				<p className="text-gray-500 mt-2">No pudimos encontrar la información o no tienes permisos.</p>
+				<Button variant="outline" className="mt-8 rounded-2xl px-8" onClick={() => router.back()}>Volver atrás</Button>
 			</div>
 		);
 	}
 
-	const isBungalow = !!visita.reserva_asociada;
-	const ingresantes = visita.lista_ingresantes?.ingresantes || [];
-	const reservaBungalow = visita.reserva_asociada;
-
 	return (
-		<div className="max-w-7xl mx-auto pb-20 space-y-8 animate-in fade-in duration-700">
+		<div className="max-w-7xl mx-auto pb-24 space-y-8 animate-in fade-in duration-700 px-4 md:px-6">
 			{/* Header / Nav */}
-			<div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm overflow-hidden relative">
+			<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 md:p-8 rounded-[32px] md:rounded-[40px] border border-gray-100 shadow-sm overflow-hidden relative">
 				<div className="absolute top-0 right-0 h-full w-32 bg-gradient-to-l from-gray-50/50 to-transparent pointer-events-none" />
 
-				<div className="flex items-center gap-6">
+				<div className="flex items-start md:items-center gap-4 md:gap-6">
 					<Button
 						variant="outline"
 						size="icon"
-						className="rounded-2xl h-12 w-12 border-gray-100 hover:bg-gray-50 text-gray-500"
+						className="rounded-xl md:rounded-2xl h-10 w-10 md:h-12 md:w-12 border-gray-100 hover:bg-gray-50 text-gray-500 flex-shrink-0"
 						onClick={() => router.back()}
 					>
-						<ChevronLeft className="h-6 w-6" />
+						<ChevronLeft className="h-5 w-5 md:h-6 md:w-6" />
 					</Button>
-					<div>
-						<div className="flex items-center gap-3 mb-1">
-							<h1 className="text-4xl font-black text-[#2C3A2C] tracking-tighter">
-								{isBungalow ? "Detalle de Estadía" : "Visita de Día"}
+					<div className="min-w-0">
+						<div className="flex flex-wrap items-center gap-3 mb-1">
+							<h1 className="text-2xl md:text-4xl font-black text-[#2C3A2C] tracking-tighter">
+								{isBungalow ? "Estadía" : "Visita de Día"}
 							</h1>
 							<StatusBadge estado={visita.pagado ? "CONFIRMADA" : visita.estado} />
 						</div>
-						<p className="text-gray-400 font-bold flex items-center gap-2 text-sm">
-							<QrCode className="h-4 w-4 text-amber-500" />
-							ID de Registro:{" "}
+						<p className="text-gray-400 font-bold flex items-center gap-2 text-[11px] md:text-sm">
+							<QrCode className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500" />
+							Registro:{" "}
 							<span className="text-[#4A5D4A] uppercase bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100 font-black">
-								{visita.id.split("-")[0]}
+								{visita.id_publico || visita.id.split("-")[0]}
 							</span>
 						</p>
 					</div>
 				</div>
 
-				<div className="flex items-center gap-3">
+				<div className="flex flex-col sm:flex-row items-center gap-3">
 					<Button
 						variant="outline"
-						className="rounded-2xl h-12 px-6 font-black text-xs uppercase tracking-widest border-gray-100"
+						className="w-full sm:w-auto rounded-xl md:rounded-2xl h-11 md:h-12 px-6 font-black text-[10px] md:text-xs uppercase tracking-widest border-gray-100"
 						onClick={() => setIsReceiptModalOpen(true)}
 					>
-						<Receipt className="mr-2 h-4 w-4" /> Descargar Boleta
+						<Receipt className="mr-2 h-4 w-4" /> Ver Boleta
 					</Button>
-					<Link href={`/visitas/nueva`}>
-						<Button className="rounded-2xl h-12 px-6 bg-[#2C3A2C] hover:bg-black text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-gray-200">
+					<Link href={`/visitas/nueva`} className="w-full sm:w-auto">
+						<Button className="w-full sm:w-auto rounded-xl md:rounded-2xl h-11 md:h-12 px-6 bg-[#2C3A2C] hover:bg-black text-white font-black text-[10px] md:text-xs uppercase tracking-widest shadow-lg shadow-gray-200">
 							Nueva Visita <Plus className="ml-2 h-4 w-4" />
 						</Button>
 					</Link>
 				</div>
 			</div>
 
-			<div className="space-y-8">
-				{/* 1. SECCION ALOJAMIENTO (Sólo si es bungalow) */}
-				{isBungalow && (
-					<Card className="border-none shadow-sm bg-white rounded-[40px] overflow-hidden">
-						<div className="grid grid-cols-1 lg:grid-cols-3">
-							<div className="lg:col-span-2 p-8 border-r border-gray-50">
-								<div className="flex items-center gap-4 mb-8">
-									<div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-										<Home className="h-6 w-6" />
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+				<div className="lg:col-span-2 space-y-6 md:space-y-8">
+					{/* SECCION ALOJAMIENTO */}
+					{isBungalow && (
+						<Card className="border-none shadow-sm bg-white rounded-[32px] md:rounded-[40px] overflow-hidden">
+							<div className="p-6 md:p-8">
+								<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+									<div className="flex items-center gap-4">
+										<div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+											<Home className="h-5 w-5 md:h-6 md:w-6" />
+										</div>
+										<div>
+											<h3 className="text-xl md:text-2xl font-black text-[#2C3A2C] tracking-tight">Mi Alojamiento</h3>
+											<p className="text-gray-400 font-bold text-[11px] md:text-sm">Bungalows y estancias</p>
+										</div>
 									</div>
-									<div>
-										<h3 className="text-2xl font-black text-[#2C3A2C] tracking-tight">
-											Detalle de Alojamiento
-										</h3>
-										<p className="text-gray-400 font-bold text-sm">
-											Reserva de bungalows y estadía
-										</p>
+									<div className="bg-gray-50/80 p-4 rounded-2xl border border-gray-100/50 flex flex-col items-end">
+										<p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Capacidad Utilizada</p>
+										<div className="flex items-center gap-3">
+											<span className="font-black text-[#2C3A2C] text-sm">{ingresantes.length} / {reservaBungalow?.capacidad_total || 0}</span>
+											<div className="w-20 md:w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+												<div className="h-full bg-primary transition-all" style={{ width: `${ocupacionPercent}%` }} />
+											</div>
+										</div>
 									</div>
 								</div>
 
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-									<div className="bg-gray-50/50 p-6 rounded-[32px] border border-gray-100/50">
-										<label className="text-[10px] uppercase font-black text-gray-400 tracking-widest block mb-4">
-											Periodo de Estancia
-										</label>
-										<div className="space-y-4">
-											<div className="flex items-center gap-3">
-												<div className="h-10 w-10 rounded-xl bg-white text-amber-600 flex items-center justify-center shadow-sm">
-													<Calendar className="h-5 w-5" />
-												</div>
-												<div className="flex flex-col">
-													<span className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">
-														Check-in
-													</span>
-													<span className="font-black text-[#2C3A2C]">
-
-														{reservaBungalow?.fecha_inicio
-															? format(
-																new Date(reservaBungalow.fecha_inicio),
-																"PPP",
-																{ locale: es },
-															)
-															: "---"}
-													</span>
-												</div>
-											</div>
-											<div className="flex items-center gap-3">
-												<div className="h-10 w-10 rounded-xl bg-white text-amber-600 flex items-center justify-center shadow-sm">
-													<Clock className="h-5 w-5" />
-												</div>
-												<div className="flex flex-col">
-													<span className="text-[10px] font-black text-gray-400 uppercase leading-none mb-1">
-														Check-out
-													</span>
-													<span className="font-black text-[#2C3A2C]">
-														{reservaBungalow?.fecha_fin
-															? format(
-																new Date(reservaBungalow.fecha_fin),
-																"PPP",
-																{ locale: es },
-															)
-															: "---"}
-													</span>
-												</div>
-											</div>
-										</div>
-									</div>
-
-									<div className="space-y-4">
-										<label className="text-[10px] uppercase font-black text-gray-400 tracking-widest block pl-2">
-											Bungalows Seleccionados
-										</label>
-
-										<div className="space-y-3">
-											{!reservaBungalow || reservaBungalow.bungalows_alquilados.length === 0 ? (
-												<p className="text-gray-500 text-sm">
-													No hay bungalows seleccionados.
-												</p>
-											) : (
-												reservaBungalow.bungalows_alquilados.map((item) => (
-													<div
-														key={item.id}
-														className="p-4 rounded-[24px] bg-white border border-gray-100 shadow-sm flex items-center justify-between"
-													>
-														<div className="flex items-center gap-3">
-
-															<div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center">
-																<div className="h-8 w-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-black">
-																	#{item.bungalow.numero}
-																</div>
-															</div>
-
-															<span className="font-black text-[#2C3A2C] text-sm">
-																{item.bungalow.nombre}
-															</span>
-
-															<Badge
-																variant="secondary"
-																className="bg-primary/5 text-primary border-none font-black text-[9px] uppercase px-2 py-0"
-															>
-																Activo
-															</Badge>
-
-														</div>
+								<div className="space-y-4 md:space-y-6">
+									{reservaBungalow?.bungalows_alquilados.map((item: any) => (
+										<div key={item.id} className="bg-gray-50/50 rounded-[28px] md:rounded-[32px] border border-gray-100/50 p-5 md:p-6 group hover:bg-white hover:border-primary/20 transition-all">
+											<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+												<div className="flex items-center gap-4">
+													<div className="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+														<span className="font-black text-primary text-sm md:text-base">#{item.bungalow.numero}</span>
 													</div>
-												))
-											)}
+													<div>
+														<h4 className="font-black text-[#2C3A2C] text-base md:text-lg">{item.bungalow.nombre}</h4>
+														<p className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase flex items-center gap-2">
+															<Moon className="h-3 w-3" /> {item.desglose_noches?.length || 0} Noches
+														</p>
+													</div>
+												</div>
+												<div className="sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0">
+													<p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Subtotal</p>
+													<p className="text-xl font-black text-[#2C3A2C]">S/ {Number(item.precio_subtotal).toFixed(2)}</p>
+												</div>
+											</div>
+
+											<div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 pl-2 border-l-2 border-primary/20 ml-2">
+												{item.desglose_noches?.map((noche: any, idx: number) => (
+													<div key={idx} className="bg-white/50 p-2.5 rounded-xl flex items-center justify-between border border-gray-100/50">
+														<div className="flex items-center gap-2">
+															<div className="h-6 w-6 rounded-lg bg-gray-50 flex items-center justify-center text-[9px] font-bold text-gray-400">
+																{idx + 1}
+															</div>
+															<div className="flex flex-col">
+																<span className="text-[10px] font-black text-[#2C3A2C]">
+																	{format(new Date(noche.fecha || new Date()), "EEE dd/MM", { locale: es }).toUpperCase()}
+																</span>
+																<span className="text-[8px] font-bold text-gray-400 uppercase leading-none">{noche.tarifa_nombre}</span>
+															</div>
+														</div>
+														<span className="font-black text-[10px] text-primary">S/ {Number(noche.precio).toFixed(2)}</span>
+													</div>
+												))}
+											</div>
 										</div>
-									</div>
+									))}
 								</div>
 							</div>
+						</Card>
+					)}
 
-							<div className="bg-[#2C3A2C] text-white p-8 flex flex-col justify-between">
-								<div>
-									<h4 className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-										<CreditCard className="h-3 w-3" /> Orden de Alojamiento
-									</h4>
-
-									<div className="space-y-4">
-										{!reservaBungalow || reservaBungalow.bungalows_alquilados.length === 0 ? (
-											<p className="text-gray-500 text-sm">
-												No hay bungalows seleccionados.
-											</p>
-										) : (
-											reservaBungalow.bungalows_alquilados.map((item) => (
-												<div
-													key={item.id}
-													className="flex justify-between items-center text-sm"
-												>
-													<span className="font-bold text-white/50">
-														{item.bungalow.nombre}
-													</span>
-
-													<span className="font-black">
-														S/ {Number(item.precio_subtotal).toFixed(2)}
-													</span>
-												</div>
-											))
-										)}
+					{/* LISTA DE INGRESANTES */}
+					<Card className="border-none shadow-sm bg-white rounded-[32px] md:rounded-[40px] overflow-hidden">
+						<div className="p-6 md:p-8">
+							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+								<div className="flex items-center gap-4">
+									<div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center">
+										<Users className="h-5 w-5 md:h-6 md:w-6" />
+									</div>
+									<div>
+										<h3 className="text-xl md:text-2xl font-black text-[#2C3A2C] tracking-tight">Invitados</h3>
+										<p className="text-gray-400 font-bold text-[11px] md:text-sm">Gestión de acompañantes</p>
 									</div>
 								</div>
+								{((!visita.pagado && !visita.lista_ingresantes?.esta_pagada) || isBungalow) && 
+								 (visita.estado === 'PENDIENTE' || visita.estado === 'CONFIRMADA') && (
+									<Button
+										variant="outline"
+										className="w-full sm:w-auto rounded-xl md:rounded-2xl border-amber-200 text-amber-700 hover:bg-amber-50 font-black text-[10px] md:text-xs uppercase gap-2 h-11 px-6 shadow-sm shadow-amber-900/5"
+										onClick={() => setIsEditModalOpen(true)}
+									>
+										<Edit2 className="h-3.5 w-3.5" /> Editar Lista
+									</Button>
+								)}
+							</div>
 
-								<div className="flex flex-col gap-4">
-									<div className="flex items-baseline justify-between gap-4">
-										<span className="text-3xl font-black">
-											S/{" "}
-											{Number(
-												visita.reserva_asociada?.precio_total || 0,
-											).toFixed(2)}
-										</span>
-										<Badge
-											className={`${visita.reserva_asociada?.esta_pagada ? "bg-emerald-500" : "bg-amber-500"} text-white font-black px-3 py-1 rounded-lg border-none`}
-										>
-											{visita.reserva_asociada?.esta_pagada
-												? "PAGADO"
-												: "PENDIENTE"}
-										</Badge>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+								{ingresantes.length === 0 ? (
+									<div className="col-span-full text-center py-12 bg-gray-50 rounded-[24px] border border-dashed border-gray-200">
+										<p className="text-gray-400 font-medium text-sm">No hay ingresantes registrados.</p>
 									</div>
+								) : (
+									ingresantes.map((ing: any) => (
+										<div key={ing.id} className="p-4 rounded-[24px] md:rounded-[28px] border border-gray-100 bg-white hover:border-primary/20 hover:shadow-md transition-all group flex items-center justify-between gap-3">
+											<div className="flex items-center gap-3 md:gap-4 min-w-0">
+												<div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-gray-50 flex items-center justify-center font-black text-[#2C3A2C] group-hover:bg-primary group-hover:text-white transition-colors flex-shrink-0">
+													{ing.persona.nombres[0]}
+												</div>
+												<div className="min-w-0">
+													<h4 className="font-black text-[#2C3A2C] leading-tight mb-1 text-[12px] md:text-sm truncate">{ing.persona.nombre_completo}</h4>
+													<div className="flex items-center gap-2 flex-wrap">
+														<span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">DNI {ing.persona.dni}</span>
+														<Badge className="bg-gray-50 text-gray-400 border-none text-[8px] font-black h-4 px-1.5 uppercase tracking-tighter whitespace-nowrap">
+															{ing.tipo_entrada?.nombre || "General"}
+														</Badge>
+														<span className="text-[10px] md:text-[11px] font-black text-primary/80 bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
+															{ing.con_cupon ? "CUPÓN (S/ 0)" : `S/ ${Number(ing.precio_entrada || 0).toFixed(2)}`}
+														</span>
+													</div>
+												</div>
+											</div>
+											<div className="flex items-center gap-2 flex-shrink-0">
+												{ing.con_cupon && (
+													<Badge className="bg-amber-100 text-amber-700 border-none font-black text-[8px] uppercase px-2 py-0.5 rounded-md">
+														CUPÓN
+													</Badge>
+												)}
+												{ing.fecha_checkin ? (
+													<Badge className="bg-emerald-50 text-emerald-700 border-none font-black text-[8px] uppercase px-2 py-0.5 rounded-md flex items-center gap-1">
+														<div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+														Ingresó
+													</Badge>
+												) : (
+													<div className="h-7 w-7 rounded-full border border-gray-100 flex items-center justify-center text-gray-100">
+														<ShieldCheck className="h-3.5 w-3.5" />
+													</div>
+												)}
+											</div>
+										</div>
+									))
+								)}
+							</div>
+						</div>
+					</Card>
+				</div>
 
-									{/* Botón removido a petición: El pago se unifica en Gestionar Pagos */}
-
-									<p className="text-[10px] font-bold text-white/30 uppercase tracking-tighter leading-tight">
-										El pago de alojamiento es independiente de los derechos de
-										ingreso al club.
+				{/* BARRA LATERAL */}
+				<div className="space-y-6 md:space-y-8">
+					<Card className="border-none shadow-sm bg-white rounded-[32px] md:rounded-[40px] overflow-hidden p-6 md:p-8">
+						<label className="text-[10px] uppercase font-black text-gray-400 tracking-widest block mb-6">Línea de Tiempo</label>
+						<div className="space-y-6">
+							<div className="flex items-start gap-4">
+								<div className="h-10 w-10 rounded-xl md:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+									<Clock className="h-5 w-5" />
+								</div>
+								<div>
+									<p className="text-[9px] font-black text-gray-400 uppercase mb-1">Inicio de Pase</p>
+									<p className="font-black text-[#2C3A2C] leading-tight text-sm md:text-base">
+										{visita.fecha_inicio ? format(new Date(visita.fecha_inicio), "PPP", { locale: es }) : "No definida"}
 									</p>
+									{isBungalow && <p className="text-[10px] md:text-[11px] font-bold text-amber-600 uppercase mt-0.5">Check-in: 19:00 PM</p>}
+								</div>
+							</div>
+							<div className="flex items-start gap-4">
+								<div className="h-10 w-10 rounded-xl md:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+									<Clock className="h-5 w-5" />
+								</div>
+								<div>
+									<p className="text-[9px] font-black text-gray-400 uppercase mb-1">Vencimiento</p>
+									<p className="font-black text-[#2C3A2C] leading-tight text-sm md:text-base">
+										{visita.fecha_fin ? format(new Date(visita.fecha_fin), "PPP", { locale: es }) : "No definida"}
+									</p>
+									{isBungalow && <p className="text-[10px] md:text-[11px] font-bold text-blue-600 uppercase mt-0.5">Check-out: 21:00 PM</p>}
 								</div>
 							</div>
 						</div>
 					</Card>
-				)}
 
-				{/* 2. SECCION INGRESANTES / LISTA */}
-				{/* 2. SECCION INGRESANTES / LISTA - Oculto temporalmente */}
-				{/* 
-				<Card className="border-none shadow-sm bg-white rounded-[40px] overflow-hidden">
-                    ... (contenido oculto) ...
-                </Card> 
-                */}
+					<Card className="border-none shadow-2xl bg-[#2C3A2C] text-white rounded-[32px] md:rounded-[40px] overflow-hidden">
+						<div className="p-6 md:p-8 space-y-6 md:space-y-8">
+							<div className="space-y-4">
+								<h4 className="text-white/40 text-[9px] md:text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+									<TrendingUp className="h-3 w-3" /> Resumen Económico
+								</h4>
+								
+								<div className="space-y-4">
+									{isBungalow && (
+										<div className="flex justify-between items-center group">
+											<span className="text-white/50 text-[13px] md:text-sm font-bold group-hover:text-white transition-colors italic">Alojamiento ({reservaBungalow?.bungalows_alquilados.length} Unid)</span>
+											<span className="font-black text-sm md:text-base">S/ {Number(reservaBungalow?.precio_total || 0).toFixed(2)}</span>
+										</div>
+									)}
+									<div className="flex justify-between items-center group">
+										<span className="text-white/50 text-[13px] md:text-sm font-bold group-hover:text-white transition-colors italic">Entradas Invitados</span>
+										<span className="font-black text-sm md:text-base">S/ {Number(visita.lista_ingresantes?.monto_total || 0).toFixed(2)}</span>
+									</div>
+									<Separator className="bg-white/10" />
+									<div className="flex flex-col gap-4">
+										<div className="flex items-center justify-between">
+											<div>
+												<p className="text-white/40 text-[9px] font-black uppercase tracking-widest mb-1 leading-none">Total</p>
+												<p className="text-3xl md:text-4xl font-black text-white tracking-tighter">S/ {Number(visita.monto_total).toFixed(2)}</p>
+											</div>
+											<Badge className={`${visita.pagado ? 'bg-emerald-500' : 'bg-amber-500'} text-white border-none font-black text-[9px] md:text-[10px] px-3 py-1 rounded-xl`}>
+												{visita.pagado ? 'LIQUIDADO' : 'PENDIENTE'}
+											</Badge>
+										</div>
+									</div>
+								</div>
+							</div>
 
-				{/* Grand Total Bar */}
-				<div className="bg-[#2C3A2C] p-8 rounded-[40px] flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl shadow-black/20 overflow-hidden relative">
-					<div className="absolute top-0 right-0 h-full w-64 bg-gradient-to-l from-white/5 to-transparent pointer-events-none" />
-
-					<div>
-						<h4 className="text-white/40 text-xs font-black uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-							{visita.pagado ? "Visita Cancelada" : "Monto Consolidado de Visita"}
-						</h4>
-						<div className="flex items-baseline gap-3">
-							<span className="text-white text-5xl font-black tracking-tighter">
-								S/ {Number((visita as any).saldo_total ?? (visita.pagado ? 0 : visita.monto_total)).toFixed(2)}
-							</span>
-							<span className="text-white/40 font-bold mb-1">
-								{visita.pagado ? "Saldo Restante" : "Total Pendiente"}
-							</span>
+							<div className="space-y-4">
+								{!visita.pagado && (
+									<div className="bg-white/5 p-5 md:p-6 rounded-[28px] md:rounded-[32px] border border-white/10">
+										<p className="text-white/40 text-[9px] font-black uppercase mb-3 px-1">Saldo por pagar</p>
+										<p className="text-3xl font-black mb-4">S/ {Number((visita as any).saldo_total || visita.monto_total).toFixed(2)}</p>
+										
+										{!isPaymentExpired ? (
+											<Button 
+												className="w-full h-14 rounded-2xl bg-white text-[#2C3A2C] hover:bg-gray-100 font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all"
+												onClick={() => {
+													const idOrden = reservaBungalow?.orden_cobro?.id || reservaBungalow?.orden_cobro_id || visita.lista_ingresantes?.orden_cobro?.id || visita.lista_ingresantes?.orden_cobro_id;
+													if (idOrden) setActiveOrdenId(idOrden);
+													else toast.info("No hay órdenes de cobro pendientes.");
+												}}
+											>
+												Pagar Ahora <ArrowRight className="ml-2 h-4 w-4" />
+											</Button>
+										) : (
+											<div className="bg-rose-500/20 border border-rose-500/50 p-4 rounded-2xl flex items-center gap-3">
+												<XCircle className="h-5 w-5 text-rose-400 shrink-0" />
+												<p className="text-[10px] font-bold text-rose-100 leading-tight italic">
+													Plazo de pago vencido. Contacta con administración.
+												</p>
+											</div>
+										)}
+									</div>
+								)}
+								<p className="text-[9px] md:text-[10px] font-bold text-white/20 uppercase tracking-tighter leading-tight text-center px-4">
+									Pagos seguros vía Izipay. Reserva confirmada automáticamente tras el cargo.
+								</p>
+							</div>
 						</div>
-					</div>
-
-					<div className="flex items-center gap-4 w-full md:w-auto">
-						<Button
-							className="flex-1 md:flex-none h-14 px-8 rounded-2xl bg-white text-[#2C3A2C] hover:bg-white/90 font-black uppercase tracking-widest text-xs disabled:opacity-50"
-							onClick={() => {
-								// 1. Obtener IDs y Estados de forma segura (cast a any para flexibilidad con el schema nuevo)
-								const res = visita.reserva_asociada as any;
-								const lista = visita.lista_ingresantes as any;
-
-								const ordenAlojamientoId = res?.orden_cobro?.id || res?.orden_cobro_id;
-								const alojamientoPagado = res?.esta_pagada || res?.orden_cobro?.esta_pagada;
-
-								const ordenIngresoId = lista?.orden_cobro?.id || lista?.orden_cobro_id;
-								const ingresoPagado = lista?.esta_pagada || lista?.orden_cobro?.esta_pagada;
-
-								if (isBungalow && !alojamientoPagado && ordenAlojamientoId) {
-									// Verificar si está vencida
-									const ordenAlojamiento = res?.orden_cobro;
-									if (ordenAlojamiento?.estado === 'VENCIDA') {
-										toast.error("La sesión de pago ha vencido. Debes generar una nueva reserva.");
-										return;
-									}
-									setActiveOrdenId(ordenAlojamientoId);
-								} else if (!ingresoPagado && ordenIngresoId) {
-									setActiveOrdenId(ordenIngresoId);
-								} else {
-									toast.info("No hay pagos pendientes por realizar.");
-								}
-							}}
-							disabled={visita.pagado || (visita as any).reserva_asociada?.orden_cobro?.estado === 'VENCIDA'}
-						>
-							{visita.pagado ? "Pagado" : (visita as any).reserva_asociada?.orden_cobro?.estado === 'VENCIDA' ? "Vencido" : "Gestionar Pagos"}
-						</Button>
-						<Button
-							variant="outline"
-							className="h-14 w-14 rounded-2xl border-white/10 text-white hover:bg-white/5"
-						>
-							<Ticket className="h-5 w-5" />
-						</Button>
-					</div>
+					</Card>
 				</div>
 			</div>
 
@@ -440,26 +454,12 @@ export default function VisitaDetailPage({
 				onClose={() => setIsReceiptModalOpen(false)}
 				visita={visita}
 			/>
-		</div>
-	);
-}
 
-function Plus(props: any) {
-	return (
-		<svg
-			{...props}
-			xmlns="http://www.w3.org/2000/svg"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		>
-			<path d="M5 12h14" />
-			<path d="M12 5v14" />
-		</svg>
+			<EditIngresantesModal
+				isOpen={isEditModalOpen}
+				onClose={() => setIsEditModalOpen(false)}
+				visita={visita}
+			/>
+		</div>
 	);
 }

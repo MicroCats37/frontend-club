@@ -1,19 +1,27 @@
 "use client";
 
+import { useEffect } from "react";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useVisitaRegistrationStore } from "@/hooks/visitas/useVisitaRegistrationStore";
 import { StepBungalowSelection } from "./_components/StepBungalowSelection";
 import { StepDateSelection } from "./_components/StepDateSelection";
-import { StepPricingAndCoupons } from "./_components/StepPricingAndCoupons";
 import { StepReviewAndConfirm } from "./_components/StepReviewAndConfirm";
 import { StepTipoVisita } from "./_components/StepTipoVisita";
 import { StepVisitorSelection } from "./_components/StepVisitorSelection";
 
+import { StepSuccess } from "./_components/StepSuccess";
+
 export default function NuevaVisitaPage() {
 	const { pasoActual, setPaso, reset, tipoVisita } =
 		useVisitaRegistrationStore();
+
+	// Limpiar el estado al entrar a la página para que siempre sea un formulario nuevo
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Solo queremos resetear al montar
+	useEffect(() => {
+		reset();
+	}, []);
 
 	const handleBack = () => {
 		if (pasoActual === 1) {
@@ -23,14 +31,13 @@ export default function NuevaVisitaPage() {
 		}
 	};
 
-	// Definición dinámica de pasos según la modalidad
+	// Definición de pasos para Pase Diario
 	const orderedSteps = [
-		{ id: 1, label: "Modalidad" },
+		{ id: 1, label: "Experiencia" },
 		{ id: 2, label: "Fechas" },
-		...(tipoVisita === "BUNGALOW" ? [{ id: 3, label: "Alojamiento" }] : []),
-		{ id: tipoVisita === "BUNGALOW" ? 4 : 3, label: "Invitados" },
-		{ id: tipoVisita === "BUNGALOW" ? 5 : 4, label: "Precios" },
-		{ id: tipoVisita === "BUNGALOW" ? 6 : 5, label: "Finalizar" },
+		{ id: 3, label: "Invitados" },
+		{ id: 4, label: "Finalizar" },
+		{ id: 5, label: "Éxito" },
 	];
 
 	const totalSteps = orderedSteps.length;
@@ -98,22 +105,13 @@ export default function NuevaVisitaPage() {
 			<div className="min-h-[500px]">
 				{pasoActual === 1 && <StepTipoVisita />}
 				{pasoActual === 2 && <StepDateSelection />}
-				{pasoActual === 3 && tipoVisita === "BUNGALOW" && (
-					<StepBungalowSelection />
-				)}
-				{pasoActual === (tipoVisita === "BUNGALOW" ? 4 : 3) && (
-					<StepVisitorSelection />
-				)}
-				{pasoActual === (tipoVisita === "BUNGALOW" ? 5 : 4) && (
-					<StepPricingAndCoupons />
-				)}
-				{pasoActual === (tipoVisita === "BUNGALOW" ? 6 : 5) && (
-					<StepReviewAndConfirm />
-				)}
+				{pasoActual === 3 && <StepVisitorSelection />}
+				{pasoActual === 4 && <StepReviewAndConfirm />}
+				{pasoActual === 5 && <StepSuccess />}
 			</div>
 
 			{/* Navegación Inferior */}
-			{pasoActual > 1 && (
+			{pasoActual > 1 && pasoActual < 5 && (
 				<div className="mt-12 flex justify-between items-center bg-white p-6 rounded-[32px] border shadow-sm border-gray-100">
 					<Button
 						variant="ghost"

@@ -2,8 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { handleApiError } from "@/lib/api/error-handler";
 import {
 	type DefaultValues,
 	type FieldValues,
@@ -115,6 +117,7 @@ export interface GenericFormProps<T extends FieldValues> {
 		methods: UseFormReturn<T>;
 		isSubmitting: boolean;
 		onSubmit: () => void;
+		submissionMessage: { type: "success" | "error"; message: string } | null;
 	}) => React.ReactNode;
 
 	// E. EXTRAS
@@ -250,17 +253,35 @@ export const GenericForm = <T extends FieldValues>({
 
 		try {
 			await onSubmit(processedData as T);
-			//setSubmissionMessage({ type: "success", message: "¡Operación exitosa!" });
+			// toast.success("¡Operación realizada con éxito!");
+			setSubmissionMessage({ type: "success", message: "¡Operación exitosa!" });
 		} catch (e: any) {
-			console.error(e);
-			//setSubmissionMessage({ type: "error", message: e.message || "Error al enviar." });
+			const msg = handleApiError(e);
+			setSubmissionMessage({ type: "error", message: msg });
+			// NOTA: No disparamos toast.error(msg) aquí porque los hooks generados 
+			// (useApiCreate) ya disparan el toast internamente. 
+			// Si el onSubmit es manual y no dispara toast, el usuario verá el mensaje 
+			// detallado en el cuerpo del formulario (setSubmissionMessage).
+			throw e;
 		}
 	};
 
 	const isLocked = isSubmitting || isLoading;
-	const onSubmitFn = handleSubmit(handleFormSubmit, (errors) =>
-		console.error("🔥 Error de validación Zod:", errors),
-	);
+	const onSubmitFn = handleSubmit(handleFormSubmit, (errs) => {
+		console.warn("🔥 Error de validación Zod:", errs);
+
+		// Función recursiva para extraer todos los mensajes de error de un objeto anidado
+		const showAllErrors = (obj: any) => {
+			if (!obj) return;
+			if (obj.message && typeof obj.message === "string") {
+				toast.error(obj.message);
+				return;
+			}
+			Object.values(obj).forEach((val) => showAllErrors(val));
+		};
+
+		showAllErrors(errs);
+	});
 
 	// -------------------------------------------------------------------
 	// RENDERIZADO
@@ -272,18 +293,11 @@ export const GenericForm = <T extends FieldValues>({
 		return (
 			<Form {...methods}>
 				<form onSubmit={onSubmitFn} className={formClassName}>
-					{submissionMessage && (
-						<div
-							className={`p-4 mb-4 rounded-md font-medium text-sm ${submissionMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}
-						>
-							{submissionMessage.message}
-						</div>
-					)}
-
 					{children({
 						methods,
 						isSubmitting: isLocked,
 						onSubmit: onSubmitFn,
+						submissionMessage,
 					})}
 				</form>
 			</Form>
@@ -326,14 +340,6 @@ export const GenericForm = <T extends FieldValues>({
 						onSubmit={onSubmitFn}
 						className={`space-y-6 ${formClassName || ""}`}
 					>
-						{submissionMessage && (
-							<div
-								className={`p-4 rounded-md font-medium text-sm ${submissionMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}
-							>
-								{submissionMessage.message}
-							</div>
-						)}
-
 						<fieldset disabled={isLocked} className="space-y-6">
 							{normalizedSections.map((section, idx) => {
 								// Prioridad Wrapper: Global -> Sección -> Default (Card/Ghost)

@@ -72,6 +72,7 @@ export type FieldType =
 	| "textarea"
 	| "hidden"
 	| "date"
+	| "image"
 	| "custom";
 
 export interface FormField {

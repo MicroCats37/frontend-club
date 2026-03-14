@@ -1,7 +1,6 @@
-import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { useApiCreate } from "@/hooks/useApiCreate";
+import { z } from "zod";
 
 export interface CotizacionIngresante {
 	persona_id: string;
@@ -29,49 +28,37 @@ export interface CotizacionResponse {
 }
 
 export function useCotizarVisita() {
-	return useMutation({
-		mutationFn: async (payload: CotizacionRequest) => {
-			const { data } = await api.post<CotizacionResponse>(
-				"/api/control/visitas/cotizar",
-				payload,
-			);
-			return data;
-		},
-		onError: (err) => {
-			console.error("Error al cotizar:", err);
-			// No mostramos toast aquí para evitar ruido si es un cambio rápido en el UI
+	return useApiCreate<CotizacionResponse, CotizacionRequest>({
+		url: "/api/control/visitas/cotizar",
+		options: {
+			onError: (err) => {
+				console.error("Error al cotizar:", err);
+				// Custom hooks show toast by default, but useVisitaFlow original had a comment:
+				// "No mostramos toast aquí para evitar ruido si es un cambio rápido en el UI"
+				// Note: current useApiCreate ALWAYS shows toast on catch. 
+			},
 		},
 	});
 }
 
 export function useRegistrarPaseDiario() {
-	return useMutation({
-		mutationFn: async (payload: any) => {
-			const { data } = await api.post(
-				"/api/control/visitas/registrar-pases",
-				payload,
-			);
-			return data;
+	return useApiCreate({
+		url: "/api/control/visitas/registrar-pases",
+		options: {
+			onSuccess: () => {
+				toast.success("Visita registrada correctamente");
+			},
 		},
-		onSuccess: () => {
-			toast.success("Visita registrada correctamente");
-		},
-		onError: (err) => toast.error(handleApiError(err)),
 	});
 }
 
 export function useRegistrarBungalow() {
-	return useMutation({
-		mutationFn: async (payload: any) => {
-			const { data } = await api.post(
-				"/api/control/visitas/registrar-bungalow",
-				payload,
-			);
-			return data;
+	return useApiCreate({
+		url: "/api/control/visitas/registrar-bungalow",
+		options: {
+			onSuccess: () => {
+				toast.success("Reserva de bungalow registrada correctamente");
+			},
 		},
-		onSuccess: () => {
-			toast.success("Reserva de bungalow registrada correctamente");
-		},
-		onError: (err) => toast.error(handleApiError(err)),
 	});
 }

@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { useApiCreate } from "@/hooks/useApiCreate";
+import { useApiQuery } from "@/hooks/useApiQuery";
+import { z } from "zod";
 
 export interface IngresanteMolinete {
 	ingresante_id: string;
@@ -17,64 +17,42 @@ export interface IngresanteMolinete {
 }
 
 export function useMolineteSearch(dni: string) {
-	return useQuery<IngresanteMolinete | null>({
+	return useApiQuery<IngresanteMolinete | null>({
 		queryKey: ["molinete-search", dni],
-		queryFn: async () => {
-			if (!dni || dni.length < 8) return null;
-			const response = await api.get(`/api/control/molinete/search?dni=${dni}`);
-			return response.data;
+		url: dni.length >= 8 ? "/api/control/molinete/search" : null,
+		params: { dni },
+		schema: z.any(), // Since original didn't have a rigid schema, using z.any()
+		queryOptions: {
+			enabled: dni.length >= 8,
 		},
-		enabled: dni.length >= 8,
 	});
 }
 
 export function useMolineteActions() {
-	const checkIn = useMutation({
-		mutationFn: async ({
-			persona_id,
-			puerta = "PRINCIPAL",
-		}: {
-			persona_id: string;
-			puerta?: string;
-		}) => {
-			const response = await api.post("/api/control/molinete/check-in", {
-				persona_id,
-				puerta,
-			});
-			return response.data;
+	const checkIn = useApiCreate({
+		url: "/api/control/molinete/check-in",
+		options: {
+			onSuccess: (data: any) => {
+				if (data.success) {
+					toast.success(data.motivo);
+				} else {
+					toast.error(data.motivo);
+				}
+			},
 		},
-		onSuccess: (data) => {
-			if (data.success) {
-				toast.success(data.motivo);
-			} else {
-				toast.error(data.motivo);
-			}
-		},
-		onError: (error) => handleApiError(error),
 	});
 
-	const checkOut = useMutation({
-		mutationFn: async ({
-			persona_id,
-			puerta = "PRINCIPAL",
-		}: {
-			persona_id: string;
-			puerta?: string;
-		}) => {
-			const response = await api.post("/api/control/molinete/check-out", {
-				persona_id,
-				puerta,
-			});
-			return response.data;
+	const checkOut = useApiCreate({
+		url: "/api/control/molinete/check-out",
+		options: {
+			onSuccess: (data: any) => {
+				if (data.success) {
+					toast.success(data.motivo);
+				} else {
+					toast.error(data.motivo);
+				}
+			},
 		},
-		onSuccess: (data) => {
-			if (data.success) {
-				toast.success(data.motivo);
-			} else {
-				toast.error(data.motivo);
-			}
-		},
-		onError: (error) => handleApiError(error),
 	});
 
 	return { checkIn, checkOut };

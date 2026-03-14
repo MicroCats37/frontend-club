@@ -53,21 +53,25 @@ export const useRegisterFinal = () => {
 				const userData = {
 					...data.user,
 					full_name: `${data.user.nombres} ${data.user.apellidos}`,
-					is_staff: data.user
 				};
 
 				// Guardar en Zustand con token
-				loginAction(userData, data.tokens.access);
+				loginAction(userData, data.access);
 
 				// Guardar en Cookies
-				await setAuthCookies(
-					data.tokens.access,
-					data.tokens.refresh,
-					userData as any,
-				);
+				await setAuthCookies(data.access, data.refresh, userData as any);
 
-				toast.success("¡Cuenta creada exitosamente!");
-				router.push("/dashboard");
+				toast.success("¡Cuenta activada exitosamente!");
+
+				// Redirigir al panel principal según el rol
+				if (
+					data.user.user_type === "ADMIN" ||
+					data.user.user_type === "PORTERO"
+				) {
+					router.push("/admin");
+				} else {
+					router.push("/inicio");
+				}
 			},
 		},
 	});

@@ -8,11 +8,17 @@ import { Input } from "@/components/ui/input";
 import type { Bungalow } from "@/schemas/alojamiento/bungalow";
 import BungalowDetailsEditor from "./_components/BungalowDetailsEditor";
 import BungalowGalleryEditor from "./_components/BungalowGalleryEditor";
-import BungalowTable from "./_components/BungalowTable";
+import BungalowAddModal from "./_components/BungalowAddModal";
+import BungalowCards from "./_components/BungalowCards";
+import { Plus } from "lucide-react";
+
+
 
 export default function BungalowsAdminPage() {
 	const [detailsOpen, setDetailsOpen] = useState(false);
 	const [galleryOpen, setGalleryOpen] = useState(false);
+	const [addOpen, setAddOpen] = useState(false);
+
 	const [selectedBungalow, setSelectedBungalow] = useState<Bungalow | null>(
 		null,
 	);
@@ -54,7 +60,15 @@ export default function BungalowsAdminPage() {
 					>
 						<RefreshCw className="h-4 w-4" />
 					</Button>
+					<Button
+						className="rounded-xl px-6 bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all font-bold"
+						onClick={() => setAddOpen(true)}
+					>
+						<Plus className="mr-2 h-5 w-5" />
+						Agregar Bungalow
+					</Button>
 				</div>
+
 			</div>
 
 			{/* Filters and Search Bar */}
@@ -75,11 +89,12 @@ export default function BungalowsAdminPage() {
 				</Button>
 			</div>
 
-			{/* Main Table Content */}
-			<BungalowTable
+			{/* Main Content: Cards instead of Table */}
+			<BungalowCards
 				onEditDetails={handleEditDetails}
 				onManageGallery={handleManageGallery}
 			/>
+
 
 			{/* Editor Modals */}
 			<BungalowDetailsEditor
@@ -93,6 +108,12 @@ export default function BungalowsAdminPage() {
 				onOpenChange={setGalleryOpen}
 				bungalow={selectedBungalow}
 			/>
+
+			<BungalowAddModal
+				open={addOpen}
+				onOpenChange={setAddOpen}
+			/>
 		</div>
+
 	);
 }

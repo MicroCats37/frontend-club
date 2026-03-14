@@ -65,7 +65,7 @@ export default function InicioPage() {
 					colorClass="bg-[#2EB85C]" // Verde éxito
 				/>
 				<StatCard
-					title="Beneficiarios en Grupo"
+					title="Beneficiarios"
 					value={`${resumen.total_beneficiarios_activos} personas`}
 					icon={Users}
 					colorClass="bg-[#3399FF]" // Azul info

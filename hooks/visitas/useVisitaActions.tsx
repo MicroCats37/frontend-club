@@ -1,7 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/api/config";
 import { handleApiError } from "@/lib/api/error-handler";
+import { useApiUpdate } from "@/hooks/useApiUpdate";
 
 export function useVisitaActions(defaultVisitaId?: string) {
 	const queryClient = useQueryClient();
@@ -18,39 +19,33 @@ export function useVisitaActions(defaultVisitaId?: string) {
 	/**
 	 * Actualiza una visita de pases diarios (Delta CRUD: add, delete, update).
 	 */
-	const actualizarPases = useMutation({
-		mutationFn: async ({ id, payload }: { id?: string; payload: any }) => {
-			const targetId = id || defaultVisitaId;
-			const { data } = await api.patch(
-				`/api/control/visitas/${targetId}/pases`,
-				payload,
-			);
-			return data;
+	const actualizarPases = useApiUpdate({
+		baseUrl: "/api/control/visitas",
+		method: "PATCH",
+		options: {
+			onSuccess: (data, variables) => {
+				toast.success("Pases actualizados correctamente");
+				// Note: variables.id here will be something like "123/pases"
+				// We extract the ID part for invalidation
+				const realId = (variables.id as string).split("/")[0];
+				invalidate(realId);
+			},
 		},
-		onSuccess: (_, variables) => {
-			toast.success("Pases actualizados correctamente");
-			invalidate(variables.id);
-		},
-		onError: (err) => toast.error(handleApiError(err)),
 	});
 
 	/**
 	 * Actualiza una visita de bungalow (Delta CRUD: añadir ingresantes).
 	 */
-	const actualizarBungalow = useMutation({
-		mutationFn: async ({ id, payload }: { id?: string; payload: any }) => {
-			const targetId = id || defaultVisitaId;
-			const { data } = await api.patch(
-				`/api/control/visitas/${targetId}/bungalow`,
-				payload,
-			);
-			return data;
+	const actualizarBungalow = useApiUpdate({
+		baseUrl: "/api/control/visitas",
+		method: "PATCH",
+		options: {
+			onSuccess: (data, variables) => {
+				toast.success("Lista de bungalow actualizada");
+				const realId = (variables.id as string).split("/")[0];
+				invalidate(realId);
+			},
 		},
-		onSuccess: (_, variables) => {
-			toast.success("Lista de bungalow actualizada");
-			invalidate(variables.id);
-		},
-		onError: (err) => toast.error(handleApiError(err)),
 	});
 
 	/**

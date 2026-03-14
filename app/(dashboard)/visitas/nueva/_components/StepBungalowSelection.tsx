@@ -17,12 +17,13 @@ import { useBungalowsDisponibilidad } from "@/hooks/useBungalows";
 import { useVisitaRegistrationStore } from "@/hooks/visitas/useVisitaRegistrationStore";
 
 export function StepBungalowSelection() {
-	const { fechas, bungalowsSeleccionados, setBungalows, setPaso, tipoVisita } =
+	const { fechas, bungalowsSeleccionados, setBungalows, setPaso, tipoVisita, tipoTarifaId } =
 		useVisitaRegistrationStore();
 
 	const { data: bungalows, isLoading } = useBungalowsDisponibilidad({
 		f_inicio: fechas.start ? format(fechas.start, "yyyy-MM-dd") : "",
 		f_fin: fechas.end ? format(fechas.end, "yyyy-MM-dd") : "",
+		tipo_tarifa_id: tipoTarifaId || undefined,
 	});
 
 	const handleToggle = (bungalow: any) => {
@@ -129,19 +130,15 @@ export function StepBungalowSelection() {
 							<Card
 								key={bungalow.id}
 								onClick={() => handleToggle(bungalow)}
-								className={`group relative cursor-pointer overflow-hidden rounded-[40px] transition-all duration-500 border-2 ${
-									isSelected
-										? "border-amber-500 shadow-2xl scale-[1.02] bg-amber-50/10"
-										: "border-white shadow-lg shadow-gray-200/50 hover:border-amber-200 bg-white"
-								}`}
+								className={`group relative cursor-pointer overflow-hidden rounded-[40px] transition-all duration-500 border-2 ${isSelected
+									? "border-amber-500 shadow-2xl scale-[1.02] bg-amber-50/10"
+									: "border-white shadow-lg shadow-gray-200/50 hover:border-amber-200 bg-white"
+									}`}
 							>
 								{/* Image Section */}
 								<div className="relative aspect-[16/10] overflow-hidden bg-gray-50">
 									<img
-										src={
-											bungalow.image_main ||
-											"https://images.unsplash.com/photo-1542718610-a1d656d1884c?q=80&w=2070&auto=format&fit=crop"
-										}
+										src={`http://localhost:8000${bungalow.image_main}`}
 										alt={bungalow.nombre}
 										className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
 									/>
@@ -218,11 +215,10 @@ export function StepBungalowSelection() {
 
 									<Button
 										variant={isSelected ? "default" : "outline"}
-										className={`w-full h-14 rounded-2xl font-black text-base shadow-sm transition-all duration-300 ${
-											isSelected
-												? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200"
-												: "border-2 border-gray-100 bg-white text-gray-600 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
-										}`}
+										className={`w-full h-14 rounded-2xl font-black text-base shadow-sm transition-all duration-300 ${isSelected
+											? "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-200"
+											: "border-2 border-gray-100 bg-white text-gray-600 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/30"
+											}`}
 									>
 										{isSelected ? "Cabaña Seleccionada" : "Seleccionar Cabaña"}
 									</Button>

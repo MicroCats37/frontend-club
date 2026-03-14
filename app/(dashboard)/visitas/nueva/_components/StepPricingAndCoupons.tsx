@@ -109,11 +109,10 @@ export function StepPricingAndCoupons() {
 			<div className="mb-10 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 px-4">
 				<div className="max-w-xl">
 					<h2 className="text-4xl font-black text-[#2C3A2C] mb-3 tracking-tighter">
-						Revisión y Cupones
+						Resumen y Cupones
 					</h2>
 					<p className="text-muted-foreground font-medium leading-relaxed">
-						Verifica los precios calculados según el tipo de pase y aplica tus
-						cupones libres disponibles.
+						Verifica tu cotización final y aplica cupones si lo deseas para obtener descuentos inmediatos.
 					</p>
 				</div>
 
@@ -199,7 +198,7 @@ export function StepPricingAndCoupons() {
 											? "..."
 											: isPriceFree
 												? "S/ 0.00"
-												: `S/ ${selection.total_persona.toFixed(2)}`}
+												: `S/ ${Number(selection.total_persona || 0).toFixed(2)}`}
 									</span>
 								</div>
 

@@ -15,16 +15,26 @@ export function handleApiError(error: any): string {
 	}
 
 	const { status, data } = axiosError.response;
+	
+	// Caso A: Error de lógica de negocio personalizado ({ errors: { message: "..." } })
+	if (data.errors?.message) {
+		return data.errors.message;
+	}
+
+	// Caso B: Error de detalle personalizado ({ detail: "..." })
+	if (typeof data.detail === "string") {
+		return data.detail;
+	}
 
 	// Errores de validación de Django Ninja / Pydantic (422)
 	if (status === 422 && Array.isArray(data.detail)) {
 		return data.detail
 			.map((err: any) => {
-				const field = Array.isArray(err.loc) ? err.loc.join(".") : "";
+				const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : "";
 				return field ? `${field}: ${err.msg}` : err.msg;
 			})
-			.join(", ");
+			.join("; ");
 	}
 
-	return (typeof data.detail === 'string' ? data.detail : null) || data.message || "Ocurrió un error en la solicitud.";
+	return data.message || "Ocurrió un error en la solicitud.";
 }

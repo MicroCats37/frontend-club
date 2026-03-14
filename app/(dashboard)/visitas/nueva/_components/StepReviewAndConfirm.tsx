@@ -12,15 +12,24 @@ import {
 	Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import {
 	useRegistrarBungalow,
 	useRegistrarPaseDiario,
 } from "@/hooks/visitas/useVisitaFlow";
 import { useVisitaRegistrationStore } from "@/hooks/visitas/useVisitaRegistrationStore";
+import { useTipoTarifas } from "@/hooks/useTarifas";
 
 export function StepReviewAndConfirm() {
 	const router = useRouter();
@@ -30,8 +39,15 @@ export function StepReviewAndConfirm() {
 		guestSelections,
 		bungalowsSeleccionados,
 		totalEstimado: totalPases,
+		tipoTarifaId,
 		reset,
 	} = useVisitaRegistrationStore();
+
+	const { data: response } = useTipoTarifas();
+	const categorias = response && !Array.isArray(response) ? response.results : (response as any[]);
+	const categoriaSeleccionada = useMemo(() => {
+		return categorias?.find((c) => c.id === tipoTarifaId);
+	}, [categorias, tipoTarifaId]);
 
 	const { mutate: registrarPases, isPending: submetiendoPases } =
 		useRegistrarPaseDiario();
@@ -47,6 +63,8 @@ export function StepReviewAndConfirm() {
 
 	const totalFinal = totalPases + totalAlojamiento;
 
+	const { setCreatedVisitId, setOrdenCobroId, setPaso } = useVisitaRegistrationStore();
+
 	const handleConfirm = () => {
 		if (tipoVisita === "PASE_DIARIO") {
 			registrarPases(
@@ -60,9 +78,17 @@ export function StepReviewAndConfirm() {
 					})),
 				},
 				{
-					onSuccess: () => {
-						reset();
-						router.push("/visitas");
+					onSuccess: (data: any) => {
+						setCreatedVisitId(data.id);
+						// Extraemos el ID de la orden de cobro siguiendo el patrón de la vista de detalle
+						const ordenId = 
+							data.orden_cobro_id || 
+							data.orden_cobro?.id || 
+							data.lista_ingresantes?.orden_cobro_id || 
+							data.lista_ingresantes?.orden_cobro?.id;
+							
+						if (ordenId) setOrdenCobroId(ordenId);
+						setPaso(5);
 					},
 				},
 			);
@@ -72,6 +98,7 @@ export function StepReviewAndConfirm() {
 					bungalow_ids: bungalowsSeleccionados.map((b) => b.id.toString()),
 					fecha_llegada: format(fechas.start!, "yyyy-MM-dd"),
 					fecha_salida: format(fechas.end!, "yyyy-MM-dd"),
+					tipo_tarifa_id: tipoTarifaId!,
 					con_privilegio: false,
 					ingresantes: guestSelections.map((g) => ({
 						persona_id: g.persona_id,
@@ -80,9 +107,19 @@ export function StepReviewAndConfirm() {
 					})),
 				},
 				{
-					onSuccess: () => {
-						reset();
-						router.push("/visitas");
+					onSuccess: (data: any) => {
+						setCreatedVisitId(data.id);
+						// Extraemos el ID de la orden de cobro siguiendo el patrón de la vista de detalle
+						const ordenId = 
+							data.orden_cobro_id || 
+							data.orden_cobro?.id || 
+							data.reserva?.orden_cobro_id || 
+							data.reserva?.orden_cobro?.id ||
+							data.lista_ingresantes?.orden_cobro_id || 
+							data.lista_ingresantes?.orden_cobro?.id;
+
+						if (ordenId) setOrdenCobroId(ordenId);
+						setPaso(5);
 					},
 				},
 			);
@@ -140,6 +177,16 @@ export function StepReviewAndConfirm() {
 											` al ${format(fechas.end!, "PPP", { locale: es })}`}
 									</div>
 								</div>
+								{tipoVisita === "BUNGALOW" && (
+									<div>
+										<p className="text-[10px] uppercase font-black text-gray-400 mb-2 tracking-widest leading-none">
+											Categoría de Tarifa
+										</p>
+										<Badge className="bg-amber-500 text-white font-black border-none">
+											{categoriaSeleccionada?.nombre || "Cargando..."}
+										</Badge>
+									</div>
+								)}
 							</div>
 
 							{tipoVisita === "BUNGALOW" &&

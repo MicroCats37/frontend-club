@@ -2,11 +2,14 @@
 
 import {
 	Calendar,
+	ChevronDown,
+	ChevronRight,
 	Home,
 	LogOut,
 	Menu,
 	Settings,
 	Shield,
+	ShieldCheck,
 	Ticket,
 	TreeDeciduous,
 	Users,
@@ -43,9 +46,17 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 				return [
 					...common,
 					{ icon: Shield, label: "Panel General", href: "/admin" },
+					{ icon: ShieldCheck, label: "Validación Identidad", href: "/admin/identidad/validar" },
 					{ icon: Calendar, label: "Gestión Visitas", href: "/admin/visitas" },
-					{ icon: Home, label: "Bungalows", href: "/admin/bungalows" },
-					{ icon: Ticket, label: "Tarifas / Pases", href: "/admin/entradas" },
+					{ icon: Ticket, label: "Entradas", href: "/admin/entradas" },
+					{
+						icon: Home,
+						label: "Bungalows",
+						subItems: [
+							{ label: "Administración", href: "/admin/bungalows" },
+							{ label: "Precios", href: "/admin/bungalows-precios" },
+						]
+					},
 					{ icon: Users, label: "Control Acceso", href: "/admin/acceso" },
 					{ icon: Calendar, label: "Mis Visitas", href: "/visitas" },
 					{ icon: Users, label: "Mi Grupo", href: "/mi-grupo" },
@@ -79,7 +90,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 		}[user.user_type] || "Portal";
 
 	return (
-		<div className="flex h-screen bg-[#F8FAF8]">
+		<div className="flex h-screen bg-[#F8FAF8]" suppressHydrationWarning>
 			{" "}
 			{/* Blanco verdoso suave */}
 			{/* SIDEBAR - MOBILE OVERLAY */}
@@ -108,30 +119,10 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 					</div>
 
 					{/* NAV LINKS */}
-					<nav className="flex-1 px-4 py-6 space-y-1">
-						{menuItems.map((item) => {
-							const isActive = pathname === item.href;
-							return (
-								<Link
-									key={item.label}
-									href={item.href}
-									className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${
-										isActive
-											? "bg-primary/20 text-primary border-r-4 border-primary"
-											: "text-[#4A5D4A] hover:bg-primary/10 hover:text-primary"
-									}`}
-								>
-									<item.icon
-										className={`mr-3 h-5 w-5 transition-colors ${
-											isActive
-												? "text-primary"
-												: "text-[#8BA18B] group-hover:text-primary"
-										}`}
-									/>
-									{item.label}
-								</Link>
-							);
-						})}
+					<nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+						{menuItems.map((item) => (
+							<SidebarItem key={item.label} item={item} pathname={pathname} />
+						))}
 					</nav>
 
 					{/* USER PROFILE INFO */}
@@ -182,6 +173,82 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 					<div className="max-w-7xl mx-auto">{children}</div>
 				</main>
 			</div>
+		</div>
+	);
+}
+
+function SidebarItem({ item, pathname }: { item: any, pathname: string }) {
+	const [isOpen, setIsOpen] = useState(() => {
+		if (item.subItems) {
+			return item.subItems.some((sub: any) => pathname === sub.href);
+		}
+		return false;
+	});
+
+	const hasSubItems = item.subItems && item.subItems.length > 0;
+	const isActive = item.href ? pathname === item.href : item.subItems?.some((sub: any) => pathname === sub.href);
+
+	if (!hasSubItems) {
+		return (
+			<Link
+				href={item.href}
+				className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${isActive
+						? "bg-primary/20 text-primary border-r-4 border-primary"
+						: "text-[#4A5D4A] hover:bg-primary/10 hover:text-primary"
+					}`}
+			>
+				<item.icon
+					className={`mr-3 h-5 w-5 transition-colors ${isActive ? "text-primary" : "text-[#8BA18B] group-hover:text-primary"
+						}`}
+				/>
+				{item.label}
+			</Link>
+		);
+	}
+
+	return (
+		<div className="space-y-1">
+			<button
+				type="button"
+				onClick={() => setIsOpen(!isOpen)}
+				className={`flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${isActive
+						? "bg-primary/10 text-primary"
+						: "text-[#4A5D4A] hover:bg-primary/10 hover:text-primary"
+					}`}
+			>
+				<div className="flex items-center">
+					<item.icon
+						className={`mr-3 h-5 w-5 transition-colors ${isActive ? "text-primary" : "text-[#8BA18B] group-hover:text-primary"
+							}`}
+					/>
+					{item.label}
+				</div>
+				{isOpen ? (
+					<ChevronDown className="h-4 w-4 text-[#8BA18B]" />
+				) : (
+					<ChevronRight className="h-4 w-4 text-[#8BA18B]" />
+				)}
+			</button>
+
+			{isOpen && (
+				<div className="pl-12 space-y-1 animate-in slide-in-from-top-1 duration-200">
+					{item.subItems.map((sub: any) => {
+						const isSubActive = pathname === sub.href;
+						return (
+							<Link
+								key={sub.label}
+								href={sub.href}
+								className={`flex items-center py-2 text-sm font-medium transition-colors ${isSubActive
+										? "text-primary font-bold"
+										: "text-[#8BA18B] hover:text-primary"
+									}`}
+							>
+								{sub.label}
+							</Link>
+						);
+					})}
+				</div>
+			)}
 		</div>
 	);
 }

@@ -142,6 +142,9 @@ export function IzipayModal({ isOpen, onClose, ordenId, onSuccess }: IzipayModal
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="sm:max-w-[400px] border-none shadow-none bg-transparent">
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Pasarela de Pago Izipay</DialogTitle>
+                </DialogHeader>
                 {loading && (
                     <div className="flex flex-col items-center justify-center p-12 bg-white rounded-[32px] shadow-2xl gap-4">
                         <Loader2 className="h-12 w-12 text-primary animate-spin" />

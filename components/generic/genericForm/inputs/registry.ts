@@ -11,10 +11,9 @@ import { InputSelect } from "./InputSelect";
 import { InputText } from "./InputText";
 import { InputTextarea } from "./InputTextarea";
 import type { InputComponent } from "./types";
-// NOTE: DatePicker requires shadcn Calendar component to be installed
-// Run: npx shadcn@latest add calendar
-// Then uncomment this import:
-// import { InputDatePicker } from "./InputDatePicker";
+import { InputDatePicker } from "./InputDatePicker";
+import { InputImage } from "./InputImage";
+
 
 /**
  * Registry de inputs disponibles.
@@ -41,8 +40,10 @@ export const inputRegistry: Record<string, InputComponent> = {
 	hidden: InputHidden,
 
 	// Avanzados (requieren dependencias adicionales)
-	// date: InputDatePicker, // Uncomment after: npx shadcn@latest add calendar
+	date: InputDatePicker,
+	image: InputImage,
 };
+
 
 /**
  * Obtiene el componente de input del registry.

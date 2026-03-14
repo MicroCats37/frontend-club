@@ -7,6 +7,7 @@ import {
 	ShieldCheck,
 	UserPlus,
 	Users,
+	ArrowUpCircle,
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthStore } from "@/store/useAuthStore";
 import { type MiGrupoItem, useGetMiGrupo } from "@/hooks/auth/useGetMiGrupo";
 import {
 	useBajaFamiliar,
@@ -29,13 +31,15 @@ import { UpgradeFamiliarModal } from "./_components/UpgradeFamiliarModal";
 const GrupoMemberCard = ({
 	member,
 	onUpgrade,
+	isAdmin,
 }: {
 	member: MiGrupoItem;
 	onUpgrade: (member: MiGrupoItem) => void;
+	isAdmin: boolean;
 }) => {
 	const isTitular = member.tipo === "TITULAR";
 	const isFamiliar = member.tipo === "FAMILIAR";
-	const _isContacto = member.tipo === "CONTACTO";
+	const isContacto = member.tipo === "CONTACTO";
 	const hasPrivileges = member.tiene_privilegios;
 
 	const { mutate: deleteContacto } = useDeleteContacto();
@@ -51,13 +55,12 @@ const GrupoMemberCard = ({
 
 			<div className="flex items-center gap-4 mb-4">
 				<div
-					className={`h-14 w-14 rounded-full flex items-center justify-center text-xl font-bold border-2 border-white shadow-sm ${
-						isTitular
-							? "bg-primary/20 text-primary"
-							: isFamiliar
-								? "bg-blue-100 text-blue-600"
-								: "bg-slate-100 text-slate-500"
-					}`}
+					className={`h-14 w-14 rounded-full flex items-center justify-center text-xl font-bold border-2 border-white shadow-sm ${isTitular
+						? "bg-primary/20 text-primary"
+						: isFamiliar
+							? "bg-blue-100 text-blue-600"
+							: "bg-slate-100 text-slate-500"
+						}`}
 				>
 					{member.persona.nombres[0]}
 				</div>
@@ -72,7 +75,7 @@ const GrupoMemberCard = ({
 					</div>
 				</div>
 
-				{!isTitular && (
+				{isAdmin && !isTitular && (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
@@ -159,12 +162,26 @@ const GrupoMemberCard = ({
 					</Badge>
 				)}
 			</div>
+
+			{isContacto && (
+				<Button
+					variant="ghost"
+					size="sm"
+					className="mt-4 w-full text-primary/60 hover:text-primary hover:bg-primary/5 font-bold rounded-xl h-8 text-[10px] transition-all uppercase tracking-widest"
+					onClick={() => onUpgrade(member)}
+				>
+					<ArrowUpCircle className="h-3 w-3 mr-1" />
+					Ascender a Familiar
+				</Button>
+			)}
 		</div>
 	);
 };
 
 export default function MiGrupoPage() {
 	const { data: response, isLoading } = useGetMiGrupo();
+	const user = useAuthStore((state) => state.user);
+	const isAdmin = user?.user_type === "ADMIN";
 	const members = response?.grupo || [];
 
 	const [addModalOpen, setAddModalOpen] = useState(false);
@@ -183,7 +200,7 @@ export default function MiGrupoPage() {
 			<div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
 				<div>
 					<h1 className="text-3xl font-black text-[#2C3A2C] tracking-tight">
-						Mi Grupo Familiar
+						Mi Grupo
 					</h1>
 					<p className="text-[#8BA18B]">
 						Personas que pueden acompañarte y sus beneficios de acceso.
@@ -228,27 +245,24 @@ export default function MiGrupoPage() {
 					</p>
 				</div>
 				<div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/30 hidden sm:block">
-					<p className="text-xs font-bold uppercase text-white/90 mb-1">
-						Tu Categoría
-					</p>
-					<p className="font-black text-secondary">INGENIERO HABILITADO</p>
 				</div>
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{isLoading
 					? Array(3)
-							.fill(0)
-							.map((_, i) => (
-								<Skeleton key={i} className="h-44 w-full rounded-2xl" />
-							))
+						.fill(0)
+						.map((_, i) => (
+							<Skeleton key={i} className="h-44 w-full rounded-2xl" />
+						))
 					: members.map((member) => (
-							<GrupoMemberCard
-								key={member.persona.id}
-								member={member}
-								onUpgrade={handleOpenUpgrade}
-							/>
-						))}
+						<GrupoMemberCard
+							key={member.persona.id}
+							member={member}
+							onUpgrade={handleOpenUpgrade}
+							isAdmin={isAdmin}
+						/>
+					))}
 			</div>
 
 			<AddContactoModal open={addModalOpen} onOpenChange={setAddModalOpen} />
@@ -258,6 +272,7 @@ export default function MiGrupoPage() {
 					open={upgradeModalOpen}
 					onOpenChange={setUpgradeModalOpen}
 					contactoId={selectedMember.persona.id}
+					contactoDni={selectedMember.persona.dni}
 					contactoNombre={selectedMember.persona.nombre_completo}
 				/>
 			)}

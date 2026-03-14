@@ -73,12 +73,9 @@ export type RegisterUserData = z.infer<typeof RegisterUserSchema>;
  * La respuesta del registro final retorna mensaje, usuario y tokens (como un login)
  */
 export const RegisterResponseSchema = z.object({
-	message: z.string(),
+	access: z.string(),
+	refresh: z.string(),
 	user: LoginResponseSchema.shape.user,
-	tokens: z.object({
-		access: z.string(),
-		refresh: z.string(),
-	}),
 });
 
 export type RegisterResponse = z.infer<typeof RegisterResponseSchema>;

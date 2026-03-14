@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, ShieldCheck, Upload } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { handleApiError } from "@/lib/api/error-handler";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,11 +43,13 @@ export function UpgradeFamiliarModal({
 	open,
 	onOpenChange,
 	contactoId,
+	contactoDni,
 	contactoNombre,
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	contactoId: string;
+	contactoDni: string;
 	contactoNombre: string;
 }) {
 	const { mutate: upgrade, isPending } = useConvertirAFamiliar();
@@ -61,22 +65,27 @@ export function UpgradeFamiliarModal({
 
 	function onSubmit(values: UpgradeFormValues) {
 		if (!fotoFrontal || !fotoReverso) {
+			toast.error("Debe subir ambas fotos del DNI (Frontal y Reverso)");
 			return;
 		}
 
 		upgrade(
 			{
-				contactoId,
-				data: values,
-				frontal: fotoFrontal,
-				reverso: fotoReverso,
+				dni: contactoDni,
+				parentesco: values.parentesco,
+				foto_frontal: fotoFrontal,
+				foto_reverso: fotoReverso,
 			},
 			{
 				onSuccess: () => {
+					toast.success("Solicitud de familiar enviada con éxito.");
 					onOpenChange(false);
 					form.reset();
 					setFotoFrontal(null);
 					setFotoReverso(null);
+				},
+				onError: (err) => {
+					handleApiError(err);
 				},
 			},
 		);
@@ -101,7 +110,10 @@ export function UpgradeFamiliarModal({
 
 				<Form {...form}>
 					<form
-						onSubmit={form.handleSubmit(onSubmit)}
+						onSubmit={form.handleSubmit(onSubmit, (err) => {
+							console.warn("Validation Error:", err);
+							toast.error("Por favor, seleccione el parentesco");
+						})}
 						className="space-y-6 py-4"
 					>
 						<FormField

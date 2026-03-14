@@ -1,29 +1,62 @@
-"use client";
-
-import { format } from "date-fns";
+import { addDays, format, getISODay, isSameISOWeek, startOfISOWeek } from "date-fns";
 import { es } from "date-fns/locale";
-import { ArrowRight, Calendar as CalendarIcon, Info } from "lucide-react";
+import { ArrowRight, Calendar as CalendarIcon, Info, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useVisitaRegistrationStore } from "@/hooks/visitas/useVisitaRegistrationStore";
+import { useTipoTarifas } from "@/hooks/useTarifas";
 
 export function StepDateSelection() {
-	const { tipoVisita, fechas, setFechas, setPaso } =
+	const { tipoVisita, fechas, setFechas, setPaso, tipoTarifaId, setTipoTarifaId, selectedTariff } =
 		useVisitaRegistrationStore();
 
-	const handleSelect = (range: any) => {
+	const { data: response } = useTipoTarifas();
+	const tiposTarifa = response && !Array.isArray(response) ? response.results : (response as any[]);
+
+	const handleSelect = (val: any) => {
 		if (tipoVisita === "PASE_DIARIO") {
-			// Para Pase Diario solo tomamos una fecha
-			setFechas(range || null, range || null);
+			const date = val as Date;
+			if (date) {
+				setFechas(date, date);
+			} else {
+				setFechas(null, null);
+			}
 		} else {
-			// Para Bungalow es un rango
+			const date = val as Date;
+			
+			if (selectedTariff?.es_paquete) {
+				// Buscar la regla que contiene este día
+				const dayNum = getISODay(date);
+				const regla = selectedTariff.reglas?.find(r => r.dias_semana.includes(dayNum));
+				
+				if (regla) {
+					const weekStart = startOfISOWeek(date);
+					const days = regla.dias_semana.map(d => addDays(weekStart, d - 1));
+					const first = new Date(Math.min(...days.map(d => d.getTime())));
+					const last = new Date(Math.max(...days.map(d => d.getTime())));
+					setFechas(first, last);
+				}
+				return;
+			}
+
+			const range = val as { from: Date | undefined; to: Date | undefined };
+			
+			// Si ya hay un inicio y se intenta seleccionar un fin en otra semana, lo bloqueamos
+			if (range?.from && range?.to && !isSameISOWeek(range.from, range.to)) {
+				// Mantenemos solo el nuevo inicio y limpiamos el fin
+				setFechas(range.to, null);
+				return;
+			}
+
 			setFechas(range?.from || null, range?.to || null);
 		}
 	};
 
 	const isNextDisabled =
-		!fechas.start || (tipoVisita === "BUNGALOW" && !fechas.end);
+		!fechas.start || 
+		(tipoVisita === "BUNGALOW" && (!fechas.end || !tipoTarifaId));
 
 	return (
 		<div className="max-w-5xl mx-auto py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -33,7 +66,7 @@ export function StepDateSelection() {
 					<CardHeader className="p-8 pb-4 bg-gray-50/50">
 						<CardTitle className="text-2xl font-black text-[#2C3A2C] flex items-center gap-3">
 							<div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm border">
-								<Info className="h-5 w-5 text-amber-500" />
+								<CalendarIcon className="h-5 w-5 text-amber-500" />
 							</div>
 							{tipoVisita === "PASE_DIARIO"
 								? "Selecciona el día de tu visita"
@@ -54,9 +87,37 @@ export function StepDateSelection() {
 							onSelect={handleSelect}
 							required={true}
 							locale={es}
-							disabled={(date) =>
-								date < new Date(new Date().setHours(0, 0, 0, 0))
-							}
+							disabled={(date) => {
+								const today = new Date();
+								today.setHours(0, 0, 0, 0);
+
+								// Regla 1: No fechas pasadas
+								if (date < today) return true;
+
+								// Regla 2: Lunes siempre cerrado (general)
+								const day = getISODay(date);
+								if (day === 1) return true;
+
+								if (tipoVisita === "BUNGALOW") {
+									// Regla 3: Lunes y Domingo SIEMPRE bloqueados para Bungalow
+									if (day === 1 || day === 7) return true;
+
+									// Regla 4: Solo habilitar días permitidos por la tarifa seleccionada
+									if (selectedTariff) {
+										const allowedDays = selectedTariff.reglas?.flatMap(r => r.dias_semana) || [];
+										if (!allowedDays.includes(day)) return true;
+									}
+
+									// Regla 5: Si ya seleccionó ingreso, solo permitir misma semana para la salida
+									if (fechas.start && !fechas.end && !selectedTariff?.es_paquete) {
+										if (!isSameISOWeek(date, fechas.start)) return true;
+										// No puede salir antes de entrar
+										if (date < fechas.start) return true;
+									}
+								}
+
+								return false;
+							}}
 							className="rounded-2xl border-none p-0 scale-110"
 							classNames={{
 								month: "space-y-4 w-full",
@@ -78,7 +139,7 @@ export function StepDateSelection() {
 								day_today: "bg-gray-100 text-[#2C3A2C]",
 								day_outside: "text-muted-foreground opacity-30",
 								day_disabled:
-									"text-muted-foreground opacity-10 cursor-not-allowed",
+									"text-muted-foreground/30 opacity-50 cursor-not-allowed line-through",
 								day_range_middle:
 									"aria-selected:bg-amber-50 aria-selected:text-amber-900 rounded-none",
 								day_hidden: "invisible",
@@ -89,6 +150,8 @@ export function StepDateSelection() {
 
 				{/* Side Info & Actions */}
 				<div className="w-full lg:w-96 space-y-6">
+					{/* Summary and Continuar btn */}
+
 					<div className="p-8 bg-[#2C3A2C] rounded-[32px] text-white shadow-xl relative overflow-hidden group">
 						<div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
 							<CalendarIcon className="h-24 w-24" />
@@ -146,7 +209,7 @@ export function StepDateSelection() {
 									<p className="text-muted-foreground leading-relaxed">
 										{tipoVisita === "PASE_DIARIO"
 											? "Los pases solo son válidos para el día seleccionado."
-											: "El precio del bungalow varía según sea día de semana o fin de semana."}
+											: "Las tarifas varían según la categoría y el bloque de días (Semana/Finde)."}
 									</p>
 								</div>
 							</div>

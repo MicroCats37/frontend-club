@@ -11,8 +11,8 @@ import { type PropsWithChildren, useState } from "react";
 
 // 1. Definición de la Interfaz (Props)
 interface ProvidersProps extends PropsWithChildren {
-	// El estado deshidratado que viene del Server Component
-	dehydratedState: DehydratedState;
+	// El estado deshidratado que viene del Server Component (opcional)
+	dehydratedState?: DehydratedState;
 }
 
 // 2. Aplicación de la Interfaz al Componente

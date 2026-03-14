@@ -14,6 +14,7 @@ import {
 import {
     Dialog,
     DialogContent,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -85,9 +86,11 @@ export const ReceiptModal = ({ isOpen, onClose, visita }: ReceiptModalProps) => 
                             <ReceiptIcon className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <h3 className="font-black text-lg tracking-tight">Comprobante de Visita</h3>
+                            <DialogTitle className="font-black text-lg tracking-tight text-white">
+                                Comprobante de Visita
+                            </DialogTitle>
                             <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-0.5">
-                                Registro: {visita.id?.split("-")[0]?.toUpperCase() || "VISITA"}
+                                Registro: {visita.id_publico}
                             </p>
                         </div>
                     </div>

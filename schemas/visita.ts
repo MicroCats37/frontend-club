@@ -3,7 +3,9 @@ import { z } from "zod";
 // --- Enums ---
 export const VisitaEstadoEnum = z.enum([
 	"PENDIENTE",
+	"PAGADA",
 	"CONFIRMADA",
+	"EN_CURSO",
 	"FINALIZADA",
 	"CANCELADA",
 ]);
@@ -95,7 +97,7 @@ export const ReservaMaestraDetailSchema = z.object({
 
 export const VisitaSchema = z.object({
 	id: z.string().uuid(),
-	titular_id: z.string().uuid(),
+	titular_id: z.string().uuid().nullable().optional(),
 	estado: VisitaEstadoEnum,
 	reserva_asociada_id: z.string().uuid().nullable().optional(),
 	lista_ingresantes: ListaIngresantesSchema.nullable().optional(),
@@ -105,11 +107,21 @@ export const VisitaSchema = z.object({
 	fecha_fin: z.string().nullable().optional(),
 	total_personas: z.number().optional(),
 	monto_total: z.union([z.number(), z.string()]).optional(),
+	saldo_total: z.union([z.number(), z.string()]).optional(),
 	pagado: z.boolean().optional(),
+	id_publico: z.string().nullable().optional(),
+	fecha_limite_pago: z.string().nullable().optional(),
+	fecha_limite_cancelacion: z.string().nullable().optional(),
+	is_bungalow: z.boolean().optional(),
+	titular: PersonaDetalleSchema.optional(),
+});
+
+export const PaginatedVisitaSchema = z.object({
+	results: z.array(VisitaSchema),
+	count: z.number(),
 });
 
 export const VisitaQuerySchema = VisitaSchema.extend({
-	titular: PersonaDetalleSchema.optional(),
 	reserva_asociada: ReservaMaestraDetailSchema.nullable().optional(),
 });
 
@@ -131,6 +143,7 @@ export const RegistroVisitaBungalowSchema = z.object({
 	bungalow_ids: z.array(z.string()),
 	fecha_llegada: z.string(),
 	fecha_salida: z.string(),
+	tipo_tarifa_id: z.string().uuid(),
 	con_privilegio: z.boolean(),
 	ingresantes: z.array(RegistroIngresanteSchema),
 });
@@ -178,7 +191,7 @@ export const PricingPersonSchema = z.object({
 	precio: z.number(),
 });
 
-export const VisitaListSchema = z.array(VisitaSchema);
+export const VisitaListSchema = PaginatedVisitaSchema;
 export const PricingPersonListSchema = z.array(PricingPersonSchema);
 
 // --- Types ---
@@ -188,7 +201,7 @@ export type Ingresante = z.infer<typeof IngresanteSchema>;
 export type BungalowDisponible = z.infer<typeof BungalowDisponibleSchema>;
 export type VisitanteSeleccionado = z.infer<typeof VisitanteSeleccionadoSchema>;
 export type PricingPerson = z.infer<typeof PricingPersonSchema>;
-export type VisitaList = z.infer<typeof VisitaListSchema>;
+export type VisitaList = z.infer<typeof PaginatedVisitaSchema>;
 export type VisitaQuery = z.infer<typeof VisitaQuerySchema>;
 export type TipoPase = z.infer<typeof TipoPaseSchema>;
 export type PricingPersonList = z.infer<typeof PricingPersonListSchema>;

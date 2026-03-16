@@ -1,23 +1,22 @@
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useApiCreate } from "@/hooks/useApiCreate";
+import { useApiDelete } from "@/hooks/useApiDelete";
+import { useApiQuery } from "@/hooks/useApiQuery";
+import { useApiUpdate } from "@/hooks/useApiUpdate";
 import api from "@/lib/api/config";
 import { handleApiError } from "@/lib/api/error-handler";
 import {
 	type BatchGaleriaItem,
 	type Bungalow,
-	BungalowSchema,
-	type BungalowUpdate,
-	PaginatedBungalowSchema,
+	BungalowOcupacionSchema,
 	type BungalowPricingList,
 	BungalowPricingListSchema,
+	BungalowSchema,
+	PaginatedBungalowSchema,
 } from "@/schemas/alojamiento/bungalow";
-import { useApiQuery } from "@/hooks/useApiQuery";
-import { useApiCreate } from "@/hooks/useApiCreate";
-import { useApiUpdate } from "@/hooks/useApiUpdate";
-import { useApiDelete } from "@/hooks/useApiDelete";
 import { buildApiPayload } from "@/utils/payload/format";
-
 
 const BUNGALOWS_URL = "/api/alojamiento/bungalows";
 
@@ -70,7 +69,13 @@ export const useUpdateBungalow = () => {
 export const useUpdateBungalowEstado = () => {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async ({ id, data }: { id: number | string; data: { estado: string } }) => {
+		mutationFn: async ({
+			id,
+			data,
+		}: {
+			id: number | string;
+			data: { estado: string };
+		}) => {
 			const res = await api.patch(`${BUNGALOWS_URL}/${id}/estado/`, data);
 			return res.data;
 		},
@@ -83,13 +88,15 @@ export const useUpdateBungalowEstado = () => {
 
 			// Actualizar optimísticamente el cache
 			if (previousData) {
-				queryClient.setQueryData<any>(["bungalows"], (old) => {
+				queryClient.setQueryData<any>(["bungalows"], (old: any) => {
 					if (!old) return old;
 
 					// Caso 1: Es una lista plana (Array)
 					if (Array.isArray(old)) {
 						return old.map((b) =>
-							b.id === variables.id ? { ...b, estado: variables.data.estado } : b,
+							b.id === variables.id
+								? { ...b, estado: variables.data.estado }
+								: b,
 						);
 					}
 
@@ -98,7 +105,9 @@ export const useUpdateBungalowEstado = () => {
 						return {
 							...old,
 							results: old.results.map((b: any) =>
-								b.id === variables.id ? { ...b, estado: variables.data.estado } : b,
+								b.id === variables.id
+									? { ...b, estado: variables.data.estado }
+									: b,
 							),
 						};
 					}
@@ -145,7 +154,6 @@ export const useBatchGallery = (bungalowId: number) => {
 	});
 };
 
-
 export const useDeleteBungalow = () => {
 	const queryClient = useQueryClient();
 	return useApiDelete({
@@ -159,8 +167,8 @@ export const useDeleteBungalow = () => {
 };
 
 export function useBungalowsDisponibilidad(params: {
-	f_inicio: string;
-	f_fin: string;
+	f_inicio?: string;
+	f_fin?: string;
 	capacidad?: number;
 	tipo_tarifa_id?: string;
 }) {
@@ -171,14 +179,32 @@ export function useBungalowsDisponibilidad(params: {
 		schema: z.array(z.any()),
 		queryOptions: {
 			enabled: !!params.f_inicio && !!params.f_fin,
+			staleTime: 1000 * 60 * 5, // 5 minutos
 		},
 	});
 }
 
-export function useBungalowPricingList() {
+export function useBungalowPricingList(tipo_tarifa_id?: string) {
 	return useApiQuery<BungalowPricingList[]>({
-		queryKey: ["bungalows", "precios"],
+		queryKey: ["bungalows", "precios", { tipo_tarifa_id }],
 		url: `${BUNGALOWS_URL}/precios/`,
+		params: { tipo_tarifa_id },
 		schema: z.array(BungalowPricingListSchema),
 	});
 }
+
+export const useBungalowOcupacion = (params: {
+	f_inicio: string;
+	f_fin: string;
+}) => {
+	return useQuery({
+		queryKey: ["bungalows", "ocupacion", params.f_inicio, params.f_fin],
+		queryFn: async () => {
+			const { data } = await api.get("api/alojamiento/bungalows/ocupacion/", {
+				params,
+			});
+			return z.array(BungalowOcupacionSchema).parse(data);
+		},
+		staleTime: 5 * 60 * 1000,
+	});
+};

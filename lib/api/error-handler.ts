@@ -15,7 +15,7 @@ export function handleApiError(error: any): string {
 	}
 
 	const { status, data } = axiosError.response;
-	
+
 	// Caso A: Error de lógica de negocio personalizado ({ errors: { message: "..." } })
 	if (data.errors?.message) {
 		return data.errors.message;

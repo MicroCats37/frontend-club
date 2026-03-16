@@ -156,9 +156,17 @@ export default function RegisterPage() {
 							<div key={s} className="flex flex-col items-center">
 								<div
 									className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-										step === (s === "CODIGO" ? "CODE" : s === "ACCESO" ? "PASSWORD" : s)
+										step ===
+										(s === "CODIGO" ? "CODE" : s === "ACCESO" ? "PASSWORD" : s)
 											? "bg-primary text-white"
-											: idx < ["CIP", "CODIGO", "ACCESO"].indexOf(s === "CODIGO" && step === "CODE" ? "CODIGO" : s === "ACCESO" && step === "PASSWORD" ? "ACCESO" : step)
+											: idx <
+													["CIP", "CODIGO", "ACCESO"].indexOf(
+														s === "CODIGO" && step === "CODE"
+															? "CODIGO"
+															: s === "ACCESO" && step === "PASSWORD"
+																? "ACCESO"
+																: step,
+													)
 												? "bg-primary/20 text-primary"
 												: "bg-gray-100 text-gray-400"
 									}`}

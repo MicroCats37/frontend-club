@@ -15,7 +15,10 @@ export function usePagoActions() {
 
 	const registrarPagoManual = useMutation({
 		mutationFn: async (payload: PagoManualPayload) => {
-			const { data } = await api.post("/api/finanzas/pagos/confirmar-manual", payload);
+			const { data } = await api.post(
+				"/api/finanzas/pagos/confirmar-manual",
+				payload,
+			);
 			return data;
 		},
 		onSuccess: () => {

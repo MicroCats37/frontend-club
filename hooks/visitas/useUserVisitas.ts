@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api/config";
-import type { Visita, VisitaList } from "@/schemas/visita";
+import type { VisitaList } from "@/schemas/visita";
 
 export const useGetMisVisitas = (
 	page = 1,

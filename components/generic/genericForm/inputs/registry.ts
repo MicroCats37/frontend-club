@@ -2,7 +2,9 @@
 // Registro central de todos los inputs disponibles
 
 import { InputCheckbox } from "./InputCheckbox";
+import { InputDatePicker } from "./InputDatePicker";
 import { InputHidden } from "./InputHidden";
+import { InputImage } from "./InputImage";
 import { InputNumber } from "./InputNumber";
 import { InputPassword } from "./InputPassword";
 import { InputRadio } from "./InputRadio";
@@ -11,9 +13,6 @@ import { InputSelect } from "./InputSelect";
 import { InputText } from "./InputText";
 import { InputTextarea } from "./InputTextarea";
 import type { InputComponent } from "./types";
-import { InputDatePicker } from "./InputDatePicker";
-import { InputImage } from "./InputImage";
-
 
 /**
  * Registry de inputs disponibles.
@@ -43,7 +42,6 @@ export const inputRegistry: Record<string, InputComponent> = {
 	date: InputDatePicker,
 	image: InputImage,
 };
-
 
 /**
  * Obtiene el componente de input del registry.

@@ -1,11 +1,16 @@
 "use client";
 
-import { ArrowRight, LayoutDashboard, LogIn, LogOut, TreeDeciduous, UserPlus } from "lucide-react";
+import {
+	LayoutDashboard,
+	LogIn,
+	LogOut,
+	TreeDeciduous,
+	UserPlus,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
-import { cn } from "@/lib/utils";
 
 /**
  * Landing Page Principal - CE CIP Lima
@@ -22,9 +27,10 @@ export default function Home() {
 
 	if (!mounted) return <div className="min-h-screen bg-[#F8FAF8]" />;
 
-	const portalHref = user?.user_type === "ADMIN" || user?.user_type === "PORTERO" 
-		? "/admin" 
-		: "/inicio";
+	const portalHref =
+		user?.user_type === "ADMIN" || user?.user_type === "PORTERO"
+			? "/admin"
+			: "/inicio";
 
 	return (
 		<div className="min-h-screen bg-[#F8FAF8] flex flex-col selection:bg-primary/20">
@@ -59,7 +65,10 @@ export default function Home() {
 					) : (
 						<div className="flex items-center gap-4">
 							<span className="text-sm font-bold text-[#4A5D4A] hidden md:block">
-								Hola, <span className="text-[#2C3A2C]">{user?.nombres?.split(" ")[0]}</span>
+								Hola,{" "}
+								<span className="text-[#2C3A2C]">
+									{user?.nombres?.split(" ")[0]}
+								</span>
 							</span>
 							<Link href={portalHref}>
 								<Button className="bg-primary hover:bg-primary/90 text-white font-extrabold rounded-xl px-6 h-11 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2">
@@ -67,8 +76,8 @@ export default function Home() {
 									MI PORTAL
 								</Button>
 							</Link>
-							<Button 
-								variant="ghost" 
+							<Button
+								variant="ghost"
 								size="icon"
 								onClick={() => logout()}
 								title="Cerrar sesión"
@@ -93,18 +102,22 @@ export default function Home() {
 								<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
 								<span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
 							</span>
-							<span className="text-[10px] font-black tracking-[0.2em] text-[#8BA18B] uppercase">Portal Sede Campestre Chosica</span>
+							<span className="text-[10px] font-black tracking-[0.2em] text-[#8BA18B] uppercase">
+								Portal Sede Campestre Chosica
+							</span>
 						</div>
 
 						<h1 className="text-5xl lg:text-8xl font-black text-[#2C3A2C] leading-[0.9] tracking-tighter animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
 							Tu oasis de paz <br />
-							<span className="text-primary italic font-serif">a un solo clic.</span>
+							<span className="text-primary italic font-serif">
+								a un solo clic.
+							</span>
 						</h1>
 
 						<p className="text-lg lg:text-xl text-[#4A5D4A] max-w-2xl mx-auto leading-relaxed font-medium opacity-80 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
 							Bienvenido a la nueva experiencia digital del CE CIP Lima.
-							Gestiona tus visitas, bungalows y servicios con la agilidad
-							que mereces como colegiado.
+							Gestiona tus visitas, bungalows y servicios con la agilidad que
+							mereces como colegiado.
 						</p>
 					</div>
 
@@ -143,7 +156,9 @@ export default function Home() {
 											<LayoutDashboard className="h-6 w-6 group-hover:rotate-6 transition-transform" />
 											<span>IR A MI PORTAL</span>
 										</div>
-										<span className="text-[10px] font-bold opacity-70 tracking-widest uppercase">Hola, {user?.nombres?.split(" ")[0]}</span>
+										<span className="text-[10px] font-bold opacity-70 tracking-widest uppercase">
+											Hola, {user?.nombres?.split(" ")[0]}
+										</span>
 									</Button>
 								</Link>
 							</div>
@@ -156,24 +171,29 @@ export default function Home() {
 							{
 								icon: TreeDeciduous,
 								title: "Entorno Natural",
-								desc: "Amplias áreas verdes y clima perfecto todo el año."
+								desc: "Amplias áreas verdes y clima perfecto todo el año.",
 							},
 							{
 								icon: ShieldCheck,
 								title: "Control de Acceso",
-								desc: "Validación biométrica e identidad integrada por CIP."
+								desc: "Validación biométrica e identidad integrada por CIP.",
 							},
 							{
 								icon: LayoutDashboard,
 								title: "Gestión Online",
-								desc: "Reservas de bungalows y pases en segundos."
-							}
-						].map((benefit, i) => (
-							<div key={benefit.title} className="group p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-[#E0E7E0]/40 hover:border-primary/20 hover:bg-white transition-all hover:shadow-xl hover:shadow-primary/5 text-center sm:text-left">
+								desc: "Reservas de bungalows y pases en segundos.",
+							},
+						].map((benefit, _i) => (
+							<div
+								key={benefit.title}
+								className="group p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-[#E0E7E0]/40 hover:border-primary/20 hover:bg-white transition-all hover:shadow-xl hover:shadow-primary/5 text-center sm:text-left"
+							>
 								<div className="h-12 w-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-6 transition-transform group-hover:scale-110 group-hover:rotate-3 font-bold">
 									<benefit.icon className="h-6 w-6" />
 								</div>
-								<h3 className="text-lg font-black text-[#2C3A2C] mb-2">{benefit.title}</h3>
+								<h3 className="text-lg font-black text-[#2C3A2C] mb-2">
+									{benefit.title}
+								</h3>
 								<p className="text-sm text-[#4A5D4A] leading-relaxed font-medium opacity-70">
 									{benefit.desc}
 								</p>
@@ -188,7 +208,9 @@ export default function Home() {
 				<div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
 					<div className="flex items-center gap-2 grayscale brightness-50 opacity-50">
 						<TreeDeciduous className="h-5 w-5" />
-						<span className="text-sm font-black tracking-tighter uppercase">CE CIP LIMA</span>
+						<span className="text-sm font-black tracking-tighter uppercase">
+							CE CIP LIMA
+						</span>
 					</div>
 					<p className="text-xs font-bold text-[#8BA18B] text-center">
 						© {new Date().getFullYear()} Centro de Esparcimiento - CIP Lima.
@@ -206,14 +228,14 @@ export default function Home() {
 // Icono faltante en importación original pero usado en el loop
 function ShieldCheck({ className }: { className?: string }) {
 	return (
-		<svg 
-			xmlns="http://www.w3.org/2000/svg" 
-			viewBox="0 0 24 24" 
-			fill="none" 
-			stroke="currentColor" 
-			strokeWidth="2" 
-			strokeLinecap="round" 
-			strokeLinejoin="round" 
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2"
+			strokeLinecap="round"
+			strokeLinejoin="round"
 			className={className}
 		>
 			<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />

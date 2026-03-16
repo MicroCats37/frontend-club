@@ -1,7 +1,7 @@
 import { toast } from "sonner";
+import { z } from "zod";
 import { useApiCreate } from "@/hooks/useApiCreate";
 import { useApiQuery } from "@/hooks/useApiQuery";
-import { z } from "zod";
 
 export interface IngresanteMolinete {
 	ingresante_id: string;

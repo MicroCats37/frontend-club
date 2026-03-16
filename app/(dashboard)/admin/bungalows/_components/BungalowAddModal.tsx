@@ -1,9 +1,17 @@
 // _components/BungalowAddModal.tsx
 "use client";
 
+import {
+	AlignLeft,
+	Hash,
+	Home,
+	Layers,
+	MapPin,
+	Tag,
+	Users,
+} from "lucide-react";
 import { GenericForm } from "@/components/generic/genericForm/GenericForm";
 import type { FormSection } from "@/components/generic/genericForm/GenericInput";
-import { AlertCircle, Home } from "lucide-react";
 import {
 	Dialog,
 	DialogContent,
@@ -12,8 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { useCreateBungalow } from "@/hooks/useBungalows";
 import {
-	BungalowUpdateSchema,
 	type BungalowUpdate,
+	BungalowUpdateSchema,
 } from "@/schemas/alojamiento/bungalow";
 
 interface BungalowAddModalProps {
@@ -46,46 +54,59 @@ export default function BungalowAddModal({
 					name: "image_main",
 					label: "Imagen Principal",
 					type: "image",
-					containerClassName: "col-span-12 flex justify-center pb-6",
+					containerClassName: "col-span-12 flex justify-center pb-8",
 				},
 				{
 					name: "nombre",
-					label: "Nombre / Identificador",
+					label: "Nombre del Bungalow",
 					type: "text",
+					icon: Tag,
+					placeholder: "Ej: Bungalow Suite Familiar",
 					required: true,
-					containerClassName: "col-span-12",
+					containerClassName: "col-span-12 md:col-span-8",
 				},
 				{
 					name: "numero",
-					label: "Número",
+					label: "Número / ID",
 					type: "text",
+					icon: Hash,
 					required: true,
+					placeholder: "Ej: 101",
+					containerClassName: "col-span-12 md:col-span-4",
+				},
+				{
+					name: "capacidad",
+					label: "Capacidad Máxima",
+					type: "number",
+					icon: Users,
+					required: true,
+					disabled: true,
+					placeholder: "0",
 					containerClassName: "col-span-12 md:col-span-4",
 				},
 				{
 					name: "zona",
-					label: "Zona",
+					label: "Zona / Bloque",
 					type: "text",
+					icon: MapPin,
+					placeholder: "Ej: Zona B",
 					containerClassName: "col-span-12 md:col-span-4",
 				},
 				{
 					name: "piso",
-					label: "Piso",
+					label: "Nivel / Piso",
 					type: "number",
+					icon: Layers,
 					containerClassName: "col-span-12 md:col-span-4",
 					defaultValue: 1,
-				},
-				{
-					name: "capacidad",
-					label: "Capacidad (Personas)",
-					type: "number",
-					required: true,
-					containerClassName: "col-span-12 md:col-span-4",
 				},
 				{
 					name: "descripcion",
 					label: "Descripción Detallada",
 					type: "textarea",
+					icon: AlignLeft,
+					placeholder:
+						"Describe las características únicas de este bungalow...",
 					containerClassName: "col-span-12",
 				},
 			],
@@ -94,9 +115,9 @@ export default function BungalowAddModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-[700px] border-none shadow-2xl rounded-[2rem] p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
-				<DialogHeader className="p-8 bg-[#FBFCFB] border-b border-[#E0E7E0]">
-					<DialogTitle className="text-3xl font-extrabold text-[#2C3A2C] tracking-tight">
+			<DialogContent className="sm:max-w-[800px] border-none shadow-2xl rounded-none p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+				<DialogHeader className="p-10 bg-[#FBFCFB] border-b border-[#E0E7E0]">
+					<DialogTitle className="text-4xl font-black text-[#111827] tracking-tighter uppercase">
 						Nuevo Bungalow
 					</DialogTitle>
 				</DialogHeader>

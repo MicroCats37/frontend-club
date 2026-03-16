@@ -14,22 +14,11 @@ import {
 	XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { Pagination } from "@/components/generic/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { useGetVisitas } from "@/hooks/visitas/useGetVisitas";
-import { useVisitaActions } from "@/hooks/visitas/useVisitaActions";
-import { Pagination } from "@/components/generic/Pagination";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-
 import {
 	Dialog,
 	DialogContent,
@@ -38,7 +27,17 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useGetVisitas } from "@/hooks/visitas/useGetVisitas";
+import { useVisitaActions } from "@/hooks/visitas/useVisitaActions";
 
 export default function AdminVisitasPage() {
 	const [page, setPage] = useState(1);
@@ -61,7 +60,11 @@ export default function AdminVisitasPage() {
 	const debouncedDni = useDebounce(dni, 500);
 	const debouncedIdPublico = useDebounce(idPublico, 500);
 
-	const { data: visitsData, isLoading, isError } = useGetVisitas({
+	const {
+		data: visitsData,
+		isLoading,
+		isError,
+	} = useGetVisitas({
 		page,
 		page_size: pageSize,
 		estado: estado === "ALL" ? undefined : estado,
@@ -148,7 +151,7 @@ export default function AdminVisitasPage() {
 				await liquidarVisita.mutateAsync(confirmModal.visitaId);
 			}
 			setConfirmModal({ isOpen: false, type: null, visitaId: null });
-		} catch (error) {
+		} catch (_error) {
 			// Error handled by mutation
 		}
 	};
@@ -350,13 +353,25 @@ export default function AdminVisitasPage() {
 															<Eye className="w-4 h-4" />
 														</Button>
 													</Link>
-													{["PENDIENTE", "PAGADA", "CONFIRMADA", "EN_CURSO", "ACTIVA"].includes(visita.estado) && (
+													{[
+														"PENDIENTE",
+														"PAGADA",
+														"CONFIRMADA",
+														"EN_CURSO",
+														"ACTIVA",
+													].includes(visita.estado) && (
 														<>
 															<Button
 																variant="ghost"
 																size="icon"
 																className="h-8 w-8 rounded-lg text-green-600 hover:bg-green-50"
-																onClick={() => setConfirmModal({ isOpen: true, type: "LIQUIDAR", visitaId: visita.id })}
+																onClick={() =>
+																	setConfirmModal({
+																		isOpen: true,
+																		type: "LIQUIDAR",
+																		visitaId: visita.id,
+																	})
+																}
 																disabled={liquidarVisita.isPending}
 															>
 																<CheckCircle className="w-4 h-4" />
@@ -365,7 +380,13 @@ export default function AdminVisitasPage() {
 																variant="ghost"
 																size="icon"
 																className="h-8 w-8 rounded-lg text-red-600 hover:bg-red-50"
-																onClick={() => setConfirmModal({ isOpen: true, type: "CANCELAR", visitaId: visita.id })}
+																onClick={() =>
+																	setConfirmModal({
+																		isOpen: true,
+																		type: "CANCELAR",
+																		visitaId: visita.id,
+																	})
+																}
 																disabled={cancelarVisita.isPending}
 															>
 																<XCircle className="w-4 h-4" />
@@ -409,15 +430,19 @@ export default function AdminVisitasPage() {
 			{/* Confirmations Modal */}
 			<Dialog
 				open={confirmModal.isOpen}
-				onOpenChange={(open) => !open && setConfirmModal({ ...confirmModal, isOpen: false })}
+				onOpenChange={(open) =>
+					!open && setConfirmModal({ ...confirmModal, isOpen: false })
+				}
 			>
 				<DialogContent className="max-w-md rounded-3xl">
 					<DialogHeader>
 						<DialogTitle className="text-xl font-bold text-[#2C3A2C]">
-							{confirmModal.type === "CANCELAR" ? "Anular Visita" : "Finalizar Estadía"}
+							{confirmModal.type === "CANCELAR"
+								? "Anular Visita"
+								: "Finalizar Estadía"}
 						</DialogTitle>
 						<DialogDescription className="text-[#4A5D4A] mt-2">
-							{confirmModal.type === "CANCELAR" 
+							{confirmModal.type === "CANCELAR"
 								? "¿Estás seguro que deseas anular esta visita? Esta acción es irreversible."
 								: "¿Deseas realizar el checkout de esta visita? Si hay saldos pendientes, se registrarán como pagados automáticamente."}
 						</DialogDescription>
@@ -425,13 +450,17 @@ export default function AdminVisitasPage() {
 					<DialogFooter className="flex gap-2 mt-4">
 						<Button
 							variant="outline"
-							onClick={() => setConfirmModal({ isOpen: false, type: null, visitaId: null })}
+							onClick={() =>
+								setConfirmModal({ isOpen: false, type: null, visitaId: null })
+							}
 							className="rounded-xl"
 						>
 							No, volver
 						</Button>
 						<Button
-							variant={confirmModal.type === "CANCELAR" ? "destructive" : "default"}
+							variant={
+								confirmModal.type === "CANCELAR" ? "destructive" : "default"
+							}
 							onClick={handleConfirmAction}
 							disabled={cancelarVisita.isPending || liquidarVisita.isPending}
 							className="rounded-xl shadow-lg"

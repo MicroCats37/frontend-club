@@ -1,18 +1,22 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Filter, RefreshCw, Search, TreeDeciduous } from "lucide-react";
+import {
+	Calendar as CalendarIcon,
+	Filter,
+	Plus,
+	Search,
+	TreeDeciduous,
+} from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Bungalow } from "@/schemas/alojamiento/bungalow";
-import BungalowDetailsEditor from "./_components/BungalowDetailsEditor";
-import BungalowGalleryEditor from "./_components/BungalowGalleryEditor";
 import BungalowAddModal from "./_components/BungalowAddModal";
 import BungalowCards from "./_components/BungalowCards";
-import { Plus } from "lucide-react";
-
-
+import BungalowDetailsEditor from "./_components/BungalowDetailsEditor";
+import BungalowGalleryEditor from "./_components/BungalowGalleryEditor";
 
 export default function BungalowsAdminPage() {
 	const [detailsOpen, setDetailsOpen] = useState(false);
@@ -34,7 +38,7 @@ export default function BungalowsAdminPage() {
 		setGalleryOpen(true);
 	};
 
-	const handleRefresh = () => {
+	const _handleRefresh = () => {
 		queryClient.invalidateQueries({ queryKey: ["bungalows"] });
 	};
 
@@ -52,23 +56,23 @@ export default function BungalowsAdminPage() {
 					</p>
 				</div>
 				<div className="flex items-center gap-3">
+					<Link href="/admin/bungalows-estadia">
+						<Button
+							variant="outline"
+							className="h-12 px-6 rounded-2xl border-[#E0E7E0] text-primary bg-primary/5 hover:bg-primary/10 shadow-sm font-black uppercase text-xs tracking-widest"
+						>
+							<CalendarIcon className="mr-2 h-4 w-4" />
+							Ver Calendario de Estadía
+						</Button>
+					</Link>
 					<Button
-						variant="outline"
-						size="icon"
-						className="rounded-xl border-[#E0E7E0] text-[#4A5D4A]"
-						onClick={handleRefresh}
-					>
-						<RefreshCw className="h-4 w-4" />
-					</Button>
-					<Button
-						className="rounded-xl px-6 bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all font-bold"
 						onClick={() => setAddOpen(true)}
+						className="h-12 px-6 rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 font-black uppercase text-xs tracking-widest"
 					>
-						<Plus className="mr-2 h-5 w-5" />
-						Agregar Bungalow
+						<Plus className="mr-2 h-4 w-4" />
+						Nuevo Bungalow
 					</Button>
 				</div>
-
 			</div>
 
 			{/* Filters and Search Bar */}
@@ -95,25 +99,24 @@ export default function BungalowsAdminPage() {
 				onManageGallery={handleManageGallery}
 			/>
 
+			{/* Editor Modals - Solo se montan si hay un bungalow seleccionado para evitar errores de reconciliación */}
+			{selectedBungalow && (
+				<>
+					<BungalowDetailsEditor
+						open={detailsOpen}
+						onOpenChange={setDetailsOpen}
+						bungalow={selectedBungalow}
+					/>
 
-			{/* Editor Modals */}
-			<BungalowDetailsEditor
-				open={detailsOpen}
-				onOpenChange={setDetailsOpen}
-				bungalow={selectedBungalow}
-			/>
+					<BungalowGalleryEditor
+						open={galleryOpen}
+						onOpenChange={setGalleryOpen}
+						bungalow={selectedBungalow}
+					/>
+				</>
+			)}
 
-			<BungalowGalleryEditor
-				open={galleryOpen}
-				onOpenChange={setGalleryOpen}
-				bungalow={selectedBungalow}
-			/>
-
-			<BungalowAddModal
-				open={addOpen}
-				onOpenChange={setAddOpen}
-			/>
+			<BungalowAddModal open={addOpen} onOpenChange={setAddOpen} />
 		</div>
-
 	);
 }

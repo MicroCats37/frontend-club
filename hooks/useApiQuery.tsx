@@ -17,7 +17,10 @@ interface UseApiQueryProps<T, TData = T> {
 	url: string | null;
 	schema: ZodType<T>;
 	params?: Record<string, unknown>;
-	queryOptions?: Omit<UseQueryOptions<T, AxiosError, TData>, "queryKey" | "queryFn">;
+	queryOptions?: Omit<
+		UseQueryOptions<T, AxiosError, TData>,
+		"queryKey" | "queryFn"
+	>;
 }
 
 export function useApiQuery<T, TData = T>({

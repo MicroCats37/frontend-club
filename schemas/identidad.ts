@@ -21,8 +21,8 @@ export const VinculoValidacionSchema = z.object({
 	id: z.string(),
 	titular_nombre: z.string(),
 	titular_dni: z.string(),
-	parentesco: z.string(),
-	nombre_parentesco: z.string(),
+	parentesco: z.string().nullish(),
+	nombre_parentesco: z.string().nullish(),
 	estado: z.string(),
 	nombre_estado: z.string(),
 });
@@ -68,12 +68,14 @@ export const ValidacionListaItemSchema = z.object({
 	vinculos: z.array(VinculoValidacionSchema).optional(),
 	es_familiar: z.boolean().optional(),
 	es_contacto: z.boolean().optional(),
+	tiene_privilegios: z.boolean().optional(),
+	solicita_privilegios: z.boolean().optional(),
 	motivo_rechazo: z.string().nullable().optional(),
 	created_at: z.string(),
 });
 
 export const PaginatedValidacionSchema = z.object({
-	items: z.array(ValidacionListaItemSchema),
+	results: z.array(ValidacionListaItemSchema),
 	count: z.number(),
 });
 

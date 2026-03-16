@@ -1,5 +1,5 @@
 import axios from "axios";
-import { deleteCookie, getCookie, setCookie } from "cookies-next";
+import { getCookie, setCookie } from "cookies-next";
 import { useAuthStore } from "@/store/useAuthStore";
 
 const api = axios.create({
@@ -76,7 +76,7 @@ api.interceptors.response.use(
 function handleGlobalLogout(originalRequest?: any) {
 	// Si el error viene de un intento de login, NO redirigimos
 	const isLoginRequest = originalRequest?.url?.includes("/api/auth/login/");
-	
+
 	// El store ya maneja la limpieza de cookies y estado centralizada
 	// e incluso la redirección a /login si está en el cliente.
 	if (!isLoginRequest) {

@@ -12,30 +12,25 @@ import {
 	Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { useResumen } from "@/hooks/auth/useResumen";
+import { useTipoTarifas } from "@/hooks/useTarifas";
 import {
 	useRegistrarBungalow,
 	useRegistrarPaseDiario,
 } from "@/hooks/visitas/useVisitaFlow";
 import { useVisitaRegistrationStore } from "@/hooks/visitas/useVisitaRegistrationStore";
-import { useTipoTarifas } from "@/hooks/useTarifas";
 
 export function StepReviewAndConfirm() {
-	const router = useRouter();
+	const _router = useRouter();
+	const { data: userResumen } = useResumen();
 	const {
 		tipoVisita,
 		fechas,
+		noches,
 		guestSelections,
 		bungalowsSeleccionados,
 		totalEstimado: totalPases,
@@ -44,7 +39,10 @@ export function StepReviewAndConfirm() {
 	} = useVisitaRegistrationStore();
 
 	const { data: response } = useTipoTarifas();
-	const categorias = response && !Array.isArray(response) ? response.results : (response as any[]);
+	const categorias =
+		response && !Array.isArray(response)
+			? response.results
+			: (response as any[]);
 	const categoriaSeleccionada = useMemo(() => {
 		return categorias?.find((c) => c.id === tipoTarifaId);
 	}, [categorias, tipoTarifaId]);
@@ -63,7 +61,13 @@ export function StepReviewAndConfirm() {
 
 	const totalFinal = totalPases + totalAlojamiento;
 
-	const { setCreatedVisitId, setOrdenCobroId, setPaso } = useVisitaRegistrationStore();
+	const {
+		setCreatedVisitId,
+		setOrdenCobroId,
+		setPaso,
+		setTotalEstimado,
+		setFechaLimitePago,
+	} = useVisitaRegistrationStore();
 
 	const handleConfirm = () => {
 		if (tipoVisita === "PASE_DIARIO") {
@@ -81,25 +85,39 @@ export function StepReviewAndConfirm() {
 					onSuccess: (data: any) => {
 						setCreatedVisitId(data.id);
 						// Extraemos el ID de la orden de cobro siguiendo el patrón de la vista de detalle
-						const ordenId = 
-							data.orden_cobro_id || 
-							data.orden_cobro?.id || 
-							data.lista_ingresantes?.orden_cobro_id || 
+						const ordenId =
+							data.orden_cobro_id ||
+							data.orden_cobro?.id ||
+							data.lista_ingresantes?.orden_cobro_id ||
 							data.lista_ingresantes?.orden_cobro?.id;
-							
+
 						if (ordenId) setOrdenCobroId(ordenId);
+
+						// Guardamos la fecha límite de pago
+						const fixFechaLimite =
+							data.fecha_limite_pago ||
+							data.lista_ingresantes?.orden_cobro?.fecha_limite_pago;
+						if (fixFechaLimite) setFechaLimitePago(fixFechaLimite);
+
+						const finalTotal =
+							data.monto_total ||
+							data.lista_ingresantes?.orden_cobro?.monto_total;
+						if (finalTotal) setTotalEstimado(Number(finalTotal));
+
 						setPaso(5);
 					},
 				},
 			);
 		} else {
+			// BUNGALOW: Incluimos 'noches' en el payload
 			registrarBungalow(
 				{
 					bungalow_ids: bungalowsSeleccionados.map((b) => b.id.toString()),
-					fecha_llegada: format(fechas.start!, "yyyy-MM-dd"),
-					fecha_salida: format(fechas.end!, "yyyy-MM-dd"),
+					fecha_llegada: format(fechas.start || new Date(), "yyyy-MM-dd"), // Fallback por si acaso, aunque el backend usará min(noches)
+					fecha_salida: format(fechas.end || new Date(), "yyyy-MM-dd"),
+					noches: noches.map((d) => format(d, "yyyy-MM-dd")),
 					tipo_tarifa_id: tipoTarifaId!,
-					con_privilegio: false,
+					con_privilegio: userResumen?.privilegios || false,
 					ingresantes: guestSelections.map((g) => ({
 						persona_id: g.persona_id,
 						tipo_entrada_id: g.tipo_entrada_id,
@@ -110,16 +128,29 @@ export function StepReviewAndConfirm() {
 					onSuccess: (data: any) => {
 						setCreatedVisitId(data.id);
 						// Extraemos el ID de la orden de cobro siguiendo el patrón de la vista de detalle
-						const ordenId = 
-							data.orden_cobro_id || 
-							data.orden_cobro?.id || 
-							data.reserva?.orden_cobro_id || 
+						const ordenId =
+							data.reserva_asociada?.orden_cobro?.id ||
+							data.orden_cobro_id ||
+							data.orden_cobro?.id ||
+							data.reserva?.orden_cobro_id ||
 							data.reserva?.orden_cobro?.id ||
-							data.lista_ingresantes?.orden_cobro_id || 
+							data.lista_ingresantes?.orden_cobro_id ||
 							data.lista_ingresantes?.orden_cobro?.id;
 
 						if (ordenId) setOrdenCobroId(ordenId);
-						setPaso(5);
+
+						// Guardamos la fecha límite de pago
+						const fixFechaLimite =
+							data.fecha_limite_pago ||
+							data.reserva_asociada?.orden_cobro?.fecha_limite_pago;
+						if (fixFechaLimite) setFechaLimitePago(fixFechaLimite);
+
+						const finalTotal =
+							data.monto_total ||
+							data.reserva_asociada?.orden_cobro?.monto_total;
+						if (finalTotal) setTotalEstimado(Number(finalTotal));
+
+						setPaso(6);
 					},
 				},
 			);
@@ -129,34 +160,67 @@ export function StepReviewAndConfirm() {
 	const isPending = submetiendoPases || submetiendoBungalow;
 
 	return (
-		<div className="max-w-5xl mx-auto py-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-			<div className="text-center mb-10">
-				<h2 className="text-3xl font-black text-[#2C3A2C] mb-2 tracking-tight">
+		<div className="max-w-5xl mx-auto py-2 sm:py-4 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+			<div className="text-center mb-8 sm:mb-12 px-4">
+				<h2 className="text-2xl sm:text-4xl font-black text-[#2C3A2C] mb-2 tracking-tight">
 					Resumen y Confirmación
 				</h2>
-				<p className="text-muted-foreground font-medium">
+				<p className="text-muted-foreground font-medium text-xs sm:text-lg">
 					Verifica los detalles antes de finalizar tu registro.
 				</p>
+			</div>
+
+			{/* Banner Informativo */}
+			<div className="mx-4 mb-8 bg-amber-50 border border-amber-200 rounded-[20px] sm:rounded-[24px] p-4 sm:p-6 flex items-start gap-4">
+				<div className="h-10 w-10 sm:h-12 sm:w-12 bg-amber-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-amber-200">
+					<AlertCircle className="h-6 w-6 text-white" />
+				</div>
+				<div className="min-w-0">
+					<p className="font-black text-amber-900 text-xs sm:text-sm uppercase tracking-wider mb-1">
+						Información Importante
+					</p>
+					<p className="text-[#2C3A2C] text-[11px] sm:text-sm font-bold leading-relaxed">
+						{tipoVisita === "BUNGALOW" ? (
+							<>
+								Podrás{" "}
+								<span className="text-amber-600 underline decoration-2 underline-offset-2 uppercase">
+									modificar a tus invitados
+								</span>{" "}
+								hasta un día antes de la reserva. Después de ese plazo, los
+								cambios se bloquearán.
+							</>
+						) : (
+							<>
+								Si pagas ahora{" "}
+								<span className="text-amber-600 underline decoration-2 underline-offset-2 uppercase">
+									no podrás modificar
+								</span>{" "}
+								a tus invitados. Si deseas modificar la lista más adelante,
+								deberás contactar con el administrador.
+							</>
+						)}
+					</p>
+				</div>
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
 				{/* Detalles de la Visita */}
 				<div className="lg:col-span-2 space-y-6">
-					<Card className="rounded-[32px] border-gray-100 shadow-sm overflow-hidden">
+					<Card className="rounded-[24px] sm:rounded-[32px] border-gray-100 shadow-sm overflow-hidden">
 						<CardHeader className="bg-gray-50/50 p-6 border-b border-gray-100">
-							<CardTitle className="text-lg font-black flex items-center gap-2 text-[#2C3A2C]">
+							<CardTitle className="text-base sm:text-lg font-black flex items-center gap-2 text-[#2C3A2C]">
 								<Calendar className="h-5 w-5 text-amber-500" />
 								Información General
 							</CardTitle>
 						</CardHeader>
-						<CardContent className="p-8">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+						<CardContent className="p-6 sm:p-8">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
 								<div>
 									<p className="text-[10px] uppercase font-black text-gray-400 mb-2 tracking-widest leading-none">
 										Modalidad
 									</p>
 									<Badge
-										className={`px-4 py-1.5 rounded-xl font-black ${
+										className={`px-4 py-1.5 rounded-xl font-black text-[10px] sm:text-sm ${
 											tipoVisita === "PASE_DIARIO"
 												? "bg-amber-100 text-amber-700"
 												: "bg-blue-100 text-blue-700"
@@ -171,10 +235,26 @@ export function StepReviewAndConfirm() {
 									<p className="text-[10px] uppercase font-black text-gray-400 mb-2 tracking-widest leading-none">
 										Periodo
 									</p>
-									<div className="font-bold text-[#2C3A2C] text-sm">
-										{format(fechas.start!, "PPP", { locale: es })}
-										{tipoVisita === "BUNGALOW" &&
-											` al ${format(fechas.end!, "PPP", { locale: es })}`}
+									<div className="font-bold text-[#2C3A2C] text-xs sm:text-sm">
+										{tipoVisita === "PASE_DIARIO" ? (
+											format(fechas.start!, "PPP", { locale: es })
+										) : (
+											<div className="flex flex-col gap-1">
+												<span className="text-amber-600">
+													{noches.length}{" "}
+													{noches.length === 1 ? "noche" : "noches"}{" "}
+													seleccionadas
+												</span>
+												<span className="text-[10px] sm:text-xs opacity-60">
+													{noches.length > 0
+														? [...noches]
+																.sort((a, b) => a.getTime() - b.getTime())
+																.map((d) => format(d, "dd MMM", { locale: es }))
+																.join(", ")
+														: "—"}
+												</span>
+											</div>
+										)}
 									</div>
 								</div>
 								{tipoVisita === "BUNGALOW" && (
@@ -182,7 +262,7 @@ export function StepReviewAndConfirm() {
 										<p className="text-[10px] uppercase font-black text-gray-400 mb-2 tracking-widest leading-none">
 											Categoría de Tarifa
 										</p>
-										<Badge className="bg-amber-500 text-white font-black border-none">
+										<Badge className="bg-amber-500 text-white font-black border-none text-[10px] sm:text-sm">
 											{categoriaSeleccionada?.nombre || "Cargando..."}
 										</Badge>
 									</div>
@@ -191,24 +271,24 @@ export function StepReviewAndConfirm() {
 
 							{tipoVisita === "BUNGALOW" &&
 								bungalowsSeleccionados.length > 0 && (
-									<div className="mt-8 pt-8 border-t border-gray-100">
+									<div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-100">
 										<p className="text-[10px] uppercase font-black text-gray-400 mb-4 tracking-widest leading-none">
 											Unidades Seleccionadas
 										</p>
-										<div className="flex flex-wrap gap-3">
+										<div className="flex flex-wrap gap-2 sm:gap-3">
 											{bungalowsSeleccionados.map((b) => (
 												<div
 													key={b.id}
-													className="flex items-center gap-3 bg-gray-50/50 p-3 pr-5 rounded-2xl border border-gray-100"
+													className="flex items-center gap-2 sm:gap-3 bg-gray-50/50 p-2 sm:p-3 sm:pr-5 rounded-xl sm:rounded-2xl border border-gray-100 w-full sm:w-auto"
 												>
-													<div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-blue-500 border border-blue-50">
-														<Home className="h-5 w-5" />
+													<div className="h-8 w-8 sm:h-10 sm:w-10 bg-white rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm text-blue-500 border border-blue-50 shrink-0">
+														<Home className="h-4 w-4 sm:h-5 sm:w-5" />
 													</div>
-													<div>
-														<p className="text-[9px] font-black leading-none mb-1 text-gray-400 uppercase tracking-tighter">
+													<div className="min-w-0">
+														<p className="text-[8px] sm:text-[9px] font-black leading-none mb-1 text-gray-400 uppercase tracking-tighter">
 															B-{b.numero}
 														</p>
-														<p className="text-xs font-black text-[#2C3A2C] leading-none">
+														<p className="text-[10px] sm:text-xs font-black text-[#2C3A2C] leading-none truncate">
 															{b.nombre}
 														</p>
 													</div>
@@ -220,56 +300,61 @@ export function StepReviewAndConfirm() {
 						</CardContent>
 					</Card>
 
-					<Card className="rounded-[32px] border-gray-100 shadow-sm overflow-hidden">
-						<CardHeader className="bg-gray-50/50 p-6 border-b border-gray-100">
-							<CardTitle className="text-lg font-black flex items-center gap-2 text-[#2C3A2C]">
-								<Users className="h-5 w-5 text-amber-500" />
-								Invitados ({guestSelections.length})
+					<Card className="rounded-[24px] sm:rounded-[32px] border-gray-100 shadow-sm overflow-hidden">
+						<CardHeader className="bg-gray-50/50 p-5 sm:p-6 border-b border-gray-100">
+							<CardTitle className="text-base sm:text-lg font-black flex items-center justify-between text-[#2C3A2C]">
+								<div className="flex items-center gap-2">
+									<Users className="h-5 w-5 text-amber-500" />
+									Invitados
+								</div>
+								<Badge
+									variant="outline"
+									className="border-gray-200 text-gray-400 text-[10px]"
+								>
+									{guestSelections.length} personas
+								</Badge>
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="p-0">
-							<div className="divide-y divide-gray-100">
+							<div className="divide-y divide-gray-50">
 								{guestSelections.map((guest) => (
 									<div
 										key={guest.persona_id}
-										className="p-6 flex items-center justify-between gap-4 hover:bg-gray-50/30 transition-colors"
+										className="p-4 sm:p-6 flex items-center justify-between gap-4 hover:bg-gray-50/30 transition-colors"
 									>
-										<div className="flex items-center gap-4">
-											<div className="h-11 w-11 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 font-black border border-amber-100 text-lg">
+										<div className="flex items-center gap-3 sm:gap-4">
+											<div className="h-9 w-9 sm:h-11 sm:w-11 bg-amber-50 rounded-xl sm:rounded-2xl flex items-center justify-center text-amber-600 font-black border border-amber-100 text-base sm:text-lg shrink-0">
 												{guest.nombre_completo.charAt(0)}
 											</div>
-											<div>
-												<p className="font-black text-[#2C3A2C] text-sm leading-tight mb-1.5 line-clamp-2">
+											<div className="min-w-0">
+												<p className="font-black text-[#2C3A2C] text-xs sm:text-sm leading-tight mb-1 sm:mb-1.5 line-clamp-1 sm:line-clamp-2">
 													{guest.nombre_completo}
 												</p>
 												<div className="flex items-center gap-2">
 													{guest.usa_cupon ? (
-														<Badge className="h-4.5 px-2 py-0 bg-green-500 text-white border-none text-[8px] font-black uppercase tracking-wider">
+														<Badge className="h-4 px-1.5 py-0 bg-green-500 text-white border-none text-[7px] sm:text-[8px] font-black uppercase tracking-wider">
 															Pase Libre
 														</Badge>
 													) : (
 														<Badge
 															variant="outline"
-															className="h-4.5 px-2 py-0 border-gray-100 text-[8px] font-black uppercase text-gray-400"
+															className="h-4 px-1.5 py-0 border-gray-100 text-[7px] sm:text-[8px] font-black uppercase text-gray-400"
 														>
 															Invitado
 														</Badge>
 													)}
-													<p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-														ID: {guest.persona_id.split("-")[0]}...
-													</p>
 												</div>
 											</div>
 										</div>
-										<div className="text-right">
+										<div className="text-right shrink-0">
 											<p
-												className={`font-black text-sm ${guest.usa_cupon ? "text-green-600" : "text-[#2C3A2C]"}`}
+												className={`font-black text-xs sm:text-sm ${guest.usa_cupon ? "text-green-600" : "text-[#2C3A2C]"}`}
 											>
 												{guest.usa_cupon
 													? "S/ 0.00"
 													: `S/ ${Number(guest.total_persona || 0).toFixed(2)}`}
 											</p>
-											<p className="text-[9px] font-bold text-gray-400 tracking-tighter leading-none mt-1">
+											<p className="text-[8px] sm:text-[9px] font-bold text-gray-400 tracking-tighter leading-none mt-1">
 												Precio final
 											</p>
 										</div>
@@ -282,41 +367,41 @@ export function StepReviewAndConfirm() {
 
 				{/* Resumen de Pago */}
 				<div className="space-y-6">
-					<Card className="rounded-[40px] bg-[#2C3A2C] text-white overflow-hidden shadow-2xl relative border-none">
+					<Card className="rounded-[32px] sm:rounded-[40px] bg-[#2C3A2C] text-white overflow-hidden shadow-2xl relative border-none">
 						<div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-							<CreditCard className="h-32 w-32" />
+							<CreditCard className="h-24 sm:h-32 w-24 sm:w-32" />
 						</div>
 
-						<CardContent className="p-8 pt-10 relative z-10">
-							<div className="flex items-center gap-3 mb-8">
-								<div className="h-1.5 w-8 bg-amber-500 rounded-full" />
-								<p className="text-[10px] uppercase font-black text-amber-400 tracking-widest">
+						<CardContent className="p-6 sm:p-8 pt-8 sm:pt-10 relative z-10">
+							<div className="flex items-center gap-3 mb-6 sm:mb-8">
+								<div className="h-1.5 w-6 sm:w-8 bg-amber-500 rounded-full" />
+								<p className="text-[9px] sm:text-[10px] uppercase font-black text-amber-400 tracking-widest">
 									Resumen de Pago
 								</p>
 							</div>
 
-							<div className="space-y-5 mb-10">
-								<div className="flex justify-between items-center text-sm font-bold opacity-70">
+							<div className="space-y-4 sm:space-y-5 mb-8 sm:mb-10">
+								<div className="flex justify-between items-center text-xs sm:text-sm font-bold opacity-70">
 									<span className="flex items-center gap-2">
 										<Users className="h-3.5 w-3.5" /> Pases y Entradas
 									</span>
 									<span>S/ {Number(totalPases || 0).toFixed(2)}</span>
 								</div>
 								{tipoVisita === "BUNGALOW" && (
-									<div className="flex justify-between items-center text-sm font-bold opacity-70">
+									<div className="flex justify-between items-center text-xs sm:text-sm font-bold opacity-70">
 										<span className="flex items-center gap-2">
 											<Home className="h-3.5 w-3.5" /> Alojamiento
 										</span>
 										<span>S/ {Number(totalAlojamiento || 0).toFixed(2)}</span>
 									</div>
 								)}
-								<div className="h-px bg-white/10 w-full my-6 shadow-sm shadow-black/20" />
+								<div className="h-px bg-white/10 w-full my-4 sm:my-6 shadow-sm shadow-black/20" />
 								<div className="flex justify-between items-end">
 									<div>
-										<p className="text-[10px] uppercase font-black text-amber-400/80 leading-none mb-3 tracking-tighter">
+										<p className="text-[9px] sm:text-[10px] uppercase font-black text-amber-400/80 leading-none mb-2 sm:mb-3 tracking-tighter">
 											Monto Total Estimado
 										</p>
-										<p className="text-4xl sm:text-5xl font-black tracking-tighter">
+										<p className="text-3xl sm:text-5xl font-black tracking-tighter">
 											S/ {Number(totalFinal || 0).toFixed(2)}
 										</p>
 									</div>
@@ -326,22 +411,24 @@ export function StepReviewAndConfirm() {
 							<Button
 								disabled={isPending}
 								onClick={handleConfirm}
-								className="w-full h-16 rounded-[24px] bg-amber-500 hover:bg-amber-600 text-white font-black text-lg transition-all hover:scale-[1.02] shadow-xl shadow-amber-900/40 active:scale-95 border-none"
+								className="w-full h-14 sm:h-20 rounded-[20px] sm:rounded-[28px] bg-amber-500 hover:bg-amber-600 text-white font-black text-sm sm:text-xl transition-all hover:scale-[1.02] shadow-xl shadow-amber-900/40 active:scale-95 border-none px-4"
 							>
 								{isPending ? (
-									<span className="flex items-center gap-3">
-										<Loader2 className="h-6 w-6 animate-spin" /> Procesando...
+									<span className="flex items-center justify-center gap-2 sm:gap-4 w-full">
+										<Loader2 className="h-5 w-5 sm:h-7 sm:w-7 animate-spin" />
+										<span className="truncate">Procesando...</span>
 									</span>
 								) : (
-									<span className="flex items-center gap-3">
-										<CheckCircle2 className="h-6 w-6" /> Finalizar Registro
+									<span className="flex items-center justify-center gap-2 sm:gap-4 w-full">
+										<CheckCircle2 className="h-5 w-5 sm:h-7 sm:w-7" />
+										<span className="truncate">Finalizar Registro y Pagar</span>
 									</span>
 								)}
 							</Button>
 
-							<div className="mt-8 flex items-start gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
-								<AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
-								<p className="text-[9px] text-white/40 uppercase font-black tracking-widest leading-relaxed">
+							<div className="mt-6 sm:mt-8 flex items-start gap-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+								<AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400 shrink-0" />
+								<p className="text-[8px] sm:text-[9px] text-white/40 uppercase font-black tracking-widest leading-relaxed">
 									Al confirmar, los datos se enviarán al sistema para generar
 									las órdenes de pago correspondientes.
 								</p>

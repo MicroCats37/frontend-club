@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { Toaster } from "sonner";
-import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import AuthInitializer from "@/components/auth/AuthInitializer";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,6 +28,12 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="es" suppressHydrationWarning>
+			<head>
+				<Script
+					src="https://sandbox-checkout.izipay.pe/payments/v1/js/index.js"
+					strategy="beforeInteractive"
+				/>
+			</head>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 				suppressHydrationWarning

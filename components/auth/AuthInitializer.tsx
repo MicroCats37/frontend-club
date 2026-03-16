@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAuthStore } from "@/store/useAuthStore";
 import type { LoggedUser } from "@/schemas/auth";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface AuthInitializerProps {
 	user?: LoggedUser | null;

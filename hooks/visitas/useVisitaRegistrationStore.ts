@@ -19,7 +19,8 @@ export interface GuestSelection {
 interface VisitaRegistrationState {
 	pasoActual: number;
 	tipoVisita: VisitaTipo | null;
-	fechas: { start: Date | null; end: Date | null };
+	fechas: { start: Date | null; end: Date | null }; // Mantenemos para Pase Diario
+	noches: Date[]; // Para Bungalow (noches discretas)
 	guestSelections: GuestSelection[];
 	bungalowsSeleccionados: Bungalow[];
 	tipoTarifaId: string | null;
@@ -29,12 +30,14 @@ interface VisitaRegistrationState {
 	hasQuoted: boolean;
 	createdVisitId: string | null;
 	ordenCobroId: string | null;
+	fechaLimitePago: string | null;
 
 	// Actions
 	setHasQuoted: (quoted: boolean) => void;
 	setPaso: (paso: number) => void;
 	setTipoVisita: (tipo: VisitaTipo) => void;
 	setFechas: (start: Date | null, end: Date | null) => void;
+	setNoches: (noches: Date[]) => void;
 	setTipoTarifaId: (id: string | null) => void;
 	setSelectedTariff: (tariff: TipoTarifa | null) => void;
 	addGuest: (guest: GuestSelection) => void;
@@ -46,6 +49,7 @@ interface VisitaRegistrationState {
 	setDefaultTipoPaseId: (id: string | null) => void;
 	setCreatedVisitId: (id: string | null) => void;
 	setOrdenCobroId: (id: string | null) => void;
+	setFechaLimitePago: (fecha: string | null) => void;
 	reset: () => void;
 }
 
@@ -54,6 +58,7 @@ export const useVisitaRegistrationStore = create<VisitaRegistrationState>()(
 		pasoActual: 1,
 		tipoVisita: null,
 		fechas: { start: null, end: null },
+		noches: [],
 		guestSelections: [],
 		bungalowsSeleccionados: [],
 		tipoTarifaId: null,
@@ -63,6 +68,7 @@ export const useVisitaRegistrationStore = create<VisitaRegistrationState>()(
 		hasQuoted: false,
 		createdVisitId: null,
 		ordenCobroId: null,
+		fechaLimitePago: null,
 
 		setPaso: (paso) => set({ pasoActual: paso }),
 		setTipoVisita: (tipo) =>
@@ -71,20 +77,24 @@ export const useVisitaRegistrationStore = create<VisitaRegistrationState>()(
 				if (state.tipoVisita !== tipo) {
 					return {
 						tipoVisita: tipo,
-						pasoActual: 1,
+						pasoActual: 2, // Empezamos en fechas después de elegir experiencia
 						guestSelections: [],
 						bungalowsSeleccionados: [],
 						tipoTarifaId: null,
 						selectedTariff: null,
 						totalEstimado: 0,
+						defaultTipoPaseId: null,
 						hasQuoted: false,
 						createdVisitId: null,
 						ordenCobroId: null,
+						fechaLimitePago: null,
+						noches: [],
 					};
 				}
 				return { tipoVisita: tipo };
 			}),
 		setFechas: (start, end) => set({ fechas: { start, end } }),
+		setNoches: (noches) => set({ noches }),
 		setTipoTarifaId: (id) =>
 			set((state) => ({
 				tipoTarifaId: id,
@@ -97,7 +107,11 @@ export const useVisitaRegistrationStore = create<VisitaRegistrationState>()(
 				tipoTarifaId: tariff?.id || null,
 				bungalowsSeleccionados:
 					state.tipoTarifaId !== tariff?.id ? [] : state.bungalowsSeleccionados,
-				fechas: state.tipoTarifaId !== tariff?.id ? { start: null, end: null } : state.fechas,
+				fechas:
+					state.tipoTarifaId !== tariff?.id
+						? { start: null, end: null }
+						: state.fechas,
+				noches: state.tipoTarifaId !== tariff?.id ? [] : state.noches,
 			})),
 		addGuest: (guest) =>
 			set((state) => ({
@@ -133,11 +147,13 @@ export const useVisitaRegistrationStore = create<VisitaRegistrationState>()(
 		setHasQuoted: (quoted) => set({ hasQuoted: quoted }),
 		setCreatedVisitId: (id) => set({ createdVisitId: id }),
 		setOrdenCobroId: (id) => set({ ordenCobroId: id }),
+		setFechaLimitePago: (fecha) => set({ fechaLimitePago: fecha }),
 		reset: () =>
 			set({
 				pasoActual: 1,
 				tipoVisita: null,
 				fechas: { start: null, end: null },
+				noches: [],
 				guestSelections: [],
 				bungalowsSeleccionados: [],
 				tipoTarifaId: null,
@@ -147,6 +163,7 @@ export const useVisitaRegistrationStore = create<VisitaRegistrationState>()(
 				hasQuoted: false,
 				createdVisitId: null,
 				ordenCobroId: null,
+				fechaLimitePago: null,
 			}),
 	}),
 );

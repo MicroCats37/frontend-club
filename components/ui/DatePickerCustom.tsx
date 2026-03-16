@@ -3,7 +3,6 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { CalendarIcon, X } from "lucide-react";
-import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -64,7 +63,10 @@ export function DatePickerCustom({
 						)}
 					</Button>
 				</PopoverTrigger>
-				<PopoverContent className="w-auto p-0 rounded-2xl overflow-hidden" align="start">
+				<PopoverContent
+					className="w-auto p-0 rounded-2xl overflow-hidden"
+					align="start"
+				>
 					<Calendar
 						mode="single"
 						selected={date}
@@ -73,8 +75,8 @@ export function DatePickerCustom({
 						}}
 						disabled={(date) => {
 							// 1. Validar si está deshabilitado por lógica externa
-							if (isDateDisabled && isDateDisabled(date)) return true;
-							
+							if (isDateDisabled?.(date)) return true;
+
 							// 2. Validar rango min/max (sin mutar originales)
 							if (minDate) {
 								const min = new Date(minDate);

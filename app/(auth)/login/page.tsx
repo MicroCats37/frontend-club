@@ -1,9 +1,16 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CreditCard, Eye, EyeOff, Hash, KeyRound, Loader2, User } from "lucide-react";
+import {
+	CreditCard,
+	Eye,
+	EyeOff,
+	Hash,
+	KeyRound,
+	Loader2,
+	User,
+} from "lucide-react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { GenericForm } from "@/components/generic/genericForm/GenericForm";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -20,7 +27,6 @@ import { cn } from "@/lib/utils";
 import { type LoginFormData, LoginFormSchema } from "@/schemas/auth";
 // Components
 import { AuthShell } from "../_components/AuthShell";
-import { GenericForm } from "@/components/generic/genericForm/GenericForm";
 
 /**
  * Página de Inicio de Sesión Rediseñada
@@ -54,11 +60,21 @@ export default function LoginPage() {
 					<GenericForm<LoginFormData>
 						schema={LoginFormSchema}
 						onSubmit={onSubmit}
-						initialData={{ type: "DNI", dni: "", password: "" } as LoginFormData}
+						initialData={
+							{ type: "CIP", cip: "", password: "" } as LoginFormData
+						}
 					>
 						{(formProps) => {
-							const { methods, isSubmitting, onSubmit: handleFormSubmit, submissionMessage } = formProps;
-							const { register, formState: { errors } } = methods;
+							const {
+								methods,
+								isSubmitting,
+								onSubmit: handleFormSubmit,
+								submissionMessage,
+							} = formProps;
+							const {
+								register,
+								formState: { errors },
+							} = methods;
 
 							const syncModeChange = (newMode: "DNI" | "CIP") => {
 								setMode(newMode);
@@ -71,7 +87,6 @@ export default function LoginPage() {
 								<div className="space-y-6">
 									{/* Selector de Modo (Dentro del scope del form) */}
 									<div className="flex p-1.5 bg-[#F4F7F4] rounded-2xl border border-[#E0E7E0]/60 relative">
-
 										<button
 											type="button"
 											onClick={() => syncModeChange("CIP")}
@@ -137,12 +152,15 @@ export default function LoginPage() {
 														className={cn(
 															"pl-12 h-14 rounded-2xl border-[#E0E7E0] bg-[#FDFEFC] focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all text-base font-medium",
 															(errors as any).dni &&
-															"border-destructive focus:ring-destructive/5 focus:border-destructive",
+																"border-destructive focus:ring-destructive/5 focus:border-destructive",
 														)}
 														{...register("dni" as never, {
 															onChange: (e) => {
-																e.target.value = e.target.value.replace(/\D/g, "");
-															}
+																e.target.value = e.target.value.replace(
+																	/\D/g,
+																	"",
+																);
+															},
 														})}
 													/>
 												) : (
@@ -155,12 +173,15 @@ export default function LoginPage() {
 														className={cn(
 															"pl-12 h-14 rounded-2xl border-[#E0E7E0] bg-[#FDFEFC] focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all text-base font-medium",
 															(errors as any).cip &&
-															"border-destructive focus:ring-destructive/5 focus:border-destructive",
+																"border-destructive focus:ring-destructive/5 focus:border-destructive",
 														)}
 														{...register("cip" as never, {
 															onChange: (e) => {
-																e.target.value = e.target.value.replace(/\D/g, "");
-															}
+																e.target.value = e.target.value.replace(
+																	/\D/g,
+																	"",
+																);
+															},
 														})}
 													/>
 												)}
@@ -196,7 +217,7 @@ export default function LoginPage() {
 													className={cn(
 														"pl-12 pr-12 h-14 rounded-2xl border-[#E0E7E0] bg-[#FDFEFC] focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all text-base font-medium",
 														errors.password &&
-														"border-destructive focus:ring-destructive/5 focus:border-destructive",
+															"border-destructive focus:ring-destructive/5 focus:border-destructive",
 													)}
 													{...register("password")}
 												/>

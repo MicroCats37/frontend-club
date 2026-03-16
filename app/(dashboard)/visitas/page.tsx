@@ -7,47 +7,52 @@ import {
 	CheckCircle2,
 	ChevronRight,
 	Clock,
+	Filter,
 	Info,
+	LayoutGrid,
+	Plus,
+	Search,
 	Ticket,
 	TreeDeciduous,
 	Users,
-	XCircle,
-	Plus,
-	LayoutGrid,
-	Filter,
-	Search,
 	X,
+	XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FilterVisitasModal } from "@/components/visitas/FilterVisitasModal";
 import { useGetMisVisitas } from "@/hooks/visitas/useUserVisitas";
 import type { Visita } from "@/schemas/visita";
-import { useState, useEffect } from "react";
-import { FilterVisitasModal } from "@/components/visitas/FilterVisitasModal";
 
 const EstadoBadge = ({
 	estado,
 	pagado,
+	expirado,
 }: {
 	estado: string;
 	pagado?: boolean;
+	expirado?: boolean;
 }) => {
 	const config: Record<
 		string,
 		{ label: string; className: string; icon: any }
 	> = {
 		PENDIENTE: {
-			label: "Pendiente Pago",
-			className: "bg-amber-50 text-amber-700 border-amber-100",
-			icon: Clock,
+			label: expirado ? "Expirado" : "Pendiente Pago",
+			className: expirado
+				? "bg-rose-50 text-rose-700 border-rose-200 shadow-sm shadow-rose-100/50"
+				: "bg-amber-50 text-amber-700 border-amber-100",
+			icon: expirado ? XCircle : Clock,
 		},
 		PAGADA: {
 			label: "Pagado",
 			className: "bg-emerald-50 text-emerald-700 border-emerald-100",
 			icon: CheckCircle2,
 		},
+		// ...rest of states remain same
 		CONFIRMADA: {
 			label: "Confirmada",
 			className: "bg-blue-50 text-blue-700 border-blue-100",
@@ -83,7 +88,7 @@ const EstadoBadge = ({
 			variant="outline"
 			className={`px-3 py-1 flex items-center gap-2 font-black uppercase text-[10px] tracking-wider rounded-xl ${item.className}`}
 		>
-			<Icon className="h-3.5 w-3.5" />
+			<Icon className={`h-3.5 w-3.5 ${expirado ? "animate-pulse" : ""}`} />
 			{item.label}
 		</Badge>
 	);
@@ -98,16 +103,34 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 	const totalPagar = Number(visita.monto_total || 0);
 	const saldoPendiente = Number(visita.saldo_total || 0);
 
+	// Lógica de expiración
+	const isExpired = useMemo(() => {
+		if (visita.estado !== "PENDIENTE" || !visita.fecha_limite_pago)
+			return false;
+		return new Date() > new Date(visita.fecha_limite_pago);
+	}, [visita.estado, visita.fecha_limite_pago]);
+
 	return (
-		<div className="bg-white rounded-[32px] md:rounded-[40px] border border-gray-100 p-2 shadow-sm hover:shadow-2xl hover:border-primary/20 transition-all group relative animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+		<div
+			className={`bg-white rounded-[32px] md:rounded-[40px] border p-2 shadow-sm hover:shadow-2xl transition-all group relative animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden ${
+				isExpired
+					? "border-rose-100 bg-rose-50/20"
+					: "border-gray-100 hover:border-primary/20"
+			}`}
+		>
 			<div className="flex flex-col lg:flex-row lg:items-center gap-2">
 				{/* 1. Left Section: Icon & Main Info */}
-				<div className="bg-gray-50/50 rounded-[28px] md:rounded-[34px] p-4 md:p-6 flex items-center gap-4 md:gap-6 lg:min-w-[320px]">
+				<div
+					className={`${isExpired ? "bg-rose-50/50" : "bg-gray-50/50"} rounded-[28px] md:rounded-[34px] p-4 md:p-6 flex items-center gap-4 md:gap-6 lg:min-w-[320px]`}
+				>
 					<div
-						className={`h-12 w-12 md:h-16 md:w-16 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 duration-500 shadow-sm ${isBungalow
-							? "bg-primary text-white"
-							: "bg-[#2C3A2C] text-white"
-							}`}
+						className={`h-12 w-12 md:h-16 md:w-16 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 duration-500 shadow-sm ${
+							isExpired
+								? "bg-rose-500 text-white"
+								: isBungalow
+									? "bg-primary text-white"
+									: "bg-[#2C3A2C] text-white"
+						}`}
 					>
 						{isBungalow ? (
 							<TreeDeciduous className="h-6 w-6 md:h-8 md:w-8" />
@@ -117,21 +140,37 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 					</div>
 					<div className="flex-1 text-left min-w-0">
 						<div className="flex items-center gap-2 mb-0.5">
-							<h3 className="font-black text-lg md:text-xl text-[#2C3A2C] tracking-tighter truncate">
+							<h3
+								className={`font-black text-lg md:text-xl tracking-tighter truncate ${
+									isExpired ? "text-rose-900" : "text-[#2C3A2C]"
+								}`}
+							>
 								{isBungalow ? "Bungalow" : "Pase Diario"}
 							</h3>
 						</div>
 						<div className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-gray-400">
-							<Calendar className="h-3.5 w-3.5 text-amber-500" />
+							<Calendar
+								className={`h-3.5 w-3.5 ${isExpired ? "text-rose-300" : "text-amber-500"}`}
+							/>
 							<span>{fechaText}</span>
 							<span className="mx-1">•</span>
-							<span className="text-primary font-black uppercase bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
+							<span
+								className={`font-black uppercase px-2 py-0.5 rounded-lg border ${
+									isExpired
+										? "text-rose-400 bg-rose-50 border-rose-100"
+										: "text-primary bg-primary/5 border-primary/10"
+								}`}
+							>
 								{visita.id_publico || visita.id.split("-")[0]}
 							</span>
 						</div>
 					</div>
 					<div className="lg:hidden flex-shrink-0">
-						<EstadoBadge estado={visita.estado} pagado={visita.pagado} />
+						<EstadoBadge
+							estado={visita.estado}
+							pagado={visita.pagado}
+							expirado={isExpired}
+						/>
 					</div>
 				</div>
 
@@ -142,8 +181,12 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 							Acompañantes
 						</p>
 						<div className="flex items-center gap-1.5 text-[#4A5D4A]">
-							<Users className="h-3.5 w-3.5 text-primary/40" />
-							<span className="font-black text-xs md:text-sm">{visita.total_personas || 0} Pers.</span>
+							<Users
+								className={`h-3.5 w-3.5 ${isExpired ? "text-rose-200" : "text-primary/40"}`}
+							/>
+							<span className="font-black text-xs md:text-sm">
+								{visita.total_personas || 0} Capacidad
+							</span>
 						</div>
 					</div>
 
@@ -151,9 +194,15 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 						<p className="text-[9px] uppercase font-black text-gray-300 tracking-[0.15em]">
 							Monto Total
 						</p>
-						<div className="flex items-center gap-1 font-black text-[#2C3A2C]">
-							<span className="text-[10px] text-gray-300 uppercase font-normal">S/</span>
-							<span className="text-base md:text-lg tracking-tighter">{totalPagar.toFixed(2)}</span>
+						<div
+							className={`flex items-center gap-1 font-black ${isExpired ? "text-rose-900" : "text-[#2C3A2C]"}`}
+						>
+							<span className="text-[10px] text-gray-300 uppercase font-normal">
+								S/
+							</span>
+							<span className="text-base md:text-lg tracking-tighter">
+								{totalPagar.toFixed(2)}
+							</span>
 						</div>
 					</div>
 
@@ -166,24 +215,37 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 								<div className="flex flex-col gap-1">
 									<div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-100/50 w-fit">
 										<CheckCircle2 className="h-3 w-3" />
-										<span className="text-[9px] font-black uppercase tracking-wider">Pagado</span>
+										<span className="text-[9px] font-black uppercase tracking-wider">
+											Pagado
+										</span>
 									</div>
-									{visita.fecha_limite_cancelacion && (
-										<p className="text-[8px] font-bold text-gray-400 flex items-center gap-1 px-1 leading-none uppercase tracking-tighter">
-											Reembolso hasta {format(new Date(visita.fecha_limite_cancelacion), "dd/MM HH:mm")}
-										</p>
-									)}
 								</div>
 							) : (
 								<div className="flex flex-col gap-1">
-									<div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-2.5 py-1 rounded-full border border-amber-100/50 w-fit">
-										<Clock className="h-3 w-3" />
-										<span className="text-[9px] font-black uppercase tracking-wider">S/ {saldoPendiente.toFixed(2)} Pen.</span>
+									<div
+										className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border w-fit ${
+											isExpired
+												? "bg-rose-100 text-rose-700 border-rose-200 shadow-sm"
+												: "bg-amber-50 text-amber-600 border-amber-100/50"
+										}`}
+									>
+										{isExpired ? (
+											<XCircle className="h-3 w-3" />
+										) : (
+											<Clock className="h-3 w-3" />
+										)}
+										<span className="text-[9px] font-black uppercase tracking-wider">
+											{isExpired
+												? "Expirado"
+												: `S/ ${saldoPendiente.toFixed(2)} Pen.`}
+										</span>
 									</div>
-									{visita.fecha_limite_cancelacion && (
-										<p className="text-[8px] font-bold text-rose-500/80 flex items-center gap-1 px-1 leading-none uppercase tracking-tighter">
-											Expira {format(new Date(visita.fecha_limite_cancelacion), "dd/MM HH:mm")}
-										</p>
+									{visita.fecha_limite_pago && (
+										<p
+											className={`text-[8px] font-bold flex items-center gap-1 px-1 leading-none uppercase tracking-tighter ${
+												isExpired ? "text-rose-400" : "text-amber-500/80"
+											}`}
+										></p>
 									)}
 								</div>
 							)}
@@ -194,11 +256,19 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 				{/* 3. Right Section: Action */}
 				<div className="p-4 lg:p-6 lg:border-l lg:border-gray-50 flex flex-row lg:flex-col items-center justify-between lg:justify-center gap-4 mt-auto lg:mt-0">
 					<div className="hidden lg:block">
-						<EstadoBadge estado={visita.estado} pagado={visita.pagado} />
+						<EstadoBadge
+							estado={visita.estado}
+							pagado={visita.pagado}
+							expirado={isExpired}
+						/>
 					</div>
 					<Link href={`/visitas/${visita.id}`} className="w-full">
 						<Button
-							className="w-full rounded-2xl h-11 md:h-12 bg-white hover:bg-gray-50 border border-gray-100 text-[#2C3A2C] font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-md transition-all gap-2"
+							className={`w-full rounded-2xl h-11 md:h-12 bg-white transition-all gap-2 border font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-md ${
+								isExpired
+									? "border-rose-100 text-rose-900 hover:bg-rose-50"
+									: "border-gray-100 text-[#2C3A2C] hover:bg-gray-50"
+							}`}
 						>
 							Ver detalles <ChevronRight className="h-4 w-4" />
 						</Button>
@@ -216,18 +286,18 @@ export default function MisVisitasPage() {
 	const pageSize = 5;
 
 	const { data: response, isLoading } = useGetMisVisitas(page, pageSize, {
-		estado: estado === "all" ? undefined : estado
+		estado: estado === "all" ? undefined : estado,
 	});
 
 	useEffect(() => {
 		window.scrollTo({ top: 0, behavior: "smooth" });
-	}, [page]);
+	}, []);
 
 	const visitas = response?.results || [];
 	const totalItems = response?.count || 0;
 	const totalPages = Math.ceil(totalItems / pageSize);
 
-	const handleApplyFilters = (filters: { estado: string; fecha: string }) => {
+	const _handleApplyFilters = (filters: { estado: string; fecha: string }) => {
 		setEstado(filters.estado);
 		setPage(1);
 	};
@@ -267,7 +337,9 @@ export default function MisVisitasPage() {
 				<div className="flex items-center gap-3 md:gap-4 overflow-x-auto no-scrollbar py-1">
 					<div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
 						<Filter className="h-3.5 w-3.5 text-gray-400" />
-						<span className="text-[10px] font-black uppercase text-gray-400 tracking-widest whitespace-nowrap">Filtros Activos:</span>
+						<span className="text-[10px] font-black uppercase text-gray-400 tracking-widest whitespace-nowrap">
+							Filtros Activos:
+						</span>
 					</div>
 
 					{estado !== "all" && (
@@ -280,12 +352,14 @@ export default function MisVisitasPage() {
 					)}
 
 					{estado === "all" && (
-						<span className="text-[10px] font-bold text-gray-300 uppercase italic">Ninguno</span>
+						<span className="text-[10px] font-bold text-gray-300 uppercase italic">
+							Ninguno
+						</span>
 					)}
 				</div>
 
 				<div className="flex items-center gap-2">
-					{(estado !== "all") && (
+					{estado !== "all" && (
 						<Button
 							variant="ghost"
 							size="sm"
@@ -293,7 +367,9 @@ export default function MisVisitasPage() {
 							className="h-9 md:h-11 rounded-xl text-gray-400 font-bold hover:text-rose-500 hover:bg-rose-50 px-3 flex items-center gap-2"
 						>
 							<X className="h-4 w-4" />
-							<span className="hidden md:inline uppercase text-[10px] tracking-widest">Limpiar</span>
+							<span className="hidden md:inline uppercase text-[10px] tracking-widest">
+								Limpiar
+							</span>
 						</Button>
 					)}
 					<Button
@@ -322,7 +398,10 @@ export default function MisVisitasPage() {
 					Array(3)
 						.fill(0)
 						.map((_, i) => (
-							<Skeleton key={i} className="h-32 md:h-36 w-full rounded-[32px] md:rounded-[40px] opacity-40" />
+							<Skeleton
+								key={i}
+								className="h-32 md:h-36 w-full rounded-[32px] md:rounded-[40px] opacity-40"
+							/>
 						))
 				) : visitas.length === 0 ? (
 					<div className="py-20 md:py-40 text-center bg-white rounded-[32px] md:rounded-[60px] border border-gray-100 shadow-sm animate-in zoom-in-95 duration-700 p-6">

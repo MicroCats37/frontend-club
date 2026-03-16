@@ -1,18 +1,43 @@
 "use client";
 
 import {
+	closestCenter,
+	DndContext,
+	type DragEndEvent,
+	KeyboardSensor,
+	MouseSensor,
+	TouchSensor,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	arrayMove,
+	rectSortingStrategy,
+	SortableContext,
+	sortableKeyboardCoordinates,
+	useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+	GripVertical,
 	ImagePlus,
 	Images,
 	Loader2,
 	RefreshCcw,
 	Save,
 	Trash2,
-	X,
-	GripVertical,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+	Carousel,
+	CarouselContent,
+	CarouselDots,
+	CarouselItem,
+	CarouselNext,
+	CarouselPrevious,
+} from "@/components/ui/carousel";
 import {
 	Dialog,
 	DialogContent,
@@ -21,39 +46,8 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { useBatchGallery } from "@/hooks/useBungalows";
-import type {
-	BatchGaleriaItem,
-	Bungalow,
-} from "@/schemas/alojamiento/bungalow";
-import {
-	Carousel,
-	CarouselContent,
-	CarouselItem,
-	CarouselNext,
-	CarouselPrevious,
-	CarouselDots,
-} from "@/components/ui/carousel";
-
-
-import {
-	DndContext,
-	closestCenter,
-	KeyboardSensor,
-	PointerSensor,
-	MouseSensor,
-	TouchSensor,
-	useSensor,
-	useSensors,
-	DragEndEvent,
-} from "@dnd-kit/core";
-import {
-	arrayMove,
-	SortableContext,
-	sortableKeyboardCoordinates,
-	rectSortingStrategy,
-	useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { resolveImageUrl } from "@/lib/utils";
+import type { Bungalow } from "@/schemas/alojamiento/bungalow";
 
 interface BungalowGalleryEditorProps {
 	bungalow: Bungalow | null;
@@ -70,14 +64,14 @@ interface TempImage {
 	dndId: string; // ID estable para dnd-kit
 }
 
-function SortableImage({ 
-	img, 
-	index, 
-	onRemove 
-}: { 
-	img: TempImage; 
-	index: number; 
-	onRemove: (index: number) => void 
+function SortableImage({
+	img,
+	index,
+	onRemove,
+}: {
+	img: TempImage;
+	index: number;
+	onRemove: (index: number) => void;
 }) {
 	const {
 		attributes,
@@ -99,10 +93,10 @@ function SortableImage({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
-				img.deleted 
-					? "border-destructive/50 opacity-50 grayscale" 
-					: "border-slate-100 shadow-sm hover:shadow-md hover:border-primary/20"
+			className={`group relative aspect-square rounded-[2px] overflow-hidden border transition-all ${
+				img.deleted
+					? "border-red-200 opacity-50 grayscale"
+					: "border-[#E0E7E0] shadow-none hover:shadow-xl hover:shadow-emerald-900/5 hover:border-emerald-200"
 			}`}
 		>
 			<img
@@ -110,22 +104,25 @@ function SortableImage({
 				alt="Miniatura"
 				className="w-full h-full object-cover select-none"
 			/>
-			
+
 			{/* Draggable Area - Solo el ícono de grip si se desea, o toda la imagen */}
-			<div 
-				{...attributes} 
+			<div
+				{...attributes}
 				{...listeners}
-				className="absolute top-2 left-2 bg-white/90 backdrop-blur-md p-1.5 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-20 text-slate-400 hover:text-primary"
+				className="absolute top-2 left-2 bg-white/90 backdrop-blur-md p-1.5 rounded-[2px] shadow-sm opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing z-20 text-[#8BA18B] hover:text-emerald-700"
 			>
 				<GripVertical className="h-4 w-4" />
 			</div>
 
-			<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+			<div className="absolute inset-0 bg-emerald-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
 				<button
 					type="button"
-					onClick={() => onRemove(index)}
-					className={`h-9 w-9 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 z-30 ${
-						img.deleted ? "bg-primary text-white" : "bg-white text-destructive"
+					onClick={(e) => {
+						e.stopPropagation();
+						onRemove(index);
+					}}
+					className={`h-10 w-10 rounded-[2px] flex items-center justify-center shadow-lg transition-transform hover:scale-110 z-30 ${
+						img.deleted ? "bg-emerald-600 text-white" : "bg-white text-red-600"
 					}`}
 				>
 					{img.deleted ? (
@@ -137,13 +134,13 @@ function SortableImage({
 			</div>
 
 			{img.deleted && (
-				<div className="absolute top-2 right-2 bg-destructive text-white px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider z-30">
+				<div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-0.5 rounded-[2px] text-[8px] font-black uppercase tracking-widest z-30">
 					Eliminar
 				</div>
 			)}
-			
+
 			{!img.deleted && (
-				<div className="absolute bottom-2 right-2 bg-black/50 backdrop-blur-sm text-white px-2 py-0.5 rounded-lg text-[9px] font-mono z-10">
+				<div className="absolute bottom-2 right-2 bg-emerald-950/80 backdrop-blur-sm text-white px-2 py-0.5 rounded-[2px] text-[8px] font-black z-10">
 					#{img.orden}
 				</div>
 			)}
@@ -160,6 +157,8 @@ export default function BungalowGalleryEditor({
 
 	const [tempImages, setTempImages] = useState<TempImage[]>([]);
 	const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+	const gridInputRef = useRef<HTMLInputElement>(null);
+	const topInputRef = useRef<HTMLInputElement>(null);
 	const batchMutation = useBatchGallery(bungalow.id);
 
 	const sensors = useSensors(
@@ -171,19 +170,21 @@ export default function BungalowGalleryEditor({
 		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
-		})
+		}),
 	);
 
 	useEffect(() => {
 		if (open && bungalow) {
 			if (bungalow?.imagenes) {
 				setTempImages(
-					bungalow.imagenes.map((img) => ({
-						id: img.id,
-						preview: getImageUrl(img.imagen),
-						orden: img.orden || 0,
-						dndId: `existente-${img.id}`,
-					})).sort((a, b) => a.orden - b.orden),
+					bungalow.imagenes
+						.map((img) => ({
+							id: img.id,
+							preview: resolveImageUrl(img.imagen),
+							orden: img.orden || 0,
+							dndId: `existente-${img.id}`,
+						}))
+						.sort((a, b) => a.orden - b.orden),
 				);
 			} else {
 				setTempImages([]);
@@ -191,15 +192,11 @@ export default function BungalowGalleryEditor({
 		}
 	}, [bungalow, open]);
 
-	const getImageUrl = (url: string) => {
-		if (url.startsWith("http")) return url;
-		return `${process.env.NEXT_PUBLIC_API_URL}${url}`;
-	};
-
 	const processFiles = (files: FileList | File[]) => {
-		const nextOrder = tempImages.length > 0 
-			? Math.max(...tempImages.map(img => img.orden)) + 1 
-			: 1;
+		const nextOrder =
+			tempImages.length > 0
+				? Math.max(...tempImages.map((img) => img.orden)) + 1
+				: 1;
 
 		const newImages = Array.from(files).map((file, index) => ({
 			preview: URL.createObjectURL(file),
@@ -260,11 +257,11 @@ export default function BungalowGalleryEditor({
 				const newIndex = items.findIndex((i) => i.dndId === over.id);
 
 				const reordered = arrayMove(items, oldIndex, newIndex);
-				
+
 				// Reasignar órdenes basados en la nueva posición
 				return reordered.map((img, idx) => ({
 					...img,
-					orden: idx + 1
+					orden: idx + 1,
 				}));
 			});
 		}
@@ -279,19 +276,19 @@ export default function BungalowGalleryEditor({
 				if (img.id) ops.push({ action: "DELETE", id: img.id });
 			} else if (!img.id) {
 				// Es nueva
-				ops.push({ 
-					action: "CREATE", 
+				ops.push({
+					action: "CREATE",
 					file: img.file,
-					orden: img.orden
+					orden: img.orden,
 				});
 			} else {
 				// Es existente, verificar si cambió de orden (opcionalmente)
-				const original = bungalow.imagenes?.find(i => i.id === img.id);
+				const original = bungalow.imagenes?.find((i) => i.id === img.id);
 				if (original && original.orden !== img.orden) {
 					ops.push({
 						action: "UPDATE",
 						id: img.id,
-						orden: img.orden
+						orden: img.orden,
 					});
 				}
 			}
@@ -311,39 +308,39 @@ export default function BungalowGalleryEditor({
 		}
 	};
 
-	const activeImages = tempImages.filter(img => !img.deleted);
+	const activeImages = tempImages.filter((img) => !img.deleted);
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent 
-				className="w-[95vw] sm:max-w-[800px] border-none shadow-2xl rounded-t-3xl sm:rounded-3xl p-0 overflow-hidden bg-white max-h-[95vh] sm:max-h-[90vh]"
+			<DialogContent
+				className="w-[95vw] sm:max-w-[1000px] border-none shadow-2xl rounded-none p-0 overflow-hidden bg-white h-[95vh] sm:h-[90vh] flex flex-col"
 				onDragOver={handleDragOver}
 				onDragLeave={handleDragLeave}
 				onDrop={handleDrop}
 			>
 				{/* Overlay para Arrastre de Archivos (VISIBLE SOLO AL ARRASTRAR) */}
 				{isDraggingFiles && (
-					<div className="absolute inset-0 z-[100] bg-primary/20 backdrop-blur-[4px] border-4 border-dashed border-primary flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
-						<div className="bg-white p-10 rounded-full shadow-[0_0_50px_rgba(var(--primary),0.3)] mb-6 border-4 border-primary/20">
-							<ImagePlus className="h-16 w-16 text-primary animate-bounce" />
+					<div className="absolute inset-0 z-[100] bg-emerald-900/10 backdrop-blur-[4px] border-4 border-dashed border-emerald-600 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
+						<div className="bg-white p-12 rounded-none shadow-2xl mb-6 border-2 border-emerald-100">
+							<ImagePlus className="h-16 w-16 text-emerald-600 animate-bounce" />
 						</div>
-						<h2 className="text-4xl font-black text-primary tracking-tighter mb-2">
+						<h2 className="text-4xl font-black text-emerald-900 tracking-tighter mb-2 uppercase">
 							¡SUELTA AQUÍ!
 						</h2>
-						<p className="text-primary font-bold text-lg bg-white/50 px-4 py-1 rounded-full">
+						<p className="text-emerald-700 font-black text-sm uppercase tracking-widest bg-white/80 px-6 py-2 rounded-[2px]">
 							Sube tus fotos instantáneamente
 						</p>
 					</div>
 				)}
 
-				<DialogHeader className="p-6 bg-[#FBFCFB] border-b border-[#E0E7E0]">
-					<DialogTitle className="text-2xl font-bold text-[#2C3A2C] flex items-center">
-						<Images className="h-6 w-6 mr-2 text-primary" />
+				<DialogHeader className="p-6 sm:p-8 bg-[#FBFCFB] border-b border-[#E0E7E0] flex-none">
+					<DialogTitle className="text-2xl sm:text-3xl font-black text-[#111827] tracking-tighter uppercase flex items-center">
+						<Images className="h-6 w-6 sm:h-8 sm:w-8 mr-4 text-emerald-600" />
 						Galería: {bungalow.nombre}
 					</DialogTitle>
 				</DialogHeader>
 
-				<div className="p-0 overflow-y-auto max-h-[60vh] sm:max-h-[70vh]">
+				<div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
 					{/* Vista previa con Carrusel */}
 					{activeImages.length > 0 && (
 						<div className="bg-slate-50 p-4 sm:p-8 flex justify-center border-b border-[#E0E7E0]">
@@ -352,7 +349,7 @@ export default function BungalowGalleryEditor({
 									<CarouselContent>
 										{activeImages.map((img, index) => (
 											<CarouselItem key={img.dndId}>
-												<div className="aspect-video relative rounded-2xl overflow-hidden shadow-xl border-4 border-white">
+												<div className="aspect-video relative rounded-[2px] overflow-hidden shadow-2xl border-[12px] border-white">
 													<img
 														src={img.preview}
 														alt={`Vista ${index}`}
@@ -364,8 +361,16 @@ export default function BungalowGalleryEditor({
 									</CarouselContent>
 									{activeImages.length > 1 && (
 										<>
-											<CarouselPrevious inside variant="default" className="bg-white/90 hover:bg-white text-primary border-none shadow-lg -left-4" />
-											<CarouselNext inside variant="default" className="bg-white/90 hover:bg-white text-primary border-none shadow-lg -right-4" />
+											<CarouselPrevious
+												inside
+												variant="ghost"
+												className="bg-white/90 hover:bg-white text-emerald-900 border-none shadow-xl -left-4 rounded-none h-12 w-12"
+											/>
+											<CarouselNext
+												inside
+												variant="ghost"
+												className="bg-white/90 hover:bg-white text-emerald-900 border-none shadow-xl -right-4 rounded-none h-12 w-12"
+											/>
 										</>
 									)}
 								</div>
@@ -374,14 +379,13 @@ export default function BungalowGalleryEditor({
 						</div>
 					)}
 
-
 					<div className="p-4 sm:p-8 space-y-6">
-						<div className="flex items-center justify-between">
+						<div className="flex items-center justify-between bg-[#F8FAF8] p-6 border border-[#E0E7E0]">
 							<div>
-								<h3 className="font-bold text-[#4A5D4A]">
+								<h3 className="font-black text-[#111827] uppercase tracking-widest text-xs">
 									Gestionar Imágenes
 								</h3>
-								<p className="text-sm text-[#8BA18B]">
+								<p className="text-[10px] text-[#8BA18B] font-medium uppercase tracking-tight mt-1">
 									Arrastra para reordenar o suelta archivos aquí para subirlos.
 								</p>
 							</div>
@@ -389,14 +393,16 @@ export default function BungalowGalleryEditor({
 								type="button"
 								variant="outline"
 								size="sm"
-								className="rounded-xl relative h-10 border-primary/20 text-primary hover:bg-primary/5 font-bold"
+								className="rounded-none h-12 px-6 border-[#E0E7E0] text-[#111827] hover:bg-white hover:border-emerald-200 font-black uppercase tracking-widest text-[10px] transition-all shadow-sm"
+								onClick={() => topInputRef.current?.click()}
 							>
-								<ImagePlus className="h-4 w-4 mr-2" />
+								<ImagePlus className="h-4 w-4 mr-2 text-emerald-600" />
 								Añadir Fotos
 								<input
+									ref={topInputRef}
 									type="file"
 									multiple
-									className="absolute inset-0 opacity-0 cursor-pointer"
+									className="hidden"
 									onChange={handleAddImages}
 									accept="image/*"
 								/>
@@ -411,35 +417,38 @@ export default function BungalowGalleryEditor({
 								onDragEnd={handleDragEnd}
 							>
 								<SortableContext
-									items={tempImages.map(img => img.dndId)}
+									items={tempImages.map((img) => img.dndId)}
 									strategy={rectSortingStrategy}
 								>
-									<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-1">
+									<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-1 pb-12">
 										{/* INPUT / DROPZONE PERMANENTE */}
-										<div 
-											className="relative group aspect-square rounded-2xl border-2 border-dashed border-primary/30 hover:border-primary bg-primary/5 hover:bg-primary/10 transition-all flex flex-col items-center justify-center cursor-pointer p-4 text-center"
-											onClick={() => document.getElementById("file-input")?.click()}
+										<div
+											className="relative group aspect-square rounded-[2px] border border-dashed border-[#E0E7E0] hover:border-emerald-300 bg-[#F8FAF8] hover:bg-emerald-50/30 transition-all flex flex-col items-center justify-center cursor-pointer p-6 text-center"
+											onClick={(e) => {
+												e.stopPropagation();
+												gridInputRef.current?.click();
+											}}
 										>
-											<ImagePlus className="h-8 w-8 text-primary/60 group-hover:text-primary mb-2 transition-transform group-hover:scale-110" />
-											<span className="text-[10px] font-bold text-primary/80 uppercase tracking-wider">
-												Arrastra o haz click
+											<ImagePlus className="h-10 w-10 text-emerald-200 group-hover:text-emerald-500 mb-3 transition-transform group-hover:scale-110" />
+											<span className="text-[9px] font-black text-[#8BA18B] uppercase tracking-[0.2em] leading-tight">
+												Click o Arrastrar
 											</span>
 											<input
-												id="file-input"
+												ref={gridInputRef}
 												type="file"
 												multiple
-												className="absolute inset-0 opacity-0 cursor-pointer"
+												className="hidden"
 												onChange={handleAddImages}
 												accept="image/*"
 											/>
 										</div>
 
 										{tempImages.map((img, index) => (
-											<SortableImage 
-												key={img.dndId} 
-												img={img} 
-												index={index} 
-												onRemove={handleRemoveImage} 
+											<SortableImage
+												key={img.dndId}
+												img={img}
+												index={index}
+												onRemove={handleRemoveImage}
 											/>
 										))}
 									</div>
@@ -449,31 +458,38 @@ export default function BungalowGalleryEditor({
 					</div>
 				</div>
 
-
-				<DialogFooter className="p-4 sm:p-6 bg-[#FBFCFB] border-t border-[#E0E7E0] flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
-					<Button
-						type="button"
-						variant="ghost"
-						onClick={() => onOpenChange(false)}
-						className="rounded-xl font-medium"
-					>
-						Cancelar
-					</Button>
-					<Button
-						onClick={handleSaveGallery}
-						className="rounded-xl px-10 shadow-lg font-bold"
-						disabled={batchMutation.isPending}
-					>
-						{batchMutation.isPending ? (
-							<Loader2 className="h-4 w-4 animate-spin mr-2" />
-						) : (
-							<Save className="h-4 w-4 mr-2" />
-						)}
-						{tempImages.some(img => img.deleted || !img.id) ? "Guardar Cambios" : "Cerrar"}
-					</Button>
+				<DialogFooter className="p-6 sm:p-8 bg-[#FBFCFB] border-t border-[#E0E7E0] flex-none flex flex-row items-center justify-between gap-4">
+					<div className="hidden sm:block">
+						<p className="text-[10px] font-black uppercase text-[#8BA18B] tracking-widest">
+							{tempImages.length} Imágenes en total
+						</p>
+					</div>
+					<div className="flex items-center gap-3 w-full sm:w-auto">
+						<Button
+							type="button"
+							variant="ghost"
+							onClick={() => onOpenChange(false)}
+							className="flex-1 sm:flex-none rounded-none h-12 sm:h-14 px-8 font-black uppercase tracking-widest text-[10px] text-[#8BA18B] hover:bg-white hover:text-[#111827]"
+						>
+							Cancelar
+						</Button>
+						<Button
+							onClick={handleSaveGallery}
+							className="flex-[2] sm:flex-none rounded-none h-12 sm:h-14 px-12 bg-[#111827] hover:bg-emerald-950 text-white shadow-xl shadow-emerald-950/20 font-black uppercase tracking-widest text-[10px] transition-all disabled:opacity-50"
+							disabled={batchMutation.isPending}
+						>
+							{batchMutation.isPending ? (
+								<Loader2 className="h-5 w-5 animate-spin mr-3" />
+							) : (
+								<Save className="h-5 w-5 mr-3" />
+							)}
+							{tempImages.some((img) => img.deleted || !img.id)
+								? "Sincronizar"
+								: "Finalizar"}
+						</Button>
+					</div>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);
 }
-

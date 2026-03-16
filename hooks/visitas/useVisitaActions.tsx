@@ -1,8 +1,8 @@
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useApiUpdate } from "@/hooks/useApiUpdate";
 import api from "@/lib/api/config";
 import { handleApiError } from "@/lib/api/error-handler";
-import { useApiUpdate } from "@/hooks/useApiUpdate";
 
 export function useVisitaActions(defaultVisitaId?: string) {
 	const queryClient = useQueryClient();
@@ -23,7 +23,7 @@ export function useVisitaActions(defaultVisitaId?: string) {
 		baseUrl: "/api/control/visitas",
 		method: "PATCH",
 		options: {
-			onSuccess: (data, variables) => {
+			onSuccess: (_data, variables) => {
 				toast.success("Pases actualizados correctamente");
 				// Note: variables.id here will be something like "123/pases"
 				// We extract the ID part for invalidation
@@ -40,7 +40,7 @@ export function useVisitaActions(defaultVisitaId?: string) {
 		baseUrl: "/api/control/visitas",
 		method: "PATCH",
 		options: {
-			onSuccess: (data, variables) => {
+			onSuccess: (_data, variables) => {
 				toast.success("Lista de bungalow actualizada");
 				const realId = (variables.id as string).split("/")[0];
 				invalidate(realId);

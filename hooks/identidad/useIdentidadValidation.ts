@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { PersonaValidacion } from "@/schemas/identidad";
+import { useMutation } from "@tanstack/react-query";
+import type { PersonaValidacion } from "@/schemas/identidad";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 

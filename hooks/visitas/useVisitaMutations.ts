@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api/config";
 import { toast } from "sonner";
+import api from "@/lib/api/config";
 import { handleApiError } from "@/lib/api/error-handler";
 
 interface UpdateVisitaPasesPayload {

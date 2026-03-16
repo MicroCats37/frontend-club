@@ -2,16 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { handleApiError } from "@/lib/api/error-handler";
 import {
 	type DefaultValues,
 	type FieldValues,
 	type UseFormReturn,
 	useForm,
 } from "react-hook-form";
+import { toast } from "sonner";
 import type z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +20,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
+import { handleApiError } from "@/lib/api/error-handler";
 import {
 	type FieldWrapperProps,
 	type FormField,
@@ -210,6 +210,15 @@ export const GenericForm = <T extends FieldValues>({
 		}
 	}, [watch, onFieldChange]);
 
+	const formValues = watch();
+
+	const isHidden = (field: FormField) => {
+		if (typeof field.hidden === "function") {
+			return field.hidden(formValues);
+		}
+		return !!field.hidden;
+	};
+
 	// 3. HANDLER DE SUBMIT
 	const handleFormSubmit = async (data: FieldValues) => {
 		setSubmissionMessage(null);
@@ -258,9 +267,9 @@ export const GenericForm = <T extends FieldValues>({
 		} catch (e: any) {
 			const msg = handleApiError(e);
 			setSubmissionMessage({ type: "error", message: msg });
-			// NOTA: No disparamos toast.error(msg) aquí porque los hooks generados 
-			// (useApiCreate) ya disparan el toast internamente. 
-			// Si el onSubmit es manual y no dispara toast, el usuario verá el mensaje 
+			// NOTA: No disparamos toast.error(msg) aquí porque los hooks generados
+			// (useApiCreate) ya disparan el toast internamente.
+			// Si el onSubmit es manual y no dispara toast, el usuario verá el mensaje
 			// detallado en el cuerpo del formulario (setSubmissionMessage).
 			throw e;
 		}
@@ -349,8 +358,8 @@ export const GenericForm = <T extends FieldValues>({
 									(formSections ? CardWrapper : GhostWrapper);
 
 								// Verificar si todos los campos de la sección están ocultos
-								const areAllFieldsHidden = section.fields.every(
-									(f) => f.hidden,
+								const areAllFieldsHidden = section.fields.every((f) =>
+									isHidden(f),
 								);
 								if (areAllFieldsHidden) return null;
 
@@ -364,9 +373,11 @@ export const GenericForm = <T extends FieldValues>({
 									>
 										<div className=" grid grid-cols-1 md:grid-cols-12 gap-x-4">
 											{section.fields.map((field) => {
+												const fieldIsHidden = isHidden(field);
+
 												// Custom Fields
 												if (customFields[field.name]) {
-													if (field.hidden) return null; // Respetar propiedad hidden
+													if (fieldIsHidden) return null; // Respetar propiedad hidden
 													return (
 														<div
 															key={field.name}
@@ -376,6 +387,8 @@ export const GenericForm = <T extends FieldValues>({
 														</div>
 													);
 												}
+
+												if (fieldIsHidden) return null;
 												// Generic Inputs
 												return (
 													<GenericInput

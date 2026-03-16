@@ -1,17 +1,27 @@
 "use client";
 
-import { useTipoTarifas, useDeleteTipoTarifa, TipoTarifa } from "@/hooks/useTarifas";
+import {
+	Calendar,
+	Info,
+	Loader2,
+	Pencil,
+	Plus,
+	Trash2,
+	Zap,
+} from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-
-import { Plus, Trash2, Calendar, Loader2, Info, Pencil } from "lucide-react";
-import { useState } from "react";
-import { TipoTarifaEditModal } from "./_components/TipoTarifaEditModal";
-import { TipoTarifaCreateModal } from "./_components/TipoTarifaCreateModal";
+import {
+	type TipoTarifa,
+	useDeleteTipoTarifa,
+	useTipoTarifas,
+} from "@/hooks/useTarifas";
 import { BungalowPricingList } from "./_components/BungalowPricingList";
 import { SyncCapacidadModal } from "./_components/SyncCapacidadModal";
-import { Zap } from "lucide-react";
+import { TipoTarifaCreateModal } from "./_components/TipoTarifaCreateModal";
+import { TipoTarifaEditModal } from "./_components/TipoTarifaEditModal";
 
 const DIAS = [
 	{ id: 1, label: "L" },
@@ -34,15 +44,30 @@ export default function BungalowsPreciosPage() {
 	const [modalSyncOpen, setModalSyncOpen] = useState(false);
 	const [tipoASync, setTipoASync] = useState<TipoTarifa | null>(null);
 
-	const tipos = response && !Array.isArray(response) ? response.results : (response as TipoTarifa[]);
-	const paginacion = response && !Array.isArray(response) ? { count: response.count, next: response.next, previous: response.previous } : null;
+	const tipos =
+		response && !Array.isArray(response)
+			? response.results
+			: (response as TipoTarifa[]);
+	const paginacion =
+		response && !Array.isArray(response)
+			? {
+					count: response.count,
+					next: response.next,
+					previous: response.previous,
+				}
+			: null;
 
 	return (
 		<div className="space-y-8 animate-in fade-in duration-500 max-w-5xl mx-auto pb-20">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 				<div>
-					<h1 className="text-3xl font-extrabold text-[#2C3A2C]">Configuración de Tarifas</h1>
-					<p className="text-[#8BA18B]">Gestiona los tipos de tarifa maestros disponibles para los bungalows.</p>
+					<h1 className="text-3xl font-extrabold text-[#2C3A2C]">
+						Configuración de Tarifas
+					</h1>
+					<p className="text-[#8BA18B]">
+						Gestiona los tipos de tarifa maestros disponibles para los
+						bungalows.
+					</p>
 				</div>
 				<Button
 					onClick={() => setModalCreacionOpen(true)}
@@ -61,19 +86,24 @@ export default function BungalowsPreciosPage() {
 				) : tipos?.length === 0 ? (
 					<div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed flex flex-col items-center">
 						<Info className="h-12 w-12 text-[#8BA18B] mb-4 opacity-20" />
-						<p className="text-[#8BA18B] font-medium">No hay tipos de tarifa definidos.</p>
-                        <Button 
-                            variant="link" 
-                            className="mt-2 text-primary font-bold"
-                            onClick={() => setModalCreacionOpen(true)}
-                        >
-                            Crear la primera tarifa
-                        </Button>
+						<p className="text-[#8BA18B] font-medium">
+							No hay tipos de tarifa definidos.
+						</p>
+						<Button
+							variant="link"
+							className="mt-2 text-primary font-bold"
+							onClick={() => setModalCreacionOpen(true)}
+						>
+							Crear la primera tarifa
+						</Button>
 					</div>
 				) : (
 					<div className="grid grid-cols-1 gap-3">
 						{tipos?.map((tipo) => (
-							<Card key={tipo.id} className="rounded-2xl border-none shadow-sm hover:shadow-md transition-all group overflow-hidden bg-white/50 hover:bg-white">
+							<Card
+								key={tipo.id}
+								className="rounded-2xl border-none shadow-sm hover:shadow-md transition-all group overflow-hidden bg-white/50 hover:bg-white"
+							>
 								<CardContent className="p-4">
 									<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 										<div className="flex items-center gap-4 flex-1">
@@ -82,7 +112,9 @@ export default function BungalowsPreciosPage() {
 											</div>
 											<div>
 												<div className="flex items-center gap-2 mb-1">
-													<h3 className="font-bold text-[#2C3A2C] truncate text-lg">{tipo.nombre}</h3>
+													<h3 className="font-bold text-[#2C3A2C] truncate text-lg">
+														{tipo.nombre}
+													</h3>
 													{tipo.es_temporal && (
 														<Badge className="bg-orange-100 text-orange-700 border-none text-[10px] font-black h-5">
 															TEMPORAL
@@ -94,7 +126,7 @@ export default function BungalowsPreciosPage() {
 														</Badge>
 													)}
 												</div>
-												
+
 												<div className="flex items-center gap-3 text-[10px] text-[#8BA18B] font-medium mb-2">
 													<span className="flex items-center gap-1">
 														<Calendar className="h-3 w-3" />
@@ -105,21 +137,43 @@ export default function BungalowsPreciosPage() {
 														{tipo.fecha_fin || "Permanente"}
 													</span>
 												</div>
-												
+
 												<div className="space-y-1">
 													{tipo.reglas?.map((regla: any, idx: number) => (
-														<div key={regla.id || idx} className="flex gap-1 items-center">
+														<div
+															key={regla.id || idx}
+															className="flex gap-1 items-center"
+														>
 															{DIAS.map((dia) => (
 																<div
 																	key={dia.id}
-																	className={`h-6 w-6 rounded-lg flex items-center justify-center text-[10px] font-black ${regla.dias_semana?.includes(dia.id)
-																		? "bg-primary/10 text-primary"
-																		: "bg-gray-50 text-gray-300"
-																		}`}
+																	className={`h-6 w-6 rounded-lg flex items-center justify-center text-[10px] font-black ${
+																		regla.motor === "DIAS_SEMANA" &&
+																		regla.config?.dias?.includes(dia.id)
+																			? "bg-primary/10 text-primary"
+																			: "bg-gray-50 text-gray-300"
+																	}`}
 																>
 																	{dia.label}
 																</div>
 															))}
+															{regla.motor === "RANGO" && (
+																<Badge
+																	variant="outline"
+																	className="text-[8px] border-primary/20 text-primary"
+																>
+																	RANGO: {regla.config.desde} a{" "}
+																	{regla.config.hasta}
+																</Badge>
+															)}
+															{regla.motor === "FECHAS_PUNTUALES" && (
+																<Badge
+																	variant="outline"
+																	className="text-[8px] border-primary/20 text-primary"
+																>
+																	{regla.config.fechas?.length} FECHAS
+																</Badge>
+															)}
 															{tipo.reglas.length > 1 && (
 																<span className="text-[8px] font-black text-primary/40 uppercase ml-2 tracking-widest bg-primary/5 px-2 py-0.5 rounded-full">
 																	Regla {idx + 1}
@@ -133,11 +187,11 @@ export default function BungalowsPreciosPage() {
 
 										<div className="flex items-center gap-2 border-t sm:border-t-0 pt-3 sm:pt-0">
 											<div className="hidden sm:block h-8 w-[1px] bg-gray-100 mx-2" />
-											
-											<Button 
-											    type="button"
-												variant="ghost" 
-												size="icon" 
+
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
 												className="text-primary hover:bg-primary/5 sm:opacity-0 group-hover:opacity-100 transition-all rounded-xl h-10 w-10 border border-transparent hover:border-primary/20"
 												title="Sincronizar por Capacidad"
 												onClick={() => {
@@ -148,10 +202,10 @@ export default function BungalowsPreciosPage() {
 												<Zap className="h-5 w-5" />
 											</Button>
 
-											<Button 
-											    type="button"
-												variant="ghost" 
-												size="icon" 
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
 												className="text-[#8BA18B] hover:text-primary hover:bg-primary/5 sm:opacity-0 group-hover:opacity-100 transition-all rounded-xl h-10 w-10"
 												onClick={() => {
 													setTipoAEditar(tipo);
@@ -161,13 +215,17 @@ export default function BungalowsPreciosPage() {
 												<Pencil className="h-4 w-4" />
 											</Button>
 
-											<Button 
-											    type="button"
-												variant="ghost" 
-												size="icon" 
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
 												className="text-[#8BA18B] hover:text-destructive hover:bg-destructive/5 sm:opacity-0 group-hover:opacity-100 transition-all rounded-xl h-10 w-10"
 												onClick={() => {
-													if(confirm("¿Estás seguro de eliminar este tipo de tarifa?")) {
+													if (
+														confirm(
+															"¿Estás seguro de eliminar este tipo de tarifa?",
+														)
+													) {
 														deleteMutation.mutate(tipo.id);
 													}
 												}}
@@ -222,10 +280,10 @@ export default function BungalowsPreciosPage() {
 				onOpenChange={setModalCreacionOpen}
 			/>
 
-			<TipoTarifaEditModal 
-				open={modalEdicionOpen} 
-				onOpenChange={setModalEdicionOpen} 
-				tipo={tipoAEditar} 
+			<TipoTarifaEditModal
+				open={modalEdicionOpen}
+				onOpenChange={setModalEdicionOpen}
+				tipo={tipoAEditar}
 			/>
 
 			<SyncCapacidadModal

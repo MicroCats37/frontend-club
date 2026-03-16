@@ -1,6 +1,8 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useApiCreate } from "@/hooks/useApiCreate";
 import { useApiDelete } from "@/hooks/useApiDelete";
+import api from "@/lib/api/config";
+import { buildApiPayload } from "@/utils/payload/format";
 
 const CONTACTOS_URL = "/api/usuarios/contactos/";
 const FAMILIARES_URL = "/api/usuarios/familiares/";
@@ -10,6 +12,19 @@ export function useAddContacto() {
 
 	return useApiCreate({
 		url: CONTACTOS_URL,
+		options: {
+			onSuccess: () => {
+				queryClient.invalidateQueries({ queryKey: ["mi-grupo"] });
+			},
+		},
+	});
+}
+
+export function useAddFamiliar() {
+	const queryClient = useQueryClient();
+
+	return useApiCreate({
+		url: FAMILIARES_URL,
 		options: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["mi-grupo"] });
@@ -35,7 +50,7 @@ export function useConvertirAFamiliar() {
 	const queryClient = useQueryClient();
 
 	return useApiCreate({
-		url: `${FAMILIARES_URL}convertir-desde-contacto/`,
+		url: `${FAMILIARES_URL}convertir-contacto`,
 		options: {
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["mi-grupo"] });
@@ -53,6 +68,46 @@ export function useBajaFamiliar() {
 			onSuccess: () => {
 				queryClient.invalidateQueries({ queryKey: ["mi-grupo"] });
 			},
+		},
+	});
+}
+
+export function useSolicitarBeneficio() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async ({ id, ...data }: { id: string; [key: string]: any }) => {
+			const payload = buildApiPayload(data);
+			const { data: response } = await api.post(
+				`${FAMILIARES_URL}solicitar-beneficiario/${id}`,
+				payload,
+			);
+			return response;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["mi-grupo"] });
+		},
+	});
+}
+
+export function useVincularPorDni() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (data: {
+			dni: string;
+			tipo: "FAMILIAR" | "CONTACTO";
+			vinculo?: string;
+			etiqueta?: string;
+		}) => {
+			const { data: response } = await api.post(
+				"/api/usuarios/mi-grupo/vincular-dni",
+				data,
+			);
+			return response;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["mi-grupo"] });
 		},
 	});
 }

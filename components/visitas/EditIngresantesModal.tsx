@@ -1,41 +1,35 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import {
+	Info,
+	Plus,
+	ShieldCheck,
+	Ticket,
+	Trash2,
+	UserPlus,
+	Users,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-	DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import {
-	Users,
-	UserPlus,
-	Trash2,
-	Ticket,
-	Info,
-	Plus,
-	Star,
-} from "lucide-react";
 import { useGetGrupoFamiliar } from "@/hooks/visitas/useGetGrupoFamiliar";
-import { useGetTiposPases } from "@/hooks/visitas/useGetTiposPases";
 import {
-	useUpdateVisitaPases,
 	useUpdateVisitaBungalow,
+	useUpdateVisitaPases,
 } from "@/hooks/visitas/useVisitaMutations";
-import type { Visita } from "@/schemas/visita";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { Visita } from "@/schemas/visita";
 
 interface EditIngresantesModalProps {
 	isOpen: boolean;
@@ -49,8 +43,12 @@ export function EditIngresantesModal({
 	visita,
 }: EditIngresantesModalProps) {
 	const { data: grupo } = useGetGrupoFamiliar();
-	const { data: tiposPases } = useGetTiposPases();
-	const isBungalow = !!(visita as any).reserva_asociada;
+	const isBungalow = useMemo(
+		() => !!((visita as any).reserva_asociada || (visita as any).reserva),
+		[visita],
+	);
+	const reservaBungalow =
+		(visita as any).reserva_asociada || (visita as any).reserva;
 
 	const updatePases = useUpdateVisitaPases(visita.id);
 	const updateBungalow = useUpdateVisitaBungalow(visita.id);
@@ -58,33 +56,87 @@ export function EditIngresantesModal({
 	const [currentIngresantes, setCurrentIngresantes] = useState<any[]>([]);
 	const [initialIngresantes, setInitialIngresantes] = useState<any[]>([]);
 
+	// Bloqueo de edición física (Add/Delete) post-pago o confirmación
+	const canEditGuests = useMemo(() => {
+		const fechaInicioRaw = visita.fecha_inicio || reservaBungalow?.fecha_inicio;
+
+		// Regla especial para Bungalows: Se permite editar hasta 1 día antes, incluso si está pagado.
+		if (isBungalow && fechaInicioRaw) {
+			const fechaInicio = new Date(fechaInicioRaw);
+			const limite = new Date(fechaInicio);
+			limite.setDate(limite.getDate() - 1);
+			limite.setHours(19, 0, 0, 0); // 19:00 del día anterior
+
+			return new Date() < limite;
+		}
+
+		// Para pases normales, mantenemos la restricción post-pago
+		return !(
+			visita.pagado ||
+			visita.lista_ingresantes?.esta_pagada ||
+			visita.estado === "CONFIRMADA"
+		);
+	}, [visita, isBungalow, reservaBungalow]);
+
 	useEffect(() => {
 		if (isOpen && visita.lista_ingresantes?.ingresantes) {
-			const mapped = visita.lista_ingresantes.ingresantes.map((i) => ({
-				...i,
-				isExisting: true,
-				isDeleted: false,
-			}));
+			const mapped = visita.lista_ingresantes.ingresantes.map((i) => {
+				// Buscar si tiene privilegios en el grupo familiar cargado
+				const miembro = grupo?.grupo.find((m) => m.persona.id === i.persona.id);
+				return {
+					...i,
+					tiene_privilegios: miembro?.tiene_privilegios || false,
+					isExisting: true,
+					isDeleted: false,
+				};
+			});
 			setCurrentIngresantes(mapped);
 			setInitialIngresantes(JSON.parse(JSON.stringify(mapped)));
 		}
-	}, [isOpen, visita]);
+	}, [isOpen, visita, grupo]);
 
-	const defaultTipoPase = useMemo(() => {
-		if (!tiposPases) return null;
-		return (
-			tiposPases.find((p) => p.nombre.toUpperCase().includes("GENERAL")) ||
-			tiposPases[0]
-		);
-	}, [tiposPases]);
+	const majorityTipoPase = useMemo(() => {
+		const counts: Record<string, { count: number; data: any }> = {};
+		const validIngresantes = currentIngresantes.filter((i) => !i.isDeleted);
+
+		for (const ing of validIngresantes) {
+			if (!ing.tipo_entrada) continue;
+			const id = ing.tipo_entrada.id;
+			if (!counts[id]) {
+				counts[id] = { count: 0, data: ing.tipo_entrada };
+			}
+			counts[id].count++;
+		}
+
+		let majority = {
+			id: "00000000-0000-0000-0000-000000000000",
+			nombre: "General",
+		};
+		let maxCount = -1;
+
+		for (const id in counts) {
+			if (counts[id].count > maxCount) {
+				maxCount = counts[id].count;
+				majority = counts[id].data;
+			}
+		}
+
+		return majority;
+	}, [currentIngresantes]);
 
 	const handleAddPerson = (miembro: any) => {
-		if (currentIngresantes.some((ing) => ing.persona.id === miembro.persona.id && !ing.isDeleted)) {
+		if (
+			currentIngresantes.some(
+				(ing) => ing.persona.id === miembro.persona.id && !ing.isDeleted,
+			)
+		) {
 			toast.info("Esta persona ya está en la lista.");
 			return;
 		}
 
-		const deletedIndex = currentIngresantes.findIndex(ing => ing.persona.id === miembro.persona.id && ing.isDeleted);
+		const deletedIndex = currentIngresantes.findIndex(
+			(ing) => ing.persona.id === miembro.persona.id && ing.isDeleted,
+		);
 		if (deletedIndex !== -1) {
 			const newIngs = [...currentIngresantes];
 			newIngs[deletedIndex].isDeleted = false;
@@ -97,8 +149,9 @@ export function EditIngresantesModal({
 			{
 				id: `temp-${Date.now()}`,
 				persona: miembro.persona,
-				tipo_entrada: defaultTipoPase,
+				tipo_entrada: majorityTipoPase,
 				con_cupon: false,
+				tiene_privilegios: miembro.tiene_privilegios || false,
 				isExisting: false,
 				isDeleted: false,
 			},
@@ -125,6 +178,11 @@ export function EditIngresantesModal({
 	};
 
 	const handleSave = async () => {
+		if (activeIngresantes.length === 0) {
+			toast.error("La lista de asistentes no puede estar vacía");
+			return;
+		}
+
 		const add = currentIngresantes
 			.filter((i) => !i.isExisting && !i.isDeleted)
 			.map((i) => ({
@@ -141,14 +199,10 @@ export function EditIngresantesModal({
 			.filter((i) => i.isExisting && !i.isDeleted)
 			.filter((i) => {
 				const initial = initialIngresantes.find((ini) => ini.id === i.id);
-				return (
-					initial.tipo_entrada?.id !== i.tipo_entrada?.id ||
-					initial.con_cupon !== i.con_cupon
-				);
+				return initial.con_cupon !== i.con_cupon;
 			})
 			.map((i) => ({
 				ingresante_id: i.id,
-				tipo_entrada_id: i.tipo_entrada?.id,
 				con_cupon: i.con_cupon,
 			}));
 
@@ -162,10 +216,7 @@ export function EditIngresantesModal({
 				await updateBungalow.mutateAsync({
 					add,
 					delete: deleteList,
-					update: update.map(({ ingresante_id, con_cupon }) => ({
-						ingresante_id,
-						con_cupon,
-					})),
+					update,
 				});
 			} else {
 				await updatePases.mutateAsync({
@@ -175,13 +226,14 @@ export function EditIngresantesModal({
 				});
 			}
 			onClose();
-		} catch (e) { }
+		} catch (_e) {}
 	};
 
 	const activeIngresantes = currentIngresantes.filter((i) => !i.isDeleted);
-	const availableFromGroup = grupo?.grupo.filter(
-		(m) => !activeIngresantes.some((ing) => ing.persona.id === m.persona.id)
-	) || [];
+	const availableFromGroup =
+		grupo?.grupo.filter(
+			(m) => !activeIngresantes.some((ing) => ing.persona.id === m.persona.id),
+		) || [];
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
@@ -196,7 +248,6 @@ export function EditIngresantesModal({
 
 				{/* 2. Este div actúa como el cuerpo de nuestro modal. Toma todo el espacio disponible (flex-1) excluyendo al footer */}
 				<div className="flex flex-col md:flex-row flex-1 min-h-0 w-full overflow-hidden">
-
 					{/* Panel Izquierdo: Selección */}
 					<div className="w-full md:w-[35%] lg:w-[30%] bg-gray-50/50 p-5 md:p-8 border-b md:border-b-0 md:border-r border-gray-100 flex flex-col h-[40%] md:h-full flex-shrink-0 md:flex-shrink">
 						<div className="flex items-center gap-3 mb-6 flex-shrink-0">
@@ -204,37 +255,59 @@ export function EditIngresantesModal({
 								<UserPlus className="h-5 w-5 md:h-6 md:w-6" />
 							</div>
 							<div>
-								<h3 className="font-black text-[#2C3A2C] text-sm md:text-lg leading-none mb-1">Añadir Invitados</h3>
-								<p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">Toca para incluir</p>
+								<h3 className="font-black text-[#2C3A2C] text-sm md:text-lg leading-none mb-1">
+									Añadir Invitados
+								</h3>
+								<p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+									Toca para incluir
+								</p>
 							</div>
 						</div>
 
 						<ScrollArea className="flex-1 min-h-0 -mx-2 px-2">
 							<div className="grid grid-cols-1 gap-2 md:gap-3 pb-4">
-								{availableFromGroup.map((miembro) => (
-									<button
-										key={miembro.persona.id}
-										onClick={() => handleAddPerson(miembro)}
-										className="w-full flex items-center justify-between p-3 md:p-4 rounded-[20px] md:rounded-[24px] bg-white border border-gray-100 hover:border-primary/30 hover:shadow-md hover:scale-[1.01] transition-all group active:scale-95"
-									>
-										<div className="flex items-center gap-3">
-											<div className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl bg-gray-50 flex items-center justify-center font-black text-xs md:text-sm text-gray-400 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
-												{miembro.persona.nombres[0]}
-											</div>
-											<div className="text-left overflow-hidden">
-												<p className="text-[12px] md:text-sm font-black text-[#2C3A2C] leading-none mb-1 truncate">{miembro.persona.nombre_completo}</p>
-												<p className="text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-tighter">DNI {miembro.persona.dni}</p>
-											</div>
-										</div>
-										<div className="h-6 w-6 md:h-8 md:w-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-											<Plus className="h-3 w-3 md:h-4 md:w-4" />
-										</div>
-									</button>
-								))}
-								{availableFromGroup.length === 0 && (
-									<div className="text-center py-6 opacity-50 bg-white/50 rounded-[24px] border border-dashed border-gray-200">
-										<p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase">Sin más opciones</p>
+								{!canEditGuests ? (
+									<div className="text-center py-10 px-4 bg-amber-50/50 rounded-[24px] border border-amber-100 flex flex-col items-center gap-3">
+										<Info className="h-8 w-8 text-amber-500 opacity-50" />
+										<p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest leading-relaxed">
+											No se pueden añadir invitados <br /> tras el plazo de
+											edición permitido.
+										</p>
 									</div>
+								) : (
+									<>
+										{availableFromGroup.map((miembro) => (
+											<button
+												key={miembro.persona.id}
+												onClick={() => handleAddPerson(miembro)}
+												className="w-full flex items-center justify-between p-3 md:p-4 rounded-[20px] md:rounded-[24px] bg-white border border-gray-100 hover:border-primary/30 hover:shadow-md hover:scale-[1.01] transition-all group active:scale-95"
+											>
+												<div className="flex items-center gap-3">
+													<div className="h-8 w-8 md:h-10 md:w-10 rounded-lg md:rounded-xl bg-gray-50 flex items-center justify-center font-black text-xs md:text-sm text-gray-400 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
+														{miembro.persona.nombres[0]}
+													</div>
+													<div className="text-left overflow-hidden">
+														<p className="text-[12px] md:text-sm font-black text-[#2C3A2C] leading-none mb-1 truncate">
+															{miembro.persona.nombre_completo}
+														</p>
+														<p className="text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-tighter">
+															DNI {miembro.persona.dni}
+														</p>
+													</div>
+												</div>
+												<div className="h-6 w-6 md:h-8 md:w-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+													<Plus className="h-3 w-3 md:h-4 md:w-4" />
+												</div>
+											</button>
+										))}
+										{availableFromGroup.length === 0 && (
+											<div className="text-center py-6 opacity-50 bg-white/50 rounded-[24px] border border-dashed border-gray-200">
+												<p className="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase">
+													Sin más opciones
+												</p>
+											</div>
+										)}
+									</>
 								)}
 							</div>
 						</ScrollArea>
@@ -242,7 +315,6 @@ export function EditIngresantesModal({
 
 					{/* Panel Derecho: Lista Actual */}
 					<div className="w-full md:w-[65%] lg:w-[70%] flex flex-col bg-white flex-1 min-h-0 relative">
-
 						{/* Header Panel Derecho */}
 						<div className="p-5 md:p-8 pb-4 md:pb-6 flex-shrink-0 flex items-center justify-between border-b border-gray-50 md:border-none">
 							<div className="flex items-center gap-3 md:gap-4">
@@ -250,8 +322,12 @@ export function EditIngresantesModal({
 									<Users className="h-5 w-5 md:h-6 md:w-6" />
 								</div>
 								<div>
-									<h3 className="font-black text-[#2C3A2C] text-base md:text-xl leading-none mb-1">En la Sesión</h3>
-									<p className="text-[9px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">{activeIngresantes.length} personas</p>
+									<h3 className="font-black text-[#2C3A2C] text-base md:text-xl leading-none mb-1">
+										En la Sesión
+									</h3>
+									<p className="text-[9px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+										{activeIngresantes.length} personas
+									</p>
 								</div>
 							</div>
 						</div>
@@ -261,17 +337,28 @@ export function EditIngresantesModal({
 							<ScrollArea className="h-full px-5 md:px-8">
 								<div className="space-y-3 md:space-y-5 pb-8">
 									{activeIngresantes.map((ing) => (
-										<div key={ing.id} className="p-4 md:p-6 rounded-[24px] md:rounded-[36px] border border-gray-100 bg-white shadow-sm flex flex-col gap-4 md:gap-5 group hover:border-amber-200 transition-all text-left">
+										<div
+											key={ing.id}
+											className="p-4 md:p-6 rounded-[24px] md:rounded-[36px] border border-gray-100 bg-white shadow-sm flex flex-col gap-4 md:gap-5 group hover:border-amber-200 transition-all text-left"
+										>
 											<div className="flex items-center justify-between">
 												<div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
 													<div className="h-9 w-9 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-gray-50 flex items-center justify-center font-black text-gray-500 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
 														{ing.persona.nombres[0]}
 													</div>
 													<div className="min-w-0">
-														<p className="text-[13px] md:text-base font-black text-[#2C3A2C] truncate leading-tight mb-1">{ing.persona.nombre_completo}</p>
+														<p className="text-[13px] md:text-base font-black text-[#2C3A2C] truncate leading-tight mb-1">
+															{ing.persona.nombre_completo}
+														</p>
 														<div className="flex items-center gap-2 flex-wrap">
-															<Badge className="h-4 md:h-5 px-1.5 md:px-2 text-[8px] md:text-[10px] font-black tracking-widest bg-gray-50 text-gray-400 border-none rounded-md md:rounded-lg uppercase">DNI {ing.persona.dni}</Badge>
-															{!ing.isExisting && <Badge className="h-4 md:h-5 px-1.5 md:px-2 text-[8px] md:text-[10px] font-black tracking-widest bg-green-50 text-green-700 border-none rounded-md md:rounded-lg uppercase">NUEVO</Badge>}
+															<Badge className="h-4 md:h-5 px-1.5 md:px-2 text-[8px] md:text-[10px] font-black tracking-widest bg-gray-50 text-gray-400 border-none rounded-md md:rounded-lg uppercase">
+																DNI {ing.persona.dni}
+															</Badge>
+															{!ing.isExisting && (
+																<Badge className="h-4 md:h-5 px-1.5 md:px-2 text-[8px] md:text-[10px] font-black tracking-widest bg-green-50 text-green-700 border-none rounded-md md:rounded-lg uppercase">
+																	NUEVO
+																</Badge>
+															)}
 														</div>
 													</div>
 												</div>
@@ -279,60 +366,92 @@ export function EditIngresantesModal({
 													variant="ghost"
 													size="icon"
 													onClick={() => handleDelete(ing.id)}
-													className="rounded-full h-8 w-8 md:h-10 md:w-10 text-gray-300 hover:text-destructive hover:bg-destructive/5 transition-colors flex-shrink-0"
+													disabled={!canEditGuests}
+													className={cn(
+														"rounded-full h-8 w-8 md:h-10 md:w-10 text-gray-300 transition-colors flex-shrink-0",
+														canEditGuests
+															? "hover:text-destructive hover:bg-destructive/5"
+															: "opacity-20 cursor-not-allowed",
+													)}
 												>
 													<Trash2 className="h-4 w-4 md:h-5 md:w-5" />
 												</Button>
 											</div>
 
 											<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-												<div className="space-y-1.5">
+												{!isBungalow && (
+													<div className="space-y-1.5 opacity-80">
+														<label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+															<Ticket className="h-3 md:h-3.5 w-3 md:w-3.5" />{" "}
+															Pase (Inalterable)
+														</label>
+														<div className="h-9 md:h-11 px-4 flex items-center rounded-xl md:rounded-2xl bg-gray-100/50 border border-gray-100 text-[10px] md:text-xs font-bold text-gray-500 uppercase">
+															{ing.tipo_entrada?.nombre || "General"}
+														</div>
+													</div>
+												)}
+
+												<div className="space-y-3">
 													<label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-														<Ticket className="h-3 md:h-3.5 w-3 md:w-3.5" /> Tipo de Pase
+														<ShieldCheck className="h-3 md:h-3.5 w-3 md:w-3.5" />{" "}
+														Beneficio
 													</label>
-													<Select
-														value={ing.tipo_entrada?.id}
-														onValueChange={(val) => {
-															const selected = tiposPases?.find(p => p.id === val);
-															handleUpdate(ing.id, { tipo_entrada: selected });
+
+													<div
+														className={`flex items-center space-x-3 p-3 rounded-2xl border transition-all ${
+															ing.con_cupon || ing.tiene_privilegios
+																? "bg-amber-50/50 border-amber-200"
+																: "bg-gray-50/30 border-gray-100"
+														} ${!canEditGuests || isBungalow || ing.tiene_privilegios ? "opacity-60 cursor-not-allowed" : "hover:border-amber-300 cursor-pointer"}`}
+														onClick={() => {
+															if (
+																canEditGuests &&
+																!isBungalow &&
+																!ing.tiene_privilegios
+															) {
+																handleUpdate(ing.id, {
+																	con_cupon: !ing.con_cupon,
+																});
+															}
 														}}
 													>
-														<SelectTrigger className="h-9 md:h-11 text-[10px] md:text-xs font-bold rounded-xl md:rounded-2xl bg-gray-50/50 border-gray-100 focus:ring-amber-500 transition-all">
-															<SelectValue />
-														</SelectTrigger>
-														<SelectContent className="rounded-xl md:rounded-2xl">
-															{tiposPases?.map((p) => (
-																<SelectItem key={p.id} value={p.id} className="text-xs font-medium py-2.5">
-																	{p.nombre}
-																</SelectItem>
-															))}
-														</SelectContent>
-													</Select>
-												</div>
-
-												<div className="space-y-1.5">
-													<label className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-														<Star className="h-3 md:h-3.5 w-3 md:w-3.5" /> Beneficio
-													</label>
-													<Select
-														value={isBungalow ? "included" : (ing.con_cupon ? "true" : "false")}
-														onValueChange={(val) => handleUpdate(ing.id, { con_cupon: val === "true" })}
-														disabled={isBungalow}
-													>
-														<SelectTrigger className="h-9 md:h-11 text-[10px] md:text-xs font-bold rounded-xl md:rounded-2xl bg-gray-50/50 border-gray-100 focus:ring-amber-500 transition-all">
-															<SelectValue />
-														</SelectTrigger>
-														<SelectContent className="rounded-xl md:rounded-2xl">
-															{isBungalow ? (
-																<SelectItem value="included" className="text-xs font-medium py-2.5">Incluido en Estancia</SelectItem>
-															) : (
-																<>
-																	<SelectItem value="false" className="text-xs font-medium py-2.5">Pagar Entrada</SelectItem>
-																	<SelectItem value="true" className="text-xs font-medium py-2.5">Usar Cupón (S/ 0)</SelectItem>
-																</>
-															)}
-														</SelectContent>
-													</Select>
+														<Checkbox
+															id={`coupon-${ing.id}`}
+															checked={ing.con_cupon || ing.tiene_privilegios}
+															disabled={
+																!canEditGuests ||
+																isBungalow ||
+																ing.tiene_privilegios
+															}
+															onCheckedChange={(checked) =>
+																handleUpdate(ing.id, {
+																	con_cupon: checked === true,
+																})
+															}
+															className="rounded-lg border-gray-300 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+														/>
+														<div className="grid gap-1.5 leading-none">
+															<Label
+																htmlFor={`coupon-${ing.id}`}
+																className="text-[10px] md:text-sm font-black text-[#2C3A2C] leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+															>
+																{ing.tiene_privilegios
+																	? "Beneficiario Activo"
+																	: ing.con_cupon && !canEditGuests
+																		? "Cupón Aplicado"
+																		: isBungalow
+																			? "Incluido en Estancia"
+																			: "Usar Cupón de Beneficio"}
+															</Label>
+															<p className="text-[8px] md:text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+																{ing.tiene_privilegios
+																	? "Gratuito por Beneficio Directo"
+																	: isBungalow
+																		? "Reserva de Bungalow"
+																		: "Costo de entrada: S/ 0.00"}
+															</p>
+														</div>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -343,7 +462,9 @@ export function EditIngresantesModal({
 											<div className="h-10 w-10 md:h-16 md:w-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
 												<Users className="h-5 w-5 md:h-8 md:w-8 text-gray-200" />
 											</div>
-											<p className="text-[10px] md:text-sm font-black text-gray-300 uppercase tracking-widest text-center px-6">La lista de asistentes está vacía</p>
+											<p className="text-[10px] md:text-sm font-black text-gray-300 uppercase tracking-widest text-center px-6">
+												La lista de asistentes está vacía
+											</p>
 										</div>
 									)}
 								</div>
@@ -375,7 +496,9 @@ export function EditIngresantesModal({
 								onClick={handleSave}
 								disabled={updatePases.isPending || updateBungalow.isPending}
 							>
-								{updatePases.isPending || updateBungalow.isPending ? "Sincronizando..." : "Confirmar Cambios"}
+								{updatePases.isPending || updateBungalow.isPending
+									? "Sincronizando..."
+									: "Confirmar Cambios"}
 							</Button>
 						</div>
 					</div>

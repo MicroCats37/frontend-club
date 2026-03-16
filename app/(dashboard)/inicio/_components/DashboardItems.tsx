@@ -15,38 +15,43 @@ export function WelcomeCard({
 	privileges: boolean;
 }) {
 	return (
-		<Card className="bg-[#2C3A2C] text-white border-none shadow-xl relative overflow-hidden">
+		<Card className="bg-[#2C3A2C] text-white border-none shadow-2xl shadow-[#2C3A2C]/20 relative overflow-hidden rounded-[32px]">
 			{/* Patrón decorativo de fondo */}
-			<div className="absolute top-0 right-0 opacity-10 transform translate-x-12 -translate-y-8">
-				<TreeDeciduous size={240} />
+			<div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4">
+				<TreeDeciduous size={120} />
 			</div>
 
-			<CardContent className="pt-8 pb-8 relative z-10">
-				<div className="flex justify-between items-center">
+			<CardContent className="pt-8 pb-8 px-6 relative z-10">
+				<div className="space-y-4">
+					<div className="flex items-center gap-2">
+						<div className="h-1 w-6 bg-emerald-500 rounded-full" />
+						<span className="text-[10px] font-black tracking-widest text-emerald-400 uppercase">
+							Dashboard
+						</span>
+					</div>
 					<div>
-						<h2 className="text-3xl font-black mb-2 tracking-tight">
-							¡Hola, {name}! 👋
+						<h2 className="text-3xl font-black tracking-tighter leading-none mb-1">
+							¡Hola, {name}!
 						</h2>
-						<p className="text-emerald-100/80 mb-6 max-w-md font-medium">
-							Bienvenido a tu portal del Centro de Esparcimiento CIP Lima.
-							Gestiona tus próximas visitas y beneficios aquí.
+						<p className="text-emerald-100/60 font-medium text-xs leading-relaxed">
+							Tu espacio exclusivo CIP Lima.
 						</p>
-						<div className="flex gap-2">
+					</div>
+					<div className="flex flex-col gap-2 pt-2">
+						<Badge
+							variant="secondary"
+							className="bg-white/10 w-fit hover:bg-white/20 text-white border border-white/10 capitalize px-3 py-1 rounded-lg font-black text-[10px] tracking-tight"
+						>
+							{category || "Colegiado"}
+						</Badge>
+						{privileges && (
 							<Badge
 								variant="secondary"
-								className="bg-white/10 hover:bg-white/20 text-white border border-white/20 capitalize px-3 py-1"
+								className="bg-emerald-500 w-fit hover:bg-emerald-600 text-white border-none font-black px-3 py-1 rounded-lg shadow-lg shadow-emerald-500/20 text-[10px] tracking-tight"
 							>
-								{category || "Colegiado"}
+								MEMBRESÍA ACTIVA
 							</Badge>
-							{privileges && (
-								<Badge
-									variant="secondary"
-									className="bg-[#2EB85C] hover:bg-[#2EB85C]/90 text-white border-none font-bold px-3 py-1 shadow-sm"
-								>
-									CON BENEFICIOS ACTIVOS
-								</Badge>
-							)}
-						</div>
+						)}
 					</div>
 				</div>
 			</CardContent>
@@ -66,17 +71,21 @@ export function StatCard({
 	colorClass: string;
 }) {
 	return (
-		<Card className="overflow-hidden border-none shadow-md">
+		<Card className="overflow-hidden border border-gray-100 shadow-xl shadow-gray-100/50 rounded-[32px] group hover:scale-[1.02] transition-all duration-500">
 			<CardContent className="p-0">
 				<div className="flex items-center">
-					<div className={`p-6 ${colorClass} text-white`}>
-						<Icon className="h-8 w-8" />
+					<div
+						className={`p-8 ${colorClass} text-white transition-transform group-hover:scale-110 duration-700`}
+					>
+						<Icon className="h-10 w-10" />
 					</div>
-					<div className="p-6">
-						<p className="text-sm font-medium text-muted-foreground uppercase opacity-70 tracking-tight">
+					<div className="p-8">
+						<p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-1">
 							{title}
 						</p>
-						<p className="text-2xl font-bold text-[#2C3A2C]">{value}</p>
+						<p className="text-2xl font-black text-[#2C3A2C] tracking-tight">
+							{value}
+						</p>
 					</div>
 				</div>
 			</CardContent>
@@ -84,21 +93,60 @@ export function StatCard({
 	);
 }
 
+export function CompactStats({
+	items,
+}: {
+	items: {
+		title: string;
+		value: string | number;
+		icon: any;
+		colorClass: string;
+	}[];
+}) {
+	return (
+		<div className="grid grid-cols-1 gap-4">
+			{items.map((item, idx) => (
+				<button
+					key={idx}
+					className="group flex items-center gap-4 bg-white p-4 rounded-2xl border border-[#E0E7E0] hover:border-emerald-500/30 hover:shadow-lg transition-all text-left duration-300 active:scale-95"
+				>
+					<div
+						className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-110 ${item.colorClass}`}
+					>
+						<item.icon className="h-5 w-5" />
+					</div>
+					<div className="flex-1 min-w-0">
+						<p className="text-[9px] font-black text-gray-400 tracking-widest uppercase mb-0.5 truncate">
+							{item.title}
+						</p>
+						<p className="text-sm font-black text-[#2C3A2C] leading-none tracking-tight truncate">
+							{item.value}
+						</p>
+					</div>
+				</button>
+			))}
+		</div>
+	);
+}
+
 export function ProximaVisitaCard({ visita }: { visita: any }) {
 	if (!visita) {
 		return (
-			<Card className="border-dashed border-2 border-primary/20 bg-primary/5 h-full">
-				<CardContent className="flex flex-col items-center justify-center p-8 text-center h-full">
-					<Calendar className="h-12 w-12 text-primary/30 mb-4" />
-					<h3 className="font-bold text-lg mb-2 text-[#2C3A2C]">
-						No tienes visitas próximas
+			<Card className="border-dashed border-2 border-[#E0E7E0] bg-[#F9FAF9] rounded-[32px]">
+				<CardContent className="flex flex-col items-center justify-center p-8 text-center">
+					<Calendar className="h-10 w-10 text-gray-300 mb-4" />
+					<h3 className="font-black text-sm mb-1 text-[#2C3A2C]">
+						Sin visitas próximas
 					</h3>
-					<p className="text-sm text-muted-foreground mb-6">
-						¿Qué tal un escape al centro campestre este fin de semana?
+					<p className="text-[10px] text-muted-foreground font-medium mb-4">
+						¿Qué tal un escape al club este fin de semana?
 					</p>
 					<Link href="/visitas/nueva">
-						<Button className="rounded-full px-6">
-							Visitar Ahora <ArrowRight className="ml-2 h-4 w-4" />
+						<Button
+							variant="outline"
+							className="rounded-xl h-10 px-6 text-xs font-black border-[#2C3A2C] text-[#2C3A2C] hover:bg-[#2C3A2C] hover:text-white transition-all"
+						>
+							GESTIONAR <ArrowRight className="ml-2 h-3.5 w-3.5" />
 						</Button>
 					</Link>
 				</CardContent>
@@ -109,49 +157,53 @@ export function ProximaVisitaCard({ visita }: { visita: any }) {
 	const fecha = new Date(visita.fecha_llegada);
 
 	return (
-		<Card className="h-full shadow-md border-none overflow-hidden group">
-			<div className="bg-[#2C3A2C] p-4 flex justify-between items-center">
+		<Card className="shadow-sm border border-[#E0E7E0] overflow-hidden rounded-[32px] group hover:border-emerald-500/30 transition-all">
+			<div className="bg-[#2C3A2C] p-3 flex justify-between items-center">
 				<Badge
 					variant="outline"
-					className="border-white/20 text-white bg-white/10 uppercase text-[10px]"
+					className="border-white/10 text-white bg-white/5 uppercase text-[9px] font-black tracking-widest"
 				>
-					PRÓXIMA ESTANCIA
+					FECHA RESERVADA
 				</Badge>
 				<Badge
-					className={
-						visita.estado === "CONFIRMADA" ? "bg-green-500" : "bg-amber-500"
-					}
+					className={`text-[9px] font-black px-2 py-0.5 ${
+						visita.estado === "CONFIRMADA"
+							? "bg-emerald-500/20 text-emerald-400"
+							: "bg-amber-500/20 text-amber-400"
+					}`}
 				>
 					{visita.estado}
 				</Badge>
 			</div>
-			<CardContent className="p-6">
-				<div className="flex gap-6 items-center">
-					<div className="text-center p-4 bg-primary/5 rounded-2xl min-w-[100px] border border-primary/10">
-						<p className="text-primary font-bold text-3xl">
+			<CardContent className="p-5">
+				<div className="flex items-center gap-4">
+					<div className="text-center p-3 bg-[#F9FAF9] rounded-2xl min-w-[70px] border border-[#E0E7E0]">
+						<p className="text-[#2C3A2C] font-black text-2xl leading-none mb-1">
 							{format(fecha, "dd")}
 						</p>
-						<p className="text-primary/70 uppercase text-xs font-bold">
-							{format(fecha, "MMMM", { locale: es })}
+						<p className="text-gray-400 uppercase text-[9px] font-black">
+							{format(fecha, "MMM", { locale: es })}
 						</p>
 					</div>
-					<div>
-						<h3 className="text-xl font-bold text-[#2C3A2C] mb-1">
+					<div className="flex-1 min-w-0">
+						<h3 className="text-sm font-black text-[#2C3A2C] mb-1 truncate">
 							{visita.tipo === "CON_BUNGALOW"
-								? "Estancia en Bungalow"
-								: "Solo Acceso (Pases)"}
+								? "Stay Bungalow"
+								: "Pase Full Day"}
 						</h3>
-						<p className="text-muted-foreground text-sm flex items-center gap-1 mb-3">
-							<Users className="h-3.5 w-3.5" /> {visita.total_visitantes}{" "}
-							visitantes incluidos
-						</p>
+						<div className="flex items-center gap-2 text-gray-400 mb-3">
+							<Users className="h-3 w-3" />
+							<span className="text-[10px] font-bold">
+								{visita.total_visitantes} Pers.
+							</span>
+						</div>
 						<Link href={`/visitas/${visita.id}`}>
 							<Button
-								variant="outline"
+								variant="ghost"
 								size="sm"
-								className="rounded-full text-xs"
+								className="h-8 rounded-xl text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-0"
 							>
-								Ver Detalles
+								Ver detalles <ArrowRight className="ml-1 h-3 w-3" />
 							</Button>
 						</Link>
 					</div>

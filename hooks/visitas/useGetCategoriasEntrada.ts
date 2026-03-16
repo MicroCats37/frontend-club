@@ -8,6 +8,7 @@ export interface CategoriaEntrada {
 	nombre: string;
 	descripcion?: string;
 	activo: boolean;
+	image_main?: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -19,9 +20,8 @@ export function useGetCategoriasEntrada() {
 	return useQuery({
 		queryKey: ["admin", "categorias-entrada"],
 		queryFn: async () => {
-			const { data } = await api.get<PaginatedResponse<CategoriaEntrada>>(
-				"/api/pases/tipos/",
-			);
+			const { data } =
+				await api.get<PaginatedResponse<CategoriaEntrada>>("/api/pases/tipos/");
 			return data;
 		},
 	});

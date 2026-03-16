@@ -3,6 +3,7 @@
 import { format } from "date-fns";
 import {
 	ArrowRight,
+	CheckCircle2,
 	Info,
 	Loader2,
 	Tag,
@@ -33,7 +34,7 @@ export function StepPricingAndCoupons() {
 	const { mutate: cotizar, isPending: isCotizando } = useCotizarVisita();
 
 	// Optimizamos la dependencia para evitar re-renders infinitos
-	const guestsSelectionTrigger = JSON.stringify(
+	const _guestsSelectionTrigger = JSON.stringify(
 		guestSelections.map((g) => ({
 			id: g.persona_id,
 			tipo: g.tipo_entrada_id,
@@ -51,7 +52,7 @@ export function StepPricingAndCoupons() {
 				con_cupon: g.con_cupon,
 			})),
 		};
-	}, [fechas.start, fechas.end, guestsSelectionTrigger]);
+	}, [fechas.start, fechas.end, guestSelections]);
 
 	useEffect(() => {
 		if (tipoVisita === "BUNGALOW") {
@@ -91,7 +92,14 @@ export function StepPricingAndCoupons() {
 				},
 			);
 		}
-	}, [quotingInputs, cotizar, setTotalEstimado, updateGuest, tipoVisita]);
+	}, [
+		quotingInputs,
+		cotizar,
+		setTotalEstimado,
+		updateGuest,
+		tipoVisita,
+		guestSelections,
+	]);
 
 	const cuponesEnUsoCount = useMemo(
 		() => guestSelections.filter((g) => g.con_cupon).length,
@@ -112,7 +120,8 @@ export function StepPricingAndCoupons() {
 						Resumen y Cupones
 					</h2>
 					<p className="text-muted-foreground font-medium leading-relaxed">
-						Verifica tu cotización final y aplica cupones si lo deseas para obtener descuentos inmediatos.
+						Verifica tu cotización final y aplica cupones si lo deseas para
+						obtener descuentos inmediatos.
 					</p>
 				</div>
 
@@ -253,30 +262,28 @@ export function StepPricingAndCoupons() {
 												</span>
 											</div>
 										</div>
-										<Checkbox
-											checked={
-												selection.con_cupon ||
-												isSocioVip ||
-												tipoVisita === "BUNGALOW"
-											}
-											disabled={
-												tipoVisita === "BUNGALOW" ||
-												isSocioVip ||
-												(!selection.con_cupon && cuponesRestantes <= 0)
-											}
-											onCheckedChange={(val) =>
-												updateGuest(selection.persona_id, {
-													con_cupon: val as boolean,
-												})
-											}
-											className={`h-6 w-6 rounded-lg transition-all ${
-												selection.con_cupon ||
-												isSocioVip ||
-												tipoVisita === "BUNGALOW"
-													? "bg-white text-green-600 border-none"
-													: "border-gray-200"
-											}`}
-										/>
+										{tipoVisita !== "BUNGALOW" && !isSocioVip && (
+											<Checkbox
+												checked={selection.con_cupon}
+												disabled={
+													isCotizando ||
+													(!selection.con_cupon && cuponesRestantes <= 0)
+												}
+												onCheckedChange={(val) =>
+													updateGuest(selection.persona_id, {
+														con_cupon: val as boolean,
+													})
+												}
+												className={`h-6 w-6 rounded-lg transition-all ${
+													selection.con_cupon
+														? "bg-white text-blue-600 border-none"
+														: "border-gray-200"
+												}`}
+											/>
+										)}
+										{(tipoVisita === "BUNGALOW" || isSocioVip) && (
+											<CheckCircle2 className="h-6 w-6 text-white" />
+										)}
 									</div>
 								</div>
 							</div>

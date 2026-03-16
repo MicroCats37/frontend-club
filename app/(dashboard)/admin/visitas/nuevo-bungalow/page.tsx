@@ -2,6 +2,16 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+	addDays,
+	eachDayOfInterval,
+	format,
+	getISODay,
+	isSameISOWeek,
+	isWithinInterval,
+	parseISO,
+} from "date-fns";
+import {
+	AlertCircle,
 	ArrowLeft,
 	Calendar,
 	Home,
@@ -12,10 +22,9 @@ import {
 	ShieldCheck,
 	Users,
 	X,
-	AlertCircle,
-	CheckCircle2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +37,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DatePickerCustom } from "@/components/ui/DatePickerCustom";
 import {
 	Form,
 	FormControl,
@@ -46,17 +55,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { DatePickerCustom } from "@/components/ui/DatePickerCustom";
-import { parseISO, isWithinInterval, getISODay, eachDayOfInterval, format, isSameISOWeek, addDays, isBefore, isEqual } from "date-fns";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBungalowsDisponibilidad } from "@/hooks/useBungalows";
-import { useGetTiposPases } from "@/hooks/visitas/useGetTiposPases";
 import { useTipoTarifasHabilitadas } from "@/hooks/useTarifas";
+import { useGetTiposPases } from "@/hooks/visitas/useGetTiposPases";
 import { useIniciarVisitaBungalow } from "@/hooks/visitas/useIniciarVisitaBungalow";
 import {
 	type RegistroVisitaBungalow,
 	RegistroVisitaBungalowSchema,
 } from "@/schemas/visita";
-import { useState, useEffect } from "react";
 
 export default function NuevoBungalowPage() {
 	const router = useRouter();
@@ -75,7 +82,13 @@ export default function NuevoBungalowPage() {
 		},
 	});
 
-	const [watchInicioStr, watchFinStr, watchTipoTarifa, watchBungalows] = form.watch(["fecha_llegada", "fecha_salida", "tipo_tarifa_id", "bungalow_ids"]);
+	const [watchInicioStr, watchFinStr, watchTipoTarifa, watchBungalows] =
+		form.watch([
+			"fecha_llegada",
+			"fecha_salida",
+			"tipo_tarifa_id",
+			"bungalow_ids",
+		]);
 	const { data: categorias } = useTipoTarifasHabilitadas(watchInicioStr);
 
 	const { fields, append, remove } = useFieldArray({
@@ -90,8 +103,10 @@ export default function NuevoBungalowPage() {
 	const watchFin = watchFinStr ? parseISO(watchFinStr) : undefined;
 	const isPending = registrar.isPending;
 
-	const selectedTariff = categorias?.find((cat: any) => cat.id === watchTipoTarifa);
-	const hasBungalow = watchBungalows && watchBungalows.length > 0;
+	const selectedTariff = categorias?.find(
+		(cat: any) => cat.id === watchTipoTarifa,
+	);
+	const _hasBungalow = watchBungalows && watchBungalows.length > 0;
 
 	// Sincronizar fechas para Solo Pase (Full Day)
 	useEffect(() => {
@@ -115,7 +130,9 @@ export default function NuevoBungalowPage() {
 			// 2. Validar rango temporal si es temporal
 			if (selectedTariff.es_temporal && selectedTariff.fecha_inicio) {
 				const start = parseISO(selectedTariff.fecha_inicio);
-				const end = selectedTariff.fecha_fin ? parseISO(selectedTariff.fecha_fin) : undefined;
+				const end = selectedTariff.fecha_fin
+					? parseISO(selectedTariff.fecha_fin)
+					: undefined;
 
 				if (end) {
 					if (!isWithinInterval(date, { start, end })) return true;
@@ -146,7 +163,7 @@ export default function NuevoBungalowPage() {
 		// 1. Restricción de Misma Semana para Bungalows
 		if (visitType === "bungalow") {
 			// Regla de Oro: La estadía debe terminar en la misma semana (Lunes a Sábado)
-			// Si llega un viernes, solo puede salir sábado. 
+			// Si llega un viernes, solo puede salir sábado.
 			if (!isSameISOWeek(date, watchInicio)) return true;
 
 			const day = getISODay(date);
@@ -159,7 +176,7 @@ export default function NuevoBungalowPage() {
 
 	// Validar paquete
 	const getPackageError = () => {
-		if (!selectedTariff?.es_paquete || !watchInicio || !watchFin) return null;
+		if (!selectedTariff?.reglas || !watchInicio || !watchFin) return null;
 
 		const requiredDays = new Set<number>();
 		selectedTariff.reglas?.forEach((r: any) => {
@@ -167,15 +184,18 @@ export default function NuevoBungalowPage() {
 		});
 
 		try {
-			const selectedDaysInRange = eachDayOfInterval({ start: watchInicio, end: watchFin });
-			const presentDays = new Set(selectedDaysInRange.map(d => getISODay(d)));
+			const selectedDaysInRange = eachDayOfInterval({
+				start: watchInicio,
+				end: watchFin,
+			});
+			const presentDays = new Set(selectedDaysInRange.map((d) => getISODay(d)));
 
 			for (const day of Array.from(requiredDays)) {
 				if (!presentDays.has(day)) {
 					return `Este paquete requiere incluir el día ${["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][day - 1]}`;
 				}
 			}
-		} catch (e) {
+		} catch (_e) {
 			return "Rango de fechas inválido";
 		}
 
@@ -194,7 +214,7 @@ export default function NuevoBungalowPage() {
 		tipo_tarifa_id: watchTipoTarifa,
 	});
 
-	const selectedBungalows = form.watch("bungalow_ids");
+	const _selectedBungalows = form.watch("bungalow_ids");
 
 	const toggleBungalow = (id: string) => {
 		const current = form.getValues("bungalow_ids");
@@ -279,14 +299,14 @@ export default function NuevoBungalowPage() {
 										className="w-full sm:w-80"
 									>
 										<TabsList className="grid h-14 grid-cols-2 rounded-[1.6rem] bg-transparent p-0">
-											<TabsTrigger 
-												value="bungalow" 
+											<TabsTrigger
+												value="bungalow"
 												className="rounded-[1.4rem] font-black text-sm data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-lg data-[state=active]:scale-[0.98] transition-all duration-300 gap-2"
 											>
 												<Home className="w-4 h-4" /> BUNGALOW
 											</TabsTrigger>
-											<TabsTrigger 
-												value="pase" 
+											<TabsTrigger
+												value="pase"
 												className="rounded-[1.4rem] font-black text-sm data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-lg data-[state=active]:scale-[0.98] transition-all duration-300 gap-2"
 											>
 												<Users className="w-4 h-4" /> SOLO PASE
@@ -302,7 +322,9 @@ export default function NuevoBungalowPage() {
 										<CardTitle className="text-lg flex items-center gap-2">
 											<Calendar className="w-5 h-5 text-primary" /> 1. Estancia
 										</CardTitle>
-										<CardDescription>Define las fechas y el tipo de tarifa.</CardDescription>
+										<CardDescription>
+											Define las fechas y el tipo de tarifa.
+										</CardDescription>
 									</CardHeader>
 									<CardContent className="p-6 space-y-6">
 										<FormField
@@ -311,14 +333,26 @@ export default function NuevoBungalowPage() {
 											render={({ field }) => (
 												<FormItem>
 													<FormLabel className="text-xs text-[#2C3A2C] uppercase font-black tracking-widest ml-1">
-														{visitType === "pase" ? "Fecha de Visita (Full Day)" : "Llegada (Check-in)"}
+														{visitType === "pase"
+															? "Fecha de Visita (Full Day)"
+															: "Llegada (Check-in)"}
 													</FormLabel>
 													<FormControl>
 														<DatePickerCustom
-															date={field.value ? parseISO(field.value) : undefined}
-															setDate={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+															date={
+																field.value ? parseISO(field.value) : undefined
+															}
+															setDate={(date) =>
+																field.onChange(
+																	date ? format(date, "yyyy-MM-dd") : "",
+																)
+															}
 															isDateDisabled={isArrivalDateDisabled}
-															placeholder={visitType === "pase" ? "Elegir fecha de día" : "Fecha de llegada"}
+															placeholder={
+																visitType === "pase"
+																	? "Elegir fecha de día"
+																	: "Fecha de llegada"
+															}
 														/>
 													</FormControl>
 													<FormMessage />
@@ -331,16 +365,32 @@ export default function NuevoBungalowPage() {
 											render={({ field }) => (
 												<FormItem>
 													<FormLabel className="text-xs text-[#2C3A2C] uppercase font-black tracking-widest ml-1">
-														{visitType === "pase" ? "Término de Visita" : "Salida (Check-out)"}
+														{visitType === "pase"
+															? "Término de Visita"
+															: "Salida (Check-out)"}
 													</FormLabel>
 													<FormControl>
 														<DatePickerCustom
-															date={field.value ? parseISO(field.value) : undefined}
-															setDate={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
+															date={
+																field.value ? parseISO(field.value) : undefined
+															}
+															setDate={(date) =>
+																field.onChange(
+																	date ? format(date, "yyyy-MM-dd") : "",
+																)
+															}
 															isDateDisabled={isDepartureDateDisabled}
-															minDate={watchInicio ? addDays(watchInicio, 1) : undefined}
+															minDate={
+																watchInicio
+																	? addDays(watchInicio, 1)
+																	: undefined
+															}
 															disabled={visitType === "pase" || !watchInicioStr}
-															placeholder={!watchInicioStr ? "Esperando llegada..." : "Fecha de salida"}
+															placeholder={
+																!watchInicioStr
+																	? "Esperando llegada..."
+																	: "Fecha de salida"
+															}
 														/>
 													</FormControl>
 													<FormMessage />
@@ -365,25 +415,20 @@ export default function NuevoBungalowPage() {
 															</SelectTrigger>
 														</FormControl>
 														<SelectContent className="rounded-xl">
-															{categorias?.filter(cat => cat.nombre !== "Feriado").map((cat) => (
-																<SelectItem
-																	key={cat.id}
-																	value={cat.id}
-																	className="rounded-lg"
-																>
-																	<div className="flex items-center gap-2">
-																		<span>{cat.nombre}</span>
-																		{cat.es_paquete && (
-																			<Badge
-																				variant="outline"
-																				className="text-[10px] bg-amber-50 text-amber-700 border-amber-200"
-																			>
-																				Paquete
-																			</Badge>
-																		)}
-																	</div>
-																</SelectItem>
-															))}
+															{categorias
+																?.filter((cat) => cat.nombre !== "Feriado")
+																.map((cat) => (
+																	<SelectItem
+																		key={cat.id}
+																		value={cat.id}
+																		className="rounded-lg"
+																	>
+																		<div className="flex items-center gap-2">
+																			<span>{cat.nombre}</span>
+																			
+																		</div>
+																	</SelectItem>
+																))}
 														</SelectContent>
 													</Select>
 													{packageError && (
@@ -412,13 +457,23 @@ export default function NuevoBungalowPage() {
 									</CardContent>
 								</Card>
 
-								<Card className={`rounded-3xl border-none shadow-sm overflow-hidden bg-white md:col-span-2 border-primary/10 border transition-opacity duration-300 ${visitType === "pase" ? "opacity-50 pointer-events-none grayscale" : ""}`}>
+								<Card
+									className={`rounded-3xl border-none shadow-sm overflow-hidden bg-white md:col-span-2 border-primary/10 border transition-opacity duration-300 ${visitType === "pase" ? "opacity-50 pointer-events-none grayscale" : ""}`}
+								>
 									<CardHeader className="bg-muted/30 border-b flex flex-row items-center justify-between py-4">
 										<CardTitle className="text-lg flex items-center gap-2">
-											<Home className="w-5 h-5 text-primary" /> 2. Selección de Bungalows
-											{visitType === "pase" && <span className="text-xs font-normal text-muted-foreground ml-2">(Deshabilitado para Solo Pase)</span>}
+											<Home className="w-5 h-5 text-primary" /> 2. Selección de
+											Bungalows
+											{visitType === "pase" && (
+												<span className="text-xs font-normal text-muted-foreground ml-2">
+													(Deshabilitado para Solo Pase)
+												</span>
+											)}
 										</CardTitle>
-										<Badge variant="outline" className="rounded-full bg-white px-3 font-bold">
+										<Badge
+											variant="outline"
+											className="rounded-full bg-white px-3 font-bold"
+										>
 											{bungalowsDisponibles?.length || 0} opciones
 										</Badge>
 									</CardHeader>
@@ -426,20 +481,25 @@ export default function NuevoBungalowPage() {
 										{buscandoBungalows ? (
 											<div className="p-20 text-center space-y-4">
 												<Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
-												<p className="text-muted-foreground font-medium">Buscando bungalows habilitados...</p>
+												<p className="text-muted-foreground font-medium">
+													Buscando bungalows habilitados...
+												</p>
 											</div>
 										) : (
 											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 												{bungalowsDisponibles?.map((b: any) => {
-													const isSelected = watchBungalows.includes(b.id.toString());
+													const isSelected = watchBungalows.includes(
+														b.id.toString(),
+													);
 													return (
 														<div
 															key={b.id}
 															onClick={() => toggleBungalow(b.id.toString())}
-															className={`p-5 rounded-2xl border-2 transition-all cursor-pointer group ${isSelected
+															className={`p-5 rounded-2xl border-2 transition-all cursor-pointer group ${
+																isSelected
 																	? "border-primary bg-primary/5 shadow-md shadow-primary/10"
 																	: "border-muted-foreground/10 hover:border-primary/30 bg-muted/5"
-																}`}
+															}`}
 														>
 															<div className="flex justify-between items-start">
 																<div>
@@ -459,11 +519,16 @@ export default function NuevoBungalowPage() {
 																</div>
 															</div>
 															<div className="mt-4 flex items-center justify-between">
-																<Badge variant="secondary" className="px-3 py-1 bg-white text-muted-foreground border-muted-foreground/20 rounded-lg text-[10px] font-bold">
+																<Badge
+																	variant="secondary"
+																	className="px-3 py-1 bg-white text-muted-foreground border-muted-foreground/20 rounded-lg text-[10px] font-bold"
+																>
 																	{b.zona || "Área General"}
 																</Badge>
 																<div className="text-right">
-																	<span className="text-[10px] block text-muted-foreground font-bold leading-none">Precio x Noche</span>
+																	<span className="text-[10px] block text-muted-foreground font-bold leading-none">
+																		Precio x Noche
+																	</span>
 																	<span className="font-black text-[#2C3A2C] text-lg">
 																		S/ {b.precio_noche || "0.00"}
 																	</span>
@@ -475,7 +540,10 @@ export default function NuevoBungalowPage() {
 												{bungalowsDisponibles?.length === 0 && (
 													<div className="col-span-full py-20 text-center border-2 border-dashed border-muted rounded-3xl">
 														<Home className="h-12 w-12 text-muted/30 mx-auto mb-4" />
-														<p className="text-muted-foreground font-medium">No hay bungalows disponibles para el rango y tarifa seleccionada.</p>
+														<p className="text-muted-foreground font-medium">
+															No hay bungalows disponibles para el rango y
+															tarifa seleccionada.
+														</p>
 													</div>
 												)}
 											</div>
@@ -514,7 +582,8 @@ export default function NuevoBungalowPage() {
 									<Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-white border-primary/10 border">
 										<CardHeader className="bg-muted/30 border-b">
 											<CardTitle className="text-lg flex items-center gap-2">
-												<ShieldCheck className="w-5 h-5 text-primary" /> Configuración
+												<ShieldCheck className="w-5 h-5 text-primary" />{" "}
+												Configuración
 											</CardTitle>
 										</CardHeader>
 										<CardContent className="p-6">
@@ -547,7 +616,8 @@ export default function NuevoBungalowPage() {
 									<Card className="rounded-3xl border-none shadow-lg overflow-hidden bg-[#2C3A2C] text-white">
 										<CardHeader className="border-b border-white/10">
 											<CardTitle className="text-base flex items-center gap-2">
-												<Calendar className="w-4 h-4 text-primary" /> Resumen Estancia
+												<Calendar className="w-4 h-4 text-primary" /> Resumen
+												Estancia
 											</CardTitle>
 										</CardHeader>
 										<CardContent className="p-6 space-y-4">
@@ -561,11 +631,17 @@ export default function NuevoBungalowPage() {
 											</div>
 											<div className="flex justify-between text-sm">
 												<span className="opacity-70 font-medium">Tarifa:</span>
-												<span className="font-bold">{selectedTariff?.nombre}</span>
+												<span className="font-bold">
+													{selectedTariff?.nombre}
+												</span>
 											</div>
 											<div className="flex justify-between text-sm">
-												<span className="opacity-70 font-medium">Hospedajes:</span>
-												<span className="font-bold">{watchBungalows.length} seleccionados</span>
+												<span className="opacity-70 font-medium">
+													Hospedajes:
+												</span>
+												<span className="font-bold">
+													{watchBungalows.length} seleccionados
+												</span>
 											</div>
 											<Button
 												variant="outline"
@@ -585,7 +661,8 @@ export default function NuevoBungalowPage() {
 										<CardHeader className="bg-muted/30 border-b flex flex-row items-center justify-between py-5 px-8">
 											<div className="space-y-0.5">
 												<CardTitle className="text-lg flex items-center gap-2">
-													<Users className="w-5 h-5 text-primary" /> Invitados e Ingresantes
+													<Users className="w-5 h-5 text-primary" /> Invitados e
+													Ingresantes
 												</CardTitle>
 												<CardDescription>
 													Debes registrar al menos al titular.

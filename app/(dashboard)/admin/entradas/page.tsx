@@ -2,7 +2,7 @@
 
 import {
 	ArrowLeft,
-	ChevronRight,
+	Image as ImageIcon,
 	Loader2,
 	MoreVertical,
 	Plus,
@@ -11,10 +11,11 @@ import {
 	Tag,
 	Ticket,
 	Trash2,
-	UserCircle2,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
+import { GenericForm } from "@/components/generic/genericForm/GenericForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,17 +41,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetCategoriasEntrada } from "@/hooks/visitas/useGetCategoriasEntrada";
 import {
-	useCategoriaActions,
-	useGetTarifas,
-	useGetMatrixTarifas,
-	useTarifaActions,
-	useMatrixUpdate,
 	type TipoEntradaMatriz,
-	type CategoriaTarifaMatriz
+	useCategoriaActions,
+	useGetMatrixTarifas,
+	useGetTarifas,
+	useMatrixUpdate,
+	useTarifaActions,
 } from "@/hooks/visitas/usePasesAdmin";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { resolveImageUrl } from "@/lib/utils";
+
+const TipoEntradaUpdateSchema = z.object({
+	nombre: z.string().min(1, "El nombre es requerido"),
+	descripcion: z.string().optional().nullable(),
+	activo: z.boolean().default(true),
+	image_main: z.any().optional().nullable(),
+});
 
 export default function CategoriasEntradaPage() {
 	const {
@@ -70,7 +78,7 @@ export default function CategoriasEntradaPage() {
 		setIsCatModalOpen(true);
 	};
 
-	const handleSaveCat = async () => {
+	const _handleSaveCat = async () => {
 		if (!editingCat.nombre) return toast.error("El nombre es requerido");
 
 		if (editingCat.id) {
@@ -85,7 +93,9 @@ export default function CategoriasEntradaPage() {
 	};
 
 	if (selectedCatId) {
-		const items = Array.isArray(categorias) ? categorias : (categorias as any)?.results || [];
+		const items = Array.isArray(categorias)
+			? categorias
+			: (categorias as any)?.results || [];
 		const cat = items.find((c: any) => c.id === selectedCatId);
 		return (
 			<TarifarioView category={cat} onBack={() => setSelectedCatId(null)} />
@@ -125,18 +135,24 @@ export default function CategoriasEntradaPage() {
 						className="bg-primary hover:bg-primary/90 text-white rounded-xl h-10 px-4 text-sm font-bold shadow-sm"
 					>
 						<Plus className="mr-2 h-4 w-4" />
-						Nueva Categoría
+						Nuevo Tipo de Entrada
 					</Button>
 				</div>
 			</div>
 
 			<Tabs defaultValue="matrix" className="space-y-6">
 				<TabsList className="bg-white border p-1 rounded-2xl h-12 inline-flex">
-					<TabsTrigger value="matrix" className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
+					<TabsTrigger
+						value="matrix"
+						className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white"
+					>
 						<Tag className="mr-2 h-4 w-4" />
 						Matriz de Tarifas
 					</TabsTrigger>
-					<TabsTrigger value="config" className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
+					<TabsTrigger
+						value="config"
+						className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white"
+					>
 						<Settings2 className="mr-2 h-4 w-4" />
 						Tipos de Entrada
 					</TabsTrigger>
@@ -156,73 +172,90 @@ export default function CategoriasEntradaPage() {
 						</div>
 					) : (
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							{(Array.isArray(categorias) ? categorias : (categorias as any)?.results || [])?.map((cat: any) => (
+							{(Array.isArray(categorias)
+								? categorias
+								: (categorias as any)?.results || []
+							)?.map((cat: any) => (
 								<Card
 									key={cat.id}
-									className="rounded-3xl border-none shadow-sm overflow-hidden bg-white group hover:shadow-md transition-all duration-300"
+									className="rounded-3xl border-none shadow-sm overflow-hidden bg-white group hover:shadow-md transition-all duration-300 flex flex-col"
 								>
-									<CardHeader className="bg-muted/30 border-b relative">
-										<div className="flex justify-between items-start">
-											<div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
-												<Ticket className="w-6 h-6" />
+									<div className="relative group/card h-40 overflow-hidden bg-muted/20">
+										{cat.image_main ? (
+											<img
+												src={resolveImageUrl(cat.image_main)}
+												alt={cat.nombre}
+												className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
+											/>
+										) : (
+											<div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/30 bg-muted/10">
+												<ImageIcon className="w-10 h-10 mb-2 opacity-20" />
+												<span className="text-[10px] font-black uppercase tracking-[0.2em]">
+													Sin Imagen
+												</span>
 											</div>
+										)}
+										<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+										<div className="absolute top-4 right-4 z-10">
 											<DropdownMenu>
 												<DropdownMenuTrigger asChild>
 													<Button
-														variant="ghost"
+														variant="secondary"
 														size="icon"
-														className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+														className="h-8 w-8 rounded-xl shadow-lg border-none bg-white/90 backdrop-blur-sm hover:bg-white"
 													>
-														<MoreVertical className="h-4 w-4" />
+														<MoreVertical className="h-4 w-4 text-[#4A5D4A]" />
 													</Button>
 												</DropdownMenuTrigger>
 												<DropdownMenuContent
 													align="end"
-													className="rounded-xl border-muted-foreground/10 shadow-xl"
+													className="rounded-2xl border-[#E0E7E0] shadow-xl p-2 min-w-[160px]"
 												>
 													<DropdownMenuItem
 														onClick={() => handleEditCat(cat)}
-														className="rounded-lg"
+														className="rounded-xl focus:bg-primary/10 focus:text-primary font-medium py-2"
 													>
-														Editar Categoría
+														Editar Detalles
 													</DropdownMenuItem>
 													<DropdownMenuItem
 														onClick={() => setSelectedCatId(cat.id)}
-														className="rounded-lg"
+														className="rounded-xl focus:bg-primary/10 focus:text-primary font-medium py-2"
 													>
-														Ver Tarifas
+														Configurar Tarifas
 													</DropdownMenuItem>
 													<DropdownMenuItem
 														onClick={() =>
 															updateCategoria.mutate({
 																id: cat.id,
-																patch: { activo: !cat.activo },
+																data: { activo: !cat.activo },
 															} as any)
 														}
-														className={`rounded-lg ${cat.activo ? "text-destructive" : "text-green-600"}`}
+														className={`rounded-xl font-medium py-2 ${cat.activo ? "text-destructive focus:text-destructive focus:bg-destructive/5" : "text-green-600 focus:text-green-600 focus:bg-green-50"}`}
 													>
 														{cat.activo ? "Desactivar" : "Activar"}
 													</DropdownMenuItem>
 												</DropdownMenuContent>
 											</DropdownMenu>
 										</div>
-										<div className="mt-4">
-											<CardTitle className="text-xl font-bold text-[#2C3A2C]">
-												{cat.nombre}
-											</CardTitle>
+										<div className="absolute bottom-4 left-4">
 											<Badge
-												variant="outline"
-												className={`mt-2 rounded-full font-bold text-[10px] uppercase tracking-wider ${cat.activo
-													? "bg-green-50 text-green-700 border-green-200"
-													: "bg-red-50 text-red-700 border-red-200"
-													}`}
+												className={`rounded-full font-bold text-[10px] px-3 py-1 uppercase tracking-wider shadow-sm border-none ${
+													cat.activo
+														? "bg-green-500 text-white"
+														: "bg-red-500 text-white"
+												}`}
 											>
 												{cat.activo ? "Activo" : "Inactivo"}
 											</Badge>
 										</div>
+									</div>
+									<CardHeader className="p-6 pb-2">
+										<CardTitle className="text-xl font-black text-[#2C3A2C] line-clamp-1">
+											{cat.nombre}
+										</CardTitle>
 									</CardHeader>
-									<CardContent className="p-6">
-										<p className="text-sm text-muted-foreground leading-relaxed min-h-[40px] line-clamp-2">
+									<CardContent className="p-6 pt-0 flex-1">
+										<p className="text-sm text-[#8BA18B] font-medium leading-relaxed line-clamp-2">
 											{cat.descripcion || "Sin descripción proporcionada."}
 										</p>
 									</CardContent>
@@ -235,51 +268,71 @@ export default function CategoriasEntradaPage() {
 
 			{/* Category Modal */}
 			<Dialog open={isCatModalOpen} onOpenChange={setIsCatModalOpen}>
-				<DialogContent className="rounded-[2rem] max-w-md">
-					<DialogHeader>
-						<DialogTitle>
-							{editingCat?.id ? "Editar Categoría" : "Nueva Categoría"}
-						</DialogTitle>
-						<DialogDescription>
-							Define el nombre y descripción para este tipo de entrada.
-						</DialogDescription>
+				<DialogContent className="rounded-[2rem] max-w-lg p-0 overflow-hidden border-none shadow-2xl bg-white">
+					<DialogHeader className="bg-primary/5 p-8 pb-6">
+						<div className="flex items-center gap-4">
+							<div className="p-3 rounded-2xl bg-primary/10 text-primary shadow-inner">
+								<Ticket className="w-6 h-6" />
+							</div>
+							<div>
+								<DialogTitle className="text-2xl font-black text-primary tracking-tight">
+									{editingCat?.id ? "Editar Categoría" : "Nueva Categoría"}
+								</DialogTitle>
+								<DialogDescription className="text-[#8BA18B] font-medium">
+									Define el nombre, descripción e imagen para este tipo de
+									entrada.
+								</DialogDescription>
+							</div>
+						</div>
 					</DialogHeader>
-					<div className="space-y-4 py-4">
-						<div className="space-y-2">
-							<Label>Nombre del Tipo de Entrada</Label>
-							<Input
-								value={editingCat?.nombre || ""}
-								onChange={(e) =>
-									setEditingCat({ ...editingCat, nombre: e.target.value })
+
+					<div className="p-8 pt-2">
+						<GenericForm
+							schema={TipoEntradaUpdateSchema}
+							initialData={editingCat}
+							onSubmit={async (data) => {
+								if (editingCat?.id) {
+									await updateCategoria.mutateAsync({
+										id: editingCat.id,
+										data: data,
+									});
+								} else {
+									await createCategoria.mutateAsync(data);
 								}
-								placeholder="Ej: Full Day VIP, Invitado Especial"
-								className="rounded-xl"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label>Descripción</Label>
-							<Input
-								value={editingCat?.descripcion || ""}
-								onChange={(e) =>
-									setEditingCat({ ...editingCat, descripcion: e.target.value })
-								}
-								placeholder="Detalles adicionales..."
-								className="rounded-xl"
-							/>
-						</div>
+								setIsCatModalOpen(false);
+							}}
+							submitButtonText={
+								editingCat?.id ? "Guardar Cambios" : "Crear Categoría"
+							}
+							onCancel={() => setIsCatModalOpen(false)}
+							fields={[
+								{
+									name: "nombre",
+									label: "Nombre del Tipo",
+									type: "text",
+									placeholder: "Ej: Full Day VIP",
+									required: true,
+								},
+								{
+									name: "descripcion",
+									label: "Descripción",
+									type: "textarea",
+									placeholder: "Detalles del acceso...",
+								},
+								{
+									name: "image_main",
+									label: "Imagen de Portada",
+									type: "image",
+									required: false,
+								},
+								{
+									name: "activo",
+									label: "Categoría Activa",
+									type: "checkbox",
+								},
+							]}
+						/>
 					</div>
-					<DialogFooter>
-						<Button variant="ghost" onClick={() => setIsCatModalOpen(false)}>
-							Cancelar
-						</Button>
-						<Button
-							onClick={handleSaveCat}
-							className="bg-primary text-white rounded-xl px-8"
-							disabled={updateCategoria.isPending || createCategoria.isPending}
-						>
-							Guardar Cambios
-						</Button>
-					</DialogFooter>
 				</DialogContent>
 			</Dialog>
 		</div>
@@ -310,19 +363,24 @@ function TarifariosMatrixView() {
 }
 
 function TipoEntradaCard({ tipo }: { tipo: TipoEntradaMatriz }) {
-	const [localTipo, setLocalTipo] = useState<TipoEntradaMatriz>(() => JSON.parse(JSON.stringify(tipo)));
-	const { mutate: updateTipo, isPending } = useMatrixUpdate(tipo.tipo_entrada_id);
+	const [localTipo, setLocalTipo] = useState<TipoEntradaMatriz>(() =>
+		JSON.parse(JSON.stringify(tipo)),
+	);
+	const { mutate: updateTipo, isPending } = useMatrixUpdate(
+		tipo.tipo_entrada_id,
+	);
 
 	const handleAddRange = (categoriaKey: string) => {
 		const updated = { ...localTipo };
-		const cat = updated.categorias.find(c => c.categoria === categoriaKey);
+		const cat = updated.categorias.find((c) => c.categoria === categoriaKey);
 		if (cat) {
-			const lastRange = cat.precios_rango_edad[cat.precios_rango_edad.length - 1];
+			const lastRange =
+				cat.precios_rango_edad[cat.precios_rango_edad.length - 1];
 			const nextMin = lastRange ? lastRange.edad_max + 1 : 0;
 			cat.precios_rango_edad.push({
 				edad_min: nextMin,
 				edad_max: 99,
-				precio: 0
+				precio: 0,
 			});
 			setLocalTipo(updated);
 		}
@@ -330,20 +388,28 @@ function TipoEntradaCard({ tipo }: { tipo: TipoEntradaMatriz }) {
 
 	const handleRemoveRange = (categoriaKey: string, index: number) => {
 		const updated = { ...localTipo };
-		const cat = updated.categorias.find(c => c.categoria === categoriaKey);
+		const cat = updated.categorias.find((c) => c.categoria === categoriaKey);
 		if (cat) {
 			cat.precios_rango_edad.splice(index, 1);
 			setLocalTipo(updated);
 		}
 	};
 
-	const handleRangeChange = (categoriaKey: string, index: number, field: string, value: any) => {
+	const handleRangeChange = (
+		categoriaKey: string,
+		index: number,
+		field: string,
+		value: any,
+	) => {
 		const updated = { ...localTipo };
-		const cat = updated.categorias.find(c => c.categoria === categoriaKey);
+		const cat = updated.categorias.find((c) => c.categoria === categoriaKey);
 		if (cat) {
 			cat.precios_rango_edad[index] = {
 				...cat.precios_rango_edad[index],
-				[field]: field === 'precio' ? parseFloat(value) || 0 : parseInt(value) || 0
+				[field]:
+					field === "precio"
+						? parseFloat(value) || 0
+						: parseInt(value, 10) || 0,
 			};
 			setLocalTipo(updated);
 		}
@@ -370,7 +436,11 @@ function TipoEntradaCard({ tipo }: { tipo: TipoEntradaMatriz }) {
 					disabled={isPending}
 					className="bg-primary text-white rounded-xl font-bold shadow-lg px-6 h-10 hover:scale-105 transition-transform"
 				>
-					{isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+					{isPending ? (
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+					) : (
+						<RefreshCw className="mr-2 h-4 w-4" />
+					)}
 					Guardar Tipo
 				</Button>
 			</CardHeader>
@@ -383,7 +453,6 @@ function TipoEntradaCard({ tipo }: { tipo: TipoEntradaMatriz }) {
 									<span className="text-base font-bold text-[#2C3A2C]">
 										{cat.nombre_categoria}
 									</span>
-
 								</div>
 								<Button
 									variant="outline"
@@ -403,34 +472,66 @@ function TipoEntradaCard({ tipo }: { tipo: TipoEntradaMatriz }) {
 									</p>
 								) : (
 									<div className="grid grid-cols-12 gap-3 mb-2 px-2">
-										<div className="col-span-3 text-[10px] font-bold text-muted-foreground uppercase">Edad Mín</div>
-										<div className="col-span-3 text-[10px] font-bold text-muted-foreground uppercase">Edad Máx</div>
-										<div className="col-span-4 text-[10px] font-bold text-muted-foreground uppercase">Precio (S/)</div>
+										<div className="col-span-3 text-[10px] font-bold text-muted-foreground uppercase">
+											Edad Mín
+										</div>
+										<div className="col-span-3 text-[10px] font-bold text-muted-foreground uppercase">
+											Edad Máx
+										</div>
+										<div className="col-span-4 text-[10px] font-bold text-muted-foreground uppercase">
+											Precio (S/)
+										</div>
 										<div className="col-span-2"></div>
 									</div>
 								)}
 								{cat.precios_rango_edad.map((range, idx) => (
-									<div key={idx} className="grid grid-cols-12 gap-3 items-center group animate-in fade-in slide-in-from-left-2 transition-all">
+									<div
+										key={idx}
+										className="grid grid-cols-12 gap-3 items-center group animate-in fade-in slide-in-from-left-2 transition-all"
+									>
 										<Input
 											type="number"
 											className="col-span-3 h-9 rounded-lg text-sm font-medium focus-visible:ring-primary border-muted/60"
 											value={range.edad_min}
-											onChange={(e) => handleRangeChange(cat.categoria, idx, 'edad_min', e.target.value)}
+											onChange={(e) =>
+												handleRangeChange(
+													cat.categoria,
+													idx,
+													"edad_min",
+													e.target.value,
+												)
+											}
 										/>
 										<Input
 											type="number"
 											className="col-span-3 h-9 rounded-lg text-sm font-medium focus-visible:ring-primary border-muted/60"
 											value={range.edad_max}
-											onChange={(e) => handleRangeChange(cat.categoria, idx, 'edad_max', e.target.value)}
+											onChange={(e) =>
+												handleRangeChange(
+													cat.categoria,
+													idx,
+													"edad_max",
+													e.target.value,
+												)
+											}
 										/>
 										<div className="col-span-4 relative">
-											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/60">S/</span>
+											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/60">
+												S/
+											</span>
 											<Input
 												type="number"
 												step="0.01"
 												className="h-9 pl-7 pr-3 rounded-lg text-sm font-black border-none bg-muted/50 focus-visible:ring-primary text-right"
 												value={range.precio}
-												onChange={(e) => handleRangeChange(cat.categoria, idx, 'precio', e.target.value)}
+												onChange={(e) =>
+													handleRangeChange(
+														cat.categoria,
+														idx,
+														"precio",
+														e.target.value,
+													)
+												}
 											/>
 										</div>
 										<div className="col-span-2 flex justify-end">
@@ -510,7 +611,10 @@ function TarifarioView({
 				</div>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					{(Array.isArray(tarifas) ? tarifas : (tarifas as any)?.results || [])?.map((t: any) => (
+					{(Array.isArray(tarifas)
+						? tarifas
+						: (tarifas as any)?.results || []
+					)?.map((t: any) => (
 						<Card
 							key={t.id}
 							className="rounded-3xl border-none shadow-sm overflow-hidden bg-white border-2 border-primary/5"

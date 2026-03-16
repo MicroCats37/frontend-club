@@ -1,13 +1,15 @@
 "use client";
 
+import { Filter } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import {
 	Select,
 	SelectContent,
@@ -15,8 +17,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Filter } from "lucide-react";
-import { useState, useEffect } from "react";
 
 interface FilterVisitasModalProps {
 	isOpen: boolean;
@@ -80,7 +80,9 @@ export function FilterVisitasModal({
 							<SelectContent className="rounded-2xl border-gray-100 shadow-xl">
 								<SelectItem value="all">Todos los registros</SelectItem>
 								<SelectItem value="PENDIENTE">Pendientes de Pago</SelectItem>
-								<SelectItem value="CONFIRMADA">Confirmadas / Pagadas</SelectItem>
+								<SelectItem value="CONFIRMADA">
+									Confirmadas / Pagadas
+								</SelectItem>
 								<SelectItem value="FINALIZADA">Finalizadas</SelectItem>
 								<SelectItem value="CANCELADA">Anuladas</SelectItem>
 							</SelectContent>

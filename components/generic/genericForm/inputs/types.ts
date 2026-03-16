@@ -20,7 +20,7 @@ export interface FieldConfig {
 	description?: string;
 	disabled?: boolean;
 	required?: boolean;
-	hidden?: boolean;
+	hidden?: boolean | ((values: any) => boolean);
 
 	// Para select/radio
 	options?: readonly InputOption[];

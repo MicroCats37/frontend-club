@@ -2,12 +2,12 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useApiQuery } from "@/hooks/useApiQuery";
-import { useApiCreate } from "@/hooks/useApiCreate";
-import { useApiUpdate } from "@/hooks/useApiUpdate";
-import { useApiDelete } from "@/hooks/useApiDelete";
 import { z } from "zod";
-import type { CategoriaEntrada, PaginatedResponse } from "./useGetCategoriasEntrada";
+import { useApiCreate } from "@/hooks/useApiCreate";
+import { useApiDelete } from "@/hooks/useApiDelete";
+import { useApiQuery } from "@/hooks/useApiQuery";
+import { useApiUpdate } from "@/hooks/useApiUpdate";
+import type { PaginatedResponse } from "./useGetCategoriasEntrada";
 
 export interface TarifaEntrada {
 	id: string;
@@ -37,7 +37,6 @@ export interface TipoEntradaMatriz {
 	categorias: CategoriaTarifaMatriz[];
 }
 
-
 export function useGetTarifas(tipoEntradaId?: string) {
 	return useApiQuery<PaginatedResponse<TarifaEntrada>>({
 		queryKey: ["admin", "tarifas", tipoEntradaId],
@@ -61,7 +60,9 @@ export function useMatrixUpdate(tipoId: string) {
 		url: `/api/pases/tarifas/matriz/${tipoId}/`,
 		options: {
 			onSuccess: () => {
-				queryClient.invalidateQueries({ queryKey: ["admin", "tarifas-matriz"] });
+				queryClient.invalidateQueries({
+					queryKey: ["admin", "tarifas-matriz"],
+				});
 				toast.success("Tarifas actualizadas correctamente");
 			},
 		},

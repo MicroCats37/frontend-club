@@ -1,16 +1,20 @@
 "use client";
 
-import { Ticket, Users } from "lucide-react";
+import { Ticket, Users, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useResumen } from "@/hooks/auth/useResumen";
+import { useAuthStore } from "@/store/useAuthStore";
+import { BenefitsBanner } from "./_components/BenefitsBanner";
 import {
-	BirthdayBanner,
+	CompactStats,
 	ProximaVisitaCard,
-	StatCard,
 	WelcomeCard,
 } from "./_components/DashboardItems";
+import { VisitTypeCarousel } from "./_components/VisitTypeCarousel";
 
 export default function InicioPage() {
+	const { user } = useAuthStore();
 	const { data: resumen, isLoading, isError } = useResumen();
 
 	if (isLoading) {
@@ -44,62 +48,89 @@ export default function InicioPage() {
 		);
 	}
 
+	const userCategory = user?.categoria || resumen.categoria;
+
 	return (
-		<div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
-			{/* 1. Banner de Bienvenida */}
-			<WelcomeCard
-				name={resumen.full_name.split(" ")[0]}
-				category={resumen.categoria}
-				privileges={resumen.privilegios}
-			/>
+		<div className="animate-in slide-in-from-bottom-4 duration-700 pb-12">
+			<div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+				{/* SIDEBAR (1/4) - Información del Usuario & Estadísticas */}
+				<aside className="lg:col-span-1 space-y-8 lg:sticky lg:top-8">
+					{/* 1. Perfil Compacto */}
+					<WelcomeCard
+						name={resumen.full_name.split(" ")[0]}
+						category={userCategory}
+						privileges={resumen.privilegios}
+					/>
 
-			{/* 2. Banner de Cumpleaños (Condicional) */}
-			{resumen.es_cumpleanero && <BirthdayBanner />}
+					{/* 2. Estadísticas de Disponibilidad */}
+					<div className="space-y-4">
+						<h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">
+							Disponibilidad
+						</h3>
+						<CompactStats
+							items={[
+								{
+									title: "Cupos Invitados",
+									value: `${resumen.cupos_invitados_restantes} pases`,
+									icon: Ticket,
+									colorClass: "bg-emerald-500",
+								},
+								{
+									title: "Beneficiarios",
+									value:
+										resumen.beneficiarios_label ||
+										`${resumen.total_beneficiarios_activos} de ${resumen.beneficiarios_limite}`,
+									icon: Users,
+									colorClass: "bg-blue-600",
+								},
+							]}
+						/>
+					</div>
 
-			{/* 3. Estadísticas Rápidas */}
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-				<StatCard
-					title="Cupos Disponibles"
-					value={`${resumen.cupos_invitados_restantes} pases`}
-					icon={Ticket}
-					colorClass="bg-[#2EB85C]" // Verde éxito
-				/>
-				<StatCard
-					title="Beneficiarios"
-					value={`${resumen.total_beneficiarios_activos} personas`}
-					icon={Users}
-					colorClass="bg-[#3399FF]" // Azul info
-				/>
-			</div>
+					{/* 3. Acceso Rápido/Estado Próxima Visita */}
+					<div className="space-y-4">
+						<h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">
+							Próxima Visita
+						</h3>
+						<ProximaVisitaCard visita={resumen.proxima_visita} />
+					</div>
+				</aside>
 
-			{/* 4. Sección de Reservas y Acciones */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-				<div className="space-y-4">
-					<h3 className="text-lg font-bold text-[#2C3A2C] px-1">
-						Tu Próxima Visita
-					</h3>
-					<ProximaVisitaCard visita={resumen.proxima_visita} />
-				</div>
+				{/* MAIN CONTENT (3/4) - Gestión de Visitas & Beneficios */}
+				<main className="lg:col-span-3 space-y-12">
+					{/* Sección: Gestionar Visita */}
 
-				<div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E0E7E0] flex flex-col justify-center">
-					<div className="text-center space-y-4">
-						<div className="bg-primary/5 p-4 rounded-full w-fit mx-auto">
-							<Ticket className="h-10 w-10 text-primary" />
+					{/* Sección: Beneficios & Comunidad */}
+					<div className="">
+						<BenefitsBanner category={userCategory} />
+					</div>
+
+					<div>
+						<VisitTypeCarousel />
+					</div>
+					{/* CTA Nueva Reserva (Banner Estilo Bento) */}
+					<div className="bg-[#2C3A2C] rounded-[40px] p-4 sm:p-12 text-white shadow-2xl shadow-[#2C3A2C]/20 relative overflow-hidden group">
+						<div className="absolute top-0 right-0 opacity-10 transform translate-x-12 -translate-y-8 transition-transform group-hover:scale-110 duration-[10s]">
+							<Zap size={300} />
 						</div>
-						<h3 className="text-xl font-bold">¿Planeas una visita?</h3>
-						<p className="text-muted-foreground">
-							Reserva un Full Day para disfrutar del sol o un bungalow para un
-							descanso total.
-						</p>
-						<div className="pt-4">
-							<a href="/visitas/nueva" className="inline-block w-full">
-								<button className="w-full bg-[#2C3A2C] text-white py-3 rounded-xl font-bold hover:bg-[#1a2b1a] transition-all shadow-md">
-									COMENZAR VISITA
-								</button>
+						<div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+							<div className="max-w-md">
+								<h3 className="text-3xl font-black tracking-tight mb-4">
+									¿Listo para un nuevo escape?
+								</h3>
+								<p className="text-emerald-100/60 font-medium text-sm sm:text-lg leading-relaxed">
+									Asegura tu ingreso o reserva un bungalow en segundos con
+									nuestro nuevo flujo optimizado.
+								</p>
+							</div>
+							<a href="/visitas/nueva" className="shrink-0">
+								<Button className="bg-emerald-500 hover:bg-emerald-600 text-white h-16 px-10 rounded-2xl font-black text-sm tracking-widest transition-all shadow-xl active:scale-95">
+									NUEVA RESERVA
+								</Button>
 							</a>
 						</div>
 					</div>
-				</div>
+				</main>
 			</div>
 		</div>
 	);

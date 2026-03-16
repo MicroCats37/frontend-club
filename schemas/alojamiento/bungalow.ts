@@ -14,11 +14,15 @@ export const BungalowImagenSchema = z.object({
 
 export const TarifaBungalowSchema = z.object({
 	id: z.coerce.number(),
-	con_privilegio: z.boolean(),
-	precio: z.coerce.number(),
-	fecha_fin: z.string().nullable(),
-	nombre_tipo: z.string(),
-	dias_semana: z.array(z.coerce.number()),
+	tipo_tarifa: z.coerce.number().nullable().optional(),
+	precios_override: z.record(z.string(), z.any()).nullable().optional(),
+	nombre_tipo: z.string().optional(),
+	activo: z.boolean().optional(),
+	// Legacy fields - Marked optional to prevent validation crashes
+	con_privilegio: z.boolean().optional(),
+	precio: z.coerce.number().optional(),
+	fecha_fin: z.string().nullable().optional(),
+	dias_semana: z.array(z.coerce.number()).optional(),
 	dias_tarifa_id: z.string().optional(),
 });
 
@@ -65,7 +69,6 @@ export const BatchGaleriaItemSchema = z.object({
 	descripcion: z.string().optional(),
 });
 
-
 export const BatchGaleriaUploadSchema = z.object({
 	imagenes: z.array(BatchGaleriaItemSchema),
 });
@@ -73,13 +76,13 @@ export const BatchGaleriaUploadSchema = z.object({
 export const BungalowPriceDetailSchema = z.object({
 	tipo_tarifa_id: z.string(),
 	tipo_tarifa_nombre: z.string(),
-	dias_tarifa_id: z.string(),
+	regla_idx: z.coerce.number(),
 	precio_con_privilegio: z.coerce.number(),
 	precio_sin_privilegio: z.coerce.number(),
 	activo: z.boolean(),
 	es_temporal: z.boolean(),
 	es_paquete: z.boolean(),
-	dias_semana: z.array(z.coerce.number()),
+	motor: z.string(),
 });
 
 export const BungalowPricingListSchema = z.object({
@@ -91,9 +94,27 @@ export const BungalowPricingListSchema = z.object({
 	precios: z.array(BungalowPriceDetailSchema),
 });
 
+export const NocheOcupadaSchema = z.object({
+	fecha: z.string(),
+	reserva_id: z.string(),
+	titular_nombre: z.string(),
+	estado_pago: z.string(),
+	color_status: z.string(),
+	es_continuacion: z.boolean().optional(),
+});
+
+export const BungalowOcupacionSchema = z.object({
+	id: z.coerce.number(),
+	numero: z.string(),
+	nombre: z.string(),
+	noches: z.array(NocheOcupadaSchema),
+});
+
 export type Bungalow = z.infer<typeof BungalowSchema>;
 export type BungalowImagen = z.infer<typeof BungalowImagenSchema>;
 export type TarifaBungalow = z.infer<typeof TarifaBungalowSchema>;
 export type BungalowUpdate = z.infer<typeof BungalowUpdateSchema>;
 export type BatchGaleriaItem = z.infer<typeof BatchGaleriaItemSchema>;
 export type BungalowPricingList = z.infer<typeof BungalowPricingListSchema>;
+export type NocheOcupada = z.infer<typeof NocheOcupadaSchema>;
+export type BungalowOcupacion = z.infer<typeof BungalowOcupacionSchema>;

@@ -1,4 +1,4 @@
-import { deleteCookie, getCookie, setCookie, hasCookie } from "cookies-next";
+import { deleteCookie, getCookie } from "cookies-next";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { LoggedUser } from "@/schemas/auth";
@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>()(
 
 			setUserInfo: (user) => set({ user, isAuthenticated: true }),
 			setAuthenticated: (status) => set({ isAuthenticated: status }),
-			
+
 			login: (user, token) => {
 				// cookies-next setCookie ya maneja el almacenamiento
 				set({ user, token, isAuthenticated: true });
@@ -36,10 +36,10 @@ export const useAuthStore = create<AuthState>()(
 				deleteCookie("jwt-access");
 				deleteCookie("jwt-refresh");
 				deleteCookie("user-session");
-				
+
 				// Limpiamos estado local
 				set({ user: null, token: null, isAuthenticated: false });
-				
+
 				// Redirigir si estamos en el cliente
 				if (typeof window !== "undefined") {
 					window.location.href = "/login";
@@ -49,12 +49,12 @@ export const useAuthStore = create<AuthState>()(
 			checkAuth: () => {
 				const token = getCookie("jwt-access");
 				const isAuthenticated = !!token;
-				
+
 				// Si no hay token pero el estado dice que estamos autenticados -> Sincronizar (Ghost Session Fix)
 				if (!isAuthenticated && get().isAuthenticated) {
 					get().logout();
 				}
-			}
+			},
 		}),
 		{
 			name: "auth-storage",

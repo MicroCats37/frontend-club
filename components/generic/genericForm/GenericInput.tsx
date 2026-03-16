@@ -85,7 +85,7 @@ export interface FormField {
 	description?: string;
 	disabled?: boolean;
 	isLoading?: boolean;
-	hidden?: boolean;
+	hidden?: boolean | ((values: any) => boolean);
 	valueType?: "string" | "number" | "boolean";
 
 	// Propiedades Visuales

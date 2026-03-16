@@ -3,7 +3,7 @@
  */
 export function formatCurrency(value: number | string): string {
 	const amount = typeof value === "string" ? Number.parseFloat(value) : value;
-	
+
 	return new Intl.NumberFormat("es-PE", {
 		style: "currency",
 		currency: "PEN",

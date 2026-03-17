@@ -97,6 +97,7 @@ export const BungalowPricingListSchema = z.object({
 export const NocheOcupadaSchema = z.object({
 	fecha: z.string(),
 	reserva_id: z.string(),
+	visita_id: z.string().uuid().optional().nullable(),
 	titular_nombre: z.string(),
 	estado_pago: z.string(),
 	color_status: z.string(),

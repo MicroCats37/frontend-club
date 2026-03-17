@@ -3,7 +3,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/registro", "/"];
+const PUBLIC_PATHS = ["/login", "/registro", "/", "/recuperar"];
 
 function decodeJWT(token: string) {
 	try {

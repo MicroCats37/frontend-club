@@ -48,3 +48,17 @@ export const useLogin = () => {
 		},
 	});
 };
+
+/**
+ * Hook para cambiar la contraseña del usuario logueado
+ */
+export const useChangePassword = () => {
+	return useApiCreate<any, any>({
+		url: "/api/auth/cambiar-password/",
+		options: {
+			onSuccess: () => {
+				toast.success("Contraseña actualizada exitosamente.");
+			},
+		},
+	});
+};

@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
-	CheckCircle,
 	Eye,
 	Filter,
 	Home,
@@ -11,22 +10,15 @@ import {
 	Search,
 	Ticket,
 	UserCheck,
-	XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pagination } from "@/components/generic/Pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -40,22 +32,18 @@ import { useGetVisitas } from "@/hooks/visitas/useGetVisitas";
 import { useVisitaActions } from "@/hooks/visitas/useVisitaActions";
 
 export default function AdminVisitasPage() {
+	const router = useRouter();
 	const [page, setPage] = useState(1);
 	const [pageSize, setPageSize] = useState(10);
 	const [dni, setDni] = useState("");
 	const [idPublico, setIdPublico] = useState("");
 	const [estado, setEstado] = useState<string>("ALL");
 
-	// Confirmation Dialog State
-	const [confirmModal, setConfirmModal] = useState<{
-		isOpen: boolean;
-		type: "CANCELAR" | "LIQUIDAR" | null;
-		visitaId: string | null;
-	}>({
-		isOpen: false,
-		type: null,
-		visitaId: null,
-	});
+	/* 
+	   Acciones removidas de la lista principal para limpiar la UI. 
+	   Ahora se gestionan directamente en la página de detalle.
+	*/
+
 
 	const debouncedDni = useDebounce(dni, 500);
 	const debouncedIdPublico = useDebounce(idPublico, 500);
@@ -141,20 +129,10 @@ export default function AdminVisitasPage() {
 		}
 	};
 
-	const handleConfirmAction = async () => {
-		if (!confirmModal.visitaId || !confirmModal.type) return;
-
-		try {
-			if (confirmModal.type === "CANCELAR") {
-				await cancelarVisita.mutateAsync(confirmModal.visitaId);
-			} else if (confirmModal.type === "LIQUIDAR") {
-				await liquidarVisita.mutateAsync(confirmModal.visitaId);
-			}
-			setConfirmModal({ isOpen: false, type: null, visitaId: null });
-		} catch (_error) {
-			// Error handled by mutation
-		}
+	const handleRowClick = (id: string) => {
+		router.push(`/admin/visitas/${id}`);
 	};
+
 
 	return (
 		<div className="space-y-8 animate-in fade-in duration-500">
@@ -180,30 +158,6 @@ export default function AdminVisitasPage() {
 							className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
 						/>
 					</Button>
-					<Link href="/admin/entradas">
-						<Button
-							variant="outline"
-							className="rounded-xl border-[#E0E7E0] text-[#4A5D4A] hover:bg-muted"
-						>
-							<Ticket className="mr-2 h-4 w-4" />
-							Gestión Entradas
-						</Button>
-					</Link>
-					<Link href="/admin/visitas/nuevo-pase">
-						<Button
-							variant="outline"
-							className="rounded-xl border-primary text-primary hover:bg-primary/5"
-						>
-							<Plus className="mr-2 h-4 w-4" />
-							Pase Diario
-						</Button>
-					</Link>
-					<Link href="/admin/visitas/nuevo-bungalow">
-						<Button className="bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20 transition-all">
-							<Home className="mr-2 h-4 w-4" />
-							Registrar Bungalow
-						</Button>
-					</Link>
 				</div>
 			</div>
 
@@ -281,7 +235,7 @@ export default function AdminVisitasPage() {
 										Registro
 									</th>
 									<th className="p-4 font-semibold text-sm text-foreground/70 uppercase tracking-wider text-right">
-										Acciones
+										{/* Columna de acciones removida */}
 									</th>
 								</tr>
 							</thead>
@@ -307,7 +261,8 @@ export default function AdminVisitasPage() {
 									visitas.map((visita: any) => (
 										<tr
 											key={visita.id}
-											className="hover:bg-muted/10 transition-colors group"
+											onClick={() => handleRowClick(visita.id)}
+											className="hover:bg-muted/10 transition-colors group cursor-pointer"
 										>
 											<td className="p-4">
 												<div className="flex flex-col text-sm">
@@ -320,13 +275,13 @@ export default function AdminVisitasPage() {
 													</span>
 												</div>
 											</td>
-											<td className="p-4">
+											<td className="p-4 text-center">
 												{visita.is_bungalow ? (
-													<span className="text-[10px] font-black py-0.5 px-2 bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+													<span className="text-[10px] font-black py-0.5 px-3 bg-blue-100 text-blue-700 rounded-full border border-blue-200">
 														Bungalow
 													</span>
 												) : (
-													<span className="text-[10px] font-black py-0.5 px-2 bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200">
+													<span className="text-[10px] font-black py-0.5 px-3 bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200">
 														Pase Diario
 													</span>
 												)}
@@ -343,56 +298,14 @@ export default function AdminVisitasPage() {
 													: "---"}
 											</td>
 											<td className="p-4 text-right">
-												<div className="flex justify-end gap-1.5">
-													<Link href={`/admin/visitas/${visita.id}`}>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="h-8 w-8 rounded-lg hover:bg-primary/10"
-														>
-															<Eye className="w-4 h-4" />
-														</Button>
-													</Link>
-													{[
-														"PENDIENTE",
-														"PAGADA",
-														"CONFIRMADA",
-														"EN_CURSO",
-														"ACTIVA",
-													].includes(visita.estado) && (
-														<>
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-8 w-8 rounded-lg text-green-600 hover:bg-green-50"
-																onClick={() =>
-																	setConfirmModal({
-																		isOpen: true,
-																		type: "LIQUIDAR",
-																		visitaId: visita.id,
-																	})
-																}
-																disabled={liquidarVisita.isPending}
-															>
-																<CheckCircle className="w-4 h-4" />
-															</Button>
-															<Button
-																variant="ghost"
-																size="icon"
-																className="h-8 w-8 rounded-lg text-red-600 hover:bg-red-50"
-																onClick={() =>
-																	setConfirmModal({
-																		isOpen: true,
-																		type: "CANCELAR",
-																		visitaId: visita.id,
-																	})
-																}
-																disabled={cancelarVisita.isPending}
-															>
-																<XCircle className="w-4 h-4" />
-															</Button>
-														</>
-													)}
+												<div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+													<Button
+														variant="ghost"
+														size="sm"
+														className="rounded-xl bg-primary/5 text-primary font-bold text-[10px] uppercase tracking-wider gap-2 px-3 h-8"
+													>
+														Detalle <Eye className="w-3.5 h-3.5" />
+													</Button>
 												</div>
 											</td>
 										</tr>
@@ -427,52 +340,7 @@ export default function AdminVisitasPage() {
 				/>
 			)}
 
-			{/* Confirmations Modal */}
-			<Dialog
-				open={confirmModal.isOpen}
-				onOpenChange={(open) =>
-					!open && setConfirmModal({ ...confirmModal, isOpen: false })
-				}
-			>
-				<DialogContent className="max-w-md rounded-3xl">
-					<DialogHeader>
-						<DialogTitle className="text-xl font-bold text-[#2C3A2C]">
-							{confirmModal.type === "CANCELAR"
-								? "Anular Visita"
-								: "Finalizar Estadía"}
-						</DialogTitle>
-						<DialogDescription className="text-[#4A5D4A] mt-2">
-							{confirmModal.type === "CANCELAR"
-								? "¿Estás seguro que deseas anular esta visita? Esta acción es irreversible."
-								: "¿Deseas realizar el checkout de esta visita? Si hay saldos pendientes, se registrarán como pagados automáticamente."}
-						</DialogDescription>
-					</DialogHeader>
-					<DialogFooter className="flex gap-2 mt-4">
-						<Button
-							variant="outline"
-							onClick={() =>
-								setConfirmModal({ isOpen: false, type: null, visitaId: null })
-							}
-							className="rounded-xl"
-						>
-							No, volver
-						</Button>
-						<Button
-							variant={
-								confirmModal.type === "CANCELAR" ? "destructive" : "default"
-							}
-							onClick={handleConfirmAction}
-							disabled={cancelarVisita.isPending || liquidarVisita.isPending}
-							className="rounded-xl shadow-lg"
-						>
-							{cancelarVisita.isPending || liquidarVisita.isPending ? (
-								<RefreshCw className="h-4 w-4 animate-spin mr-2" />
-							) : null}
-							Sí, {confirmModal.type === "CANCELAR" ? "Anular" : "Liquidar"}
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+
 		</div>
 	);
 }

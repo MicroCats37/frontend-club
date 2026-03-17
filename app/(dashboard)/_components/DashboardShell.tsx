@@ -11,6 +11,7 @@ import {
 	Ticket,
 	TreeDeciduous,
 	Users,
+	UserCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -37,7 +38,10 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 	};
 
 	const menuItems = (() => {
-		const common = [{ icon: Home, label: "Inicio", href: "/inicio" }];
+		const common = [
+			{ icon: Home, label: "Inicio", href: "/inicio" },
+			{ icon: UserCircle, label: "Mi Perfil", href: "/perfil" },
+		];
 
 		switch (user.user_type) {
 			case "ADMIN":
@@ -135,26 +139,43 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 					{/* USER PROFILE INFO */}
 					<div className="p-4 border-t border-[#E0E7E0] bg-[#FBFCFB]">
 						<div className="flex items-center mb-4 px-2">
-							<div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-primary font-bold border-2 border-white shadow-sm">
-								{user.nombres[0]}
+							<div className="relative">
+								<div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center text-primary font-bold border-2 border-white shadow-sm overflow-hidden">
+									{user.nombres[0]}
+								</div>
+								{user.privilegios && (
+									<div className="absolute -bottom-1 -right-1 h-4 w-4 bg-primary rounded-full border-2 border-white flex items-center justify-center">
+										<ShieldCheck className="h-2 w-2 text-white" />
+									</div>
+								)}
 							</div>
 							<div className="ml-3 overflow-hidden">
 								<p className="text-sm font-semibold text-[#2C3A2C] truncate">
 									{user.nombres} {user.apellidos}
 								</p>
-								<p className="text-xs text-[#8BA18B] truncate">
-									{user.cip ? `CIP: ${user.cip}` : "Personal Staff"}
-								</p>
+								<div className="flex items-center gap-1.5">
+									<p className="text-[10px] font-bold text-primary uppercase tracking-tight">
+										{user.categoria || (user.cip ? "Colegiado" : "Personal Staff")}
+									</p>
+									{user.cip && (
+										<span className="text-[10px] text-[#8BA18B]">
+											• CIP: {user.cip}
+										</span>
+									)}
+								</div>
 							</div>
 						</div>
-						<button
-							onClick={handleLogout}
-							type="button"
-							className="flex items-center w-full px-4 py-2 text-sm font-medium text-destructive bg-destructive/5 rounded-lg hover:bg-destructive hover:text-white transition-all group"
-						>
-							<LogOut className="mr-3 h-4 w-4" />
-							Cerrar Sesión
-						</button>
+
+						<div className="space-y-2">
+							<button
+								onClick={handleLogout}
+								type="button"
+								className="flex items-center w-full px-4 py-2 text-xs font-semibold text-destructive bg-destructive/5 rounded-lg hover:bg-destructive hover:text-white transition-all group"
+							>
+								<LogOut className="mr-3 h-3.5 w-3.5" />
+								Cerrar Sesión
+							</button>
+						</div>
 					</div>
 				</div>
 			</aside>

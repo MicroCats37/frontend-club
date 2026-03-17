@@ -53,18 +53,18 @@ const CardWrapper: React.FC<SectionWrapperProps> = ({
 	icon: Icon,
 	className,
 }) => (
-	<div className={`border rounded-xl p-5 bg-card shadow-sm ${className || ""}`}>
-		<div className="flex flex-col gap-1 mb-4 pb-2 border-b">
+	<div className={`border rounded-xl p-3 md:p-4 bg-card shadow-sm ${className || ""}`}>
+		<div className="flex flex-col gap-0.5 mb-3 pb-2 border-b">
 			<div className="flex items-center gap-2">
 				{Icon && (
-					<div className="p-2 bg-primary/10 rounded-lg text-primary">
-						<Icon className="w-5 h-5" />
+					<div className="p-1 bg-primary/10 rounded-md text-primary">
+						<Icon className="w-3.5 h-3.5" />
 					</div>
 				)}
-				<h3 className="font-semibold text-lg tracking-tight">{title}</h3>
+				<h3 className="font-semibold text-sm md:text-base tracking-tight">{title}</h3>
 			</div>
 			{description && (
-				<p className="text-sm text-muted-foreground ml-1">{description}</p>
+				<p className="text-[10px] md:text-xs text-muted-foreground ml-0.5">{description}</p>
 			)}
 		</div>
 		{children}
@@ -96,7 +96,9 @@ export interface GenericFormProps<T extends FieldValues> {
 	cancelButtonText?: string;
 	onCancel?: () => void;
 	isLoading?: boolean;
+	isDisabled?: boolean;
 	activateSubmitButton?: boolean;
+	formMethods?: UseFormReturn<T>;
 
 	// Inyecciones UI (Wrappers y Custom Footer)
 	globalSectionWrapper?: React.ComponentType<SectionWrapperProps>; // Cambia todas las Cards
@@ -139,7 +141,9 @@ export const GenericForm = <T extends FieldValues>({
 	onFieldChange,
 	customFields = {},
 	isLoading = false,
+	isDisabled = false,
 	activateSubmitButton = true,
+	formMethods,
 
 	// Custom injections
 	globalSectionWrapper,
@@ -183,10 +187,12 @@ export const GenericForm = <T extends FieldValues>({
 		}
 	});
 
-	const methods = useForm<T>({
+	const internalMethods = useForm<T>({
 		resolver: zodResolver(schema),
 		defaultValues,
 	});
+
+	const methods = formMethods || internalMethods;
 
 	const {
 		register,
@@ -275,7 +281,7 @@ export const GenericForm = <T extends FieldValues>({
 		}
 	};
 
-	const isLocked = isSubmitting || isLoading;
+	const isLocked = isSubmitting || isLoading || isDisabled;
 	const onSubmitFn = handleSubmit(handleFormSubmit, (errs) => {
 		console.warn("🔥 Error de validación Zod:", errs);
 
@@ -315,7 +321,7 @@ export const GenericForm = <T extends FieldValues>({
 
 	// B. MODO AUTOMÁTICO / HÍBRIDO (SECCIONES Y CARDS)
 	const DefaultFooter = (
-		<div className="flex justify-end gap-4 mt-6">
+		<div className="flex justify-end gap-3 mt-4">
 			{onCancel && (
 				<Button
 					type="button"
@@ -347,9 +353,9 @@ export const GenericForm = <T extends FieldValues>({
 				<Form {...methods}>
 					<form
 						onSubmit={onSubmitFn}
-						className={`space-y-6 ${formClassName || ""}`}
+						className={`space-y-4 ${formClassName || ""}`}
 					>
-						<fieldset disabled={isLocked} className="space-y-6">
+						<fieldset disabled={isLocked} className="space-y-4">
 							{normalizedSections.map((section, idx) => {
 								// Prioridad Wrapper: Global -> Sección -> Default (Card/Ghost)
 								const Container =

@@ -24,7 +24,7 @@ export const CardFieldWrapper = ({
 	return (
 		<div
 			className={cn(
-				"flex flex-col gap-1.5", // Espaciado vertical consistente
+				"flex flex-col gap-1", // Espaciado vertical consistente
 				field.containerClassName || "col-span-12",
 			)}
 		>
@@ -33,12 +33,12 @@ export const CardFieldWrapper = ({
 				<Label
 					htmlFor={labelId}
 					className={cn(
-						"text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+						"text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
 						error ? "text-destructive" : "text-foreground",
 					)}
 				>
 					{field.label}
-					{field.required && <span className="text-destructive ml-1">*</span>}
+					{field.required && <span className="text-destructive ml-0.5">*</span>}
 				</Label>
 			)}
 
@@ -46,9 +46,9 @@ export const CardFieldWrapper = ({
 			<div className="relative">{children}</div>
 
 			{/* Mensaje de Error */}
-			<div className="min-h-[20px]">
+			<div className="min-h-[16px]">
 				{error && (
-					<p className="text-[0.8rem] font-medium text-destructive animate-in slide-in-from-top-1 fade-in-0">
+					<p className="text-[0.7rem] font-medium text-destructive animate-in slide-in-from-top-0.5 fade-in-0">
 						{error.message}
 					</p>
 				)}

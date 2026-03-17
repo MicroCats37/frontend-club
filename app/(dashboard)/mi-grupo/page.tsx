@@ -2,6 +2,8 @@
 
 import {
 	ArrowUpCircle,
+	AlertCircle,
+	Clock,
 	Heart,
 	ShieldCheck,
 	UserPlus,
@@ -44,13 +46,12 @@ const GrupoMemberCard = ({
 	return (
 		<div className="bg-white rounded-[28px] border border-[#E0E7E0] p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center gap-4 sm:gap-6 relative group">
 			<div
-				className={`h-14 w-14 sm:h-16 sm:w-16 rounded-2xl flex items-center justify-center text-xl font-black border-2 border-white shadow-sm shrink-0 transition-transform group-hover:scale-105 duration-500 ${
-					isTitular
+				className={`h-14 w-14 sm:h-16 sm:w-16 rounded-2xl flex items-center justify-center text-xl font-black border-2 border-white shadow-sm shrink-0 transition-transform group-hover:scale-105 duration-500 ${isTitular
 						? "bg-[#2C3A2C] text-white"
 						: isFamiliar
 							? "bg-blue-500 text-white"
 							: "bg-slate-100 text-slate-400"
-				}`}
+					}`}
 			>
 				{member.persona.nombres[0]}
 			</div>
@@ -95,48 +96,70 @@ const GrupoMemberCard = ({
 				</div>
 			</div>
 
-			<div className="flex items-center gap-3">
-				{hasPrivileges ? (
+			<div className="flex flex-col items-end gap-2">
+				{/* Estado del Vínculo */}
+				{member.estado_vinculo === "ACTIVO" ? (
 					<div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100/50">
 						<ShieldCheck className="h-4 w-4" />
 						<span className="text-[10px] font-black uppercase tracking-widest">
-							Beneficiario
+							{hasPrivileges ? "Beneficiario" : "Activo"}
 						</span>
 					</div>
+				) : member.estado_vinculo === "PENDIENTE" ? (
+					<Badge
+						variant="outline"
+						className="bg-amber-50 text-amber-600 border-amber-200 gap-1.5 py-1 px-3 rounded-xl animate-pulse"
+					>
+						<Clock className="h-3 w-3" />
+						<span className="text-[10px] font-black uppercase tracking-tight">
+							Pendiente
+						</span>
+					</Badge>
 				) : member.estado_vinculo === "RECHAZADO" ? (
-					<div className="flex flex-col items-end gap-2">
-						<Badge
-							variant="outline"
-							className="bg-red-50 text-red-700 border-red-100 gap-1"
-						>
-							<XCircle className="h-3 w-3" />
-							<span className="text-[9px]">Rechazado</span>
-						</Badge>
-						{isAfiliado && isFamiliar && (
-							<Button
-								variant="ghost"
-								size="sm"
-								className="h-9 px-4 rounded-xl text-blue-600 font-black text-[10px] uppercase tracking-tighter hover:bg-blue-50 border border-transparent hover:border-blue-100"
-								onClick={() => onUpgrade(member)}
-							>
-								<ArrowUpCircle className="h-3 w-3 mr-1" />
-								Reintentar Ascenso
-							</Button>
-						)}
-					</div>
+					<Badge
+						variant="outline"
+						className="bg-red-50 text-red-700 border-red-200 gap-1.5 py-1 px-3 rounded-xl"
+					>
+						<XCircle className="h-3 w-3" />
+						<span className="text-[10px] font-black uppercase tracking-tight">
+							Rechazado
+						</span>
+					</Badge>
 				) : (
-					isAfiliado &&
-					isFamiliar && (
-						<Button
-							variant="ghost"
-							size="sm"
-							className="h-9 px-4 rounded-xl text-blue-600 font-black text-[10px] uppercase tracking-tighter hover:bg-blue-50 border border-transparent hover:border-blue-100"
-							onClick={() => onUpgrade(member)}
-						>
-							<ArrowUpCircle className="h-3 w-3 mr-1" />
-							Ascender a Beneficiario
-						</Button>
-					)
+					<Badge
+						variant="outline"
+						className="bg-slate-50 text-slate-500 border-slate-200 gap-1.5 py-1 px-3 rounded-xl"
+					>
+						<AlertCircle className="h-3 w-3" />
+						<span className="text-[10px] font-black uppercase tracking-tight">
+							Inactivo
+						</span>
+					</Badge>
+				)
+				}
+
+				{/* Botón de Acción (Ascenso) */}
+				{!hasPrivileges && isAfiliado && isFamiliar && (
+					<Button
+						variant="ghost"
+						size="sm"
+						className={`h-9 px-4 rounded-xl font-black text-[10px] uppercase tracking-tighter border border-transparent transition-all ${
+							member.estado_vinculo === "RECHAZADO"
+								? "text-red-600 hover:bg-red-50 hover:border-red-100"
+								: member.estado_vinculo === "PENDIENTE"
+									? "text-amber-600 hover:bg-amber-50 hover:border-amber-100"
+									: "text-blue-600 hover:bg-blue-50 hover:border-blue-100"
+						}`}
+						onClick={() => onUpgrade(member)}
+						disabled={member.estado_vinculo === "PENDIENTE"}
+					>
+						<ArrowUpCircle className="h-3 w-3 mr-1" />
+						{member.estado_vinculo === "RECHAZADO"
+							? "Reintentar Ascenso"
+							: member.estado_vinculo === "PENDIENTE"
+								? "En Trámite..."
+								: "Ascender a Beneficiario"}
+					</Button>
 				)}
 			</div>
 		</div>
@@ -192,13 +215,17 @@ export default function MiGrupoPage() {
 							<h3 className="text-lg font-black text-[#2C3A2C] mb-1 tracking-tight">
 								Gestión de Beneficiarios
 							</h3>
-							<p className="text-[#8BA18B] text-xs font-medium leading-relaxed max-w-sm">
-								Tus familiares nucleares disfrutan de{" "}
-								<span className="text-emerald-600 font-bold uppercase tracking-tighter text-[10px]">
-									ingreso libre (S/ 0.00)
-								</span>{" "}
-								en todas nuestras sedes.
-							</p>
+							{
+								isAfiliado && (
+									<p className="text-[#8BA18B] text-xs font-medium leading-relaxed max-w-sm">
+										Tus familiares nucleares disfrutan de{" "}
+										<span className="text-emerald-600 font-bold uppercase tracking-tighter text-[10px]">
+											ingreso libre (S/ 0.00)
+										</span>{" "}
+										en todas nuestras sedes.
+									</p>
+								)
+							}
 						</div>
 					</div>
 				</div>
@@ -276,19 +303,19 @@ export default function MiGrupoPage() {
 				<div className="flex flex-col gap-4">
 					{isLoading
 						? Array(2)
-								.fill(0)
-								.map((_, i) => (
-									<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
-								))
+							.fill(0)
+							.map((_, i) => (
+								<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
+							))
 						: familia.map((member) => (
-								<GrupoMemberCard
-									key={member.persona.id}
-									member={member}
-									onUpgrade={handleOpenUpgrade}
-									canManage={true}
-									isAfiliado={isAfiliado}
-								/>
-							))}
+							<GrupoMemberCard
+								key={member.persona.id}
+								member={member}
+								onUpgrade={handleOpenUpgrade}
+								canManage={true}
+								isAfiliado={isAfiliado}
+							/>
+						))}
 				</div>
 			</div>
 
@@ -340,19 +367,19 @@ export default function MiGrupoPage() {
 					<div className="flex flex-col gap-4">
 						{isLoading
 							? Array(3)
-									.fill(0)
-									.map((_, i) => (
-										<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
-									))
+								.fill(0)
+								.map((_, i) => (
+									<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
+								))
 							: contactos.map((member) => (
-									<GrupoMemberCard
-										key={member.persona.id}
-										member={member}
-										onUpgrade={handleOpenUpgrade}
-										canManage={true}
-										isAfiliado={isAfiliado}
-									/>
-								))}
+								<GrupoMemberCard
+									key={member.persona.id}
+									member={member}
+									onUpgrade={handleOpenUpgrade}
+									canManage={true}
+									isAfiliado={isAfiliado}
+								/>
+							))}
 					</div>
 				)}
 			</div>

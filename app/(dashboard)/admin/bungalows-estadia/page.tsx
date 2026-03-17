@@ -226,40 +226,79 @@ export default function BungalowEstadiaPage() {
 												if (!noche) return null;
 
 												return (
-													<div
-														key={`${bg.id}-${noche.reserva_id}`}
-														className="group relative p-3 rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col gap-1.5"
-														style={{
-															borderLeft: `5px solid ${noche.color_status}`,
-														}}
-													>
-														{/* Fondo sutil usando el color de estado */}
-														<div
-															className="absolute inset-0 opacity-[0.03]"
-															style={{ backgroundColor: noche.color_status }}
-														/>
-
-														<div className="relative z-10">
-															<span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">
-																Bung. {bg.numero}
-															</span>
-
-															<p className="text-xs sm:text-sm font-bold text-gray-900 truncate leading-tight my-0.5">
-																{noche.titular_nombre}
-															</p>
-
-															<Badge
-																variant="outline"
-																className="w-fit text-[9px] py-0 px-1.5 font-bold uppercase tracking-widest border-0 mt-1"
+													<Popover key={`${bg.id}-${noche.reserva_id}`}>
+														<PopoverTrigger asChild>
+															<div
+																className="group relative p-3 rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden flex flex-col gap-1.5 cursor-pointer hover:shadow-md transition-all active:scale-[0.98]"
 																style={{
-																	backgroundColor: `${noche.color_status}15`,
-																	color: noche.color_status,
+																	borderLeft: `5px solid ${noche.color_status}`,
 																}}
 															>
-																{noche.estado_pago.replace(/_/g, " ")}
-															</Badge>
-														</div>
-													</div>
+																{/* Fondo sutil usando el color de estado */}
+																<div
+																	className="absolute inset-0 opacity-[0.03]"
+																	style={{ backgroundColor: noche.color_status }}
+																/>
+
+																<div className="relative z-10">
+																	<span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">
+																		Bung. {bg.numero}
+																	</span>
+
+																	<p className="text-xs sm:text-sm font-bold text-gray-900 truncate leading-tight my-0.5">
+																		{noche.titular_nombre}
+																	</p>
+
+																	<Badge
+																		variant="outline"
+																		className="w-fit text-[9px] py-0 px-1.5 font-bold uppercase tracking-widest border-0 mt-1"
+																		style={{
+																			backgroundColor: `${noche.color_status}15`,
+																			color: noche.color_status,
+																		}}
+																	>
+																		{noche.estado_pago.replace(/_/g, " ")}
+																	</Badge>
+																</div>
+															</div>
+														</PopoverTrigger>
+														<PopoverContent className="w-64 p-4 rounded-2xl shadow-2xl border-gray-100">
+															<div className="space-y-3">
+																<div className="space-y-1">
+																	<h4 className="font-bold text-sm text-gray-900">
+																		Gestión de Estancia
+																	</h4>
+																	<p className="text-xs text-gray-500 font-medium">
+																		Titular: {noche.titular_nombre}
+																	</p>
+																</div>
+																<div className="pt-2 border-t border-gray-50 flex flex-col gap-2">
+																	{noche.visita_id ? (
+																		<Button
+																			variant="default"
+																			size="sm"
+																			className="w-full rounded-xl bg-[#2C3A2C] hover:bg-[#1C251C] font-bold text-xs gap-2"
+																			onClick={() =>
+																				window.open(
+																					`/admin/visitas/${noche.visita_id}`,
+																					"_blank",
+																				)
+																			}
+																		>
+																			Ver Gestión de Visita
+																		</Button>
+																	) : (
+																		<p className="text-[10px] text-gray-400 font-bold uppercase text-center py-2 bg-gray-50 rounded-lg">
+																			Sin visita asociada
+																		</p>
+																	)}
+																	<p className="text-[9px] text-gray-400 text-center font-medium">
+																		Reserva: {noche.reserva_id.split("-")[0]}
+																	</p>
+																</div>
+															</div>
+														</PopoverContent>
+													</Popover>
 												);
 											})}
 

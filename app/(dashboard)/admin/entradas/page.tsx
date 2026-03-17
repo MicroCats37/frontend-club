@@ -2,21 +2,13 @@
 
 import {
 	ArrowLeft,
-	Image as ImageIcon,
 	Loader2,
-	MoreVertical,
 	Plus,
 	RefreshCw,
 	Settings2,
-	Tag,
-	Ticket,
-	Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
-import { GenericForm } from "@/components/generic/genericForm/GenericForm";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -25,40 +17,21 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetCategoriasEntrada } from "@/hooks/visitas/useGetCategoriasEntrada";
 import {
-	type TipoEntradaMatriz,
-	useCategoriaActions,
 	useGetMatrixTarifas,
-	useGetTarifas,
-	useMatrixUpdate,
-	useTarifaActions,
 } from "@/hooks/visitas/usePasesAdmin";
-import { resolveImageUrl } from "@/lib/utils";
+import { TipoEntradaModal } from "./_components/TipoEntradaModal";
+import { TipoEntradaCard } from "./_components/TipoEntradaCard";
+import { TipoEntradaMatrixModal } from "./_components/TipoEntradaMatrixModal";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Tag } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
-const TipoEntradaUpdateSchema = z.object({
-	nombre: z.string().min(1, "El nombre es requerido"),
-	descripcion: z.string().optional().nullable(),
-	activo: z.boolean().default(true),
-	image_main: z.any().optional().nullable(),
-});
+
 
 export default function CategoriasEntradaPage() {
 	const {
@@ -67,9 +40,7 @@ export default function CategoriasEntradaPage() {
 		refetch,
 		isFetching,
 	} = useGetCategoriasEntrada();
-	const { updateCategoria, createCategoria } = useCategoriaActions();
-
-	const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+	const [selectedMatrixId, setSelectedMatrixId] = useState<string | null>(null);
 	const [isCatModalOpen, setIsCatModalOpen] = useState(false);
 	const [editingCat, setEditingCat] = useState<any>(null);
 
@@ -78,29 +49,7 @@ export default function CategoriasEntradaPage() {
 		setIsCatModalOpen(true);
 	};
 
-	const _handleSaveCat = async () => {
-		if (!editingCat.nombre) return toast.error("El nombre es requerido");
 
-		if (editingCat.id) {
-			updateCategoria.mutate(editingCat, {
-				onSuccess: () => setIsCatModalOpen(false),
-			});
-		} else {
-			createCategoria.mutate(editingCat, {
-				onSuccess: () => setIsCatModalOpen(false),
-			});
-		}
-	};
-
-	if (selectedCatId) {
-		const items = Array.isArray(categorias)
-			? categorias
-			: (categorias as any)?.results || [];
-		const cat = items.find((c: any) => c.id === selectedCatId);
-		return (
-			<TarifarioView category={cat} onBack={() => setSelectedCatId(null)} />
-		);
-	}
 
 	return (
 		<div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto pb-10">
@@ -140,581 +89,41 @@ export default function CategoriasEntradaPage() {
 				</div>
 			</div>
 
-			<Tabs defaultValue="matrix" className="space-y-6">
-				<TabsList className="bg-white border p-1 rounded-2xl h-12 inline-flex">
-					<TabsTrigger
-						value="matrix"
-						className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white"
-					>
-						<Tag className="mr-2 h-4 w-4" />
-						Matriz de Tarifas
-					</TabsTrigger>
-					<TabsTrigger
-						value="config"
-						className="rounded-xl px-6 font-bold data-[state=active]:bg-primary data-[state=active]:text-white"
-					>
-						<Settings2 className="mr-2 h-4 w-4" />
-						Tipos de Entrada
-					</TabsTrigger>
-				</TabsList>
-
-				<TabsContent value="matrix">
-					<TarifariosMatrixView />
-				</TabsContent>
-
-				<TabsContent value="config">
-					{isLoading ? (
-						<div className="flex h-[300px] items-center justify-center">
-							<Loader2 className="h-8 w-8 animate-spin text-primary" />
-							<span className="ml-3 text-muted-foreground font-medium">
-								Cargando categorías...
-							</span>
-						</div>
-					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							{(Array.isArray(categorias)
-								? categorias
-								: (categorias as any)?.results || []
-							)?.map((cat: any) => (
-								<Card
-									key={cat.id}
-									className="rounded-3xl border-none shadow-sm overflow-hidden bg-white group hover:shadow-md transition-all duration-300 flex flex-col"
-								>
-									<div className="relative group/card h-40 overflow-hidden bg-muted/20">
-										{cat.image_main ? (
-											<img
-												src={resolveImageUrl(cat.image_main)}
-												alt={cat.nombre}
-												className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
-											/>
-										) : (
-											<div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/30 bg-muted/10">
-												<ImageIcon className="w-10 h-10 mb-2 opacity-20" />
-												<span className="text-[10px] font-black uppercase tracking-[0.2em]">
-													Sin Imagen
-												</span>
-											</div>
-										)}
-										<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-										<div className="absolute top-4 right-4 z-10">
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button
-														variant="secondary"
-														size="icon"
-														className="h-8 w-8 rounded-xl shadow-lg border-none bg-white/90 backdrop-blur-sm hover:bg-white"
-													>
-														<MoreVertical className="h-4 w-4 text-[#4A5D4A]" />
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent
-													align="end"
-													className="rounded-2xl border-[#E0E7E0] shadow-xl p-2 min-w-[160px]"
-												>
-													<DropdownMenuItem
-														onClick={() => handleEditCat(cat)}
-														className="rounded-xl focus:bg-primary/10 focus:text-primary font-medium py-2"
-													>
-														Editar Detalles
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() => setSelectedCatId(cat.id)}
-														className="rounded-xl focus:bg-primary/10 focus:text-primary font-medium py-2"
-													>
-														Configurar Tarifas
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() =>
-															updateCategoria.mutate({
-																id: cat.id,
-																data: { activo: !cat.activo },
-															} as any)
-														}
-														className={`rounded-xl font-medium py-2 ${cat.activo ? "text-destructive focus:text-destructive focus:bg-destructive/5" : "text-green-600 focus:text-green-600 focus:bg-green-50"}`}
-													>
-														{cat.activo ? "Desactivar" : "Activar"}
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
-										</div>
-										<div className="absolute bottom-4 left-4">
-											<Badge
-												className={`rounded-full font-bold text-[10px] px-3 py-1 uppercase tracking-wider shadow-sm border-none ${
-													cat.activo
-														? "bg-green-500 text-white"
-														: "bg-red-500 text-white"
-												}`}
-											>
-												{cat.activo ? "Activo" : "Inactivo"}
-											</Badge>
-										</div>
-									</div>
-									<CardHeader className="p-6 pb-2">
-										<CardTitle className="text-xl font-black text-[#2C3A2C] line-clamp-1">
-											{cat.nombre}
-										</CardTitle>
-									</CardHeader>
-									<CardContent className="p-6 pt-0 flex-1">
-										<p className="text-sm text-[#8BA18B] font-medium leading-relaxed line-clamp-2">
-											{cat.descripcion || "Sin descripción proporcionada."}
-										</p>
-									</CardContent>
-								</Card>
-							))}
-						</div>
-					)}
-				</TabsContent>
-			</Tabs>
-
-			{/* Category Modal */}
-			<Dialog open={isCatModalOpen} onOpenChange={setIsCatModalOpen}>
-				<DialogContent className="rounded-[2rem] max-w-lg p-0 overflow-hidden border-none shadow-2xl bg-white">
-					<DialogHeader className="bg-primary/5 p-8 pb-6">
-						<div className="flex items-center gap-4">
-							<div className="p-3 rounded-2xl bg-primary/10 text-primary shadow-inner">
-								<Ticket className="w-6 h-6" />
-							</div>
-							<div>
-								<DialogTitle className="text-2xl font-black text-primary tracking-tight">
-									{editingCat?.id ? "Editar Categoría" : "Nueva Categoría"}
-								</DialogTitle>
-								<DialogDescription className="text-[#8BA18B] font-medium">
-									Define el nombre, descripción e imagen para este tipo de
-									entrada.
-								</DialogDescription>
-							</div>
-						</div>
-					</DialogHeader>
-
-					<div className="p-8 pt-2">
-						<GenericForm
-							schema={TipoEntradaUpdateSchema}
-							initialData={editingCat}
-							onSubmit={async (data) => {
-								if (editingCat?.id) {
-									await updateCategoria.mutateAsync({
-										id: editingCat.id,
-										data: data,
-									});
-								} else {
-									await createCategoria.mutateAsync(data);
-								}
-								setIsCatModalOpen(false);
-							}}
-							submitButtonText={
-								editingCat?.id ? "Guardar Cambios" : "Crear Categoría"
-							}
-							onCancel={() => setIsCatModalOpen(false)}
-							fields={[
-								{
-									name: "nombre",
-									label: "Nombre del Tipo",
-									type: "text",
-									placeholder: "Ej: Full Day VIP",
-									required: true,
-								},
-								{
-									name: "descripcion",
-									label: "Descripción",
-									type: "textarea",
-									placeholder: "Detalles del acceso...",
-								},
-								{
-									name: "image_main",
-									label: "Imagen de Portada",
-									type: "image",
-									required: false,
-								},
-								{
-									name: "activo",
-									label: "Categoría Activa",
-									type: "checkbox",
-								},
-							]}
-						/>
-					</div>
-				</DialogContent>
-			</Dialog>
-		</div>
-	);
-}
-
-function TarifariosMatrixView() {
-	const { data: matrix, isLoading } = useGetMatrixTarifas();
-
-	if (isLoading) {
-		return (
-			<div className="flex h-[300px] items-center justify-center bg-white rounded-3xl border shadow-sm">
-				<Loader2 className="h-8 w-8 animate-spin text-primary" />
-				<span className="ml-3 text-muted-foreground font-medium">
-					Cargando matriz de tarifas...
-				</span>
-			</div>
-		);
-	}
-
-	return (
-		<div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-8">
-			{matrix?.map((tipo) => (
-				<TipoEntradaCard key={tipo.tipo_entrada_id} tipo={tipo} />
-			))}
-		</div>
-	);
-}
-
-function TipoEntradaCard({ tipo }: { tipo: TipoEntradaMatriz }) {
-	const [localTipo, setLocalTipo] = useState<TipoEntradaMatriz>(() =>
-		JSON.parse(JSON.stringify(tipo)),
-	);
-	const { mutate: updateTipo, isPending } = useMatrixUpdate(
-		tipo.tipo_entrada_id,
-	);
-
-	const handleAddRange = (categoriaKey: string) => {
-		const updated = { ...localTipo };
-		const cat = updated.categorias.find((c) => c.categoria === categoriaKey);
-		if (cat) {
-			const lastRange =
-				cat.precios_rango_edad[cat.precios_rango_edad.length - 1];
-			const nextMin = lastRange ? lastRange.edad_max + 1 : 0;
-			cat.precios_rango_edad.push({
-				edad_min: nextMin,
-				edad_max: 99,
-				precio: 0,
-			});
-			setLocalTipo(updated);
-		}
-	};
-
-	const handleRemoveRange = (categoriaKey: string, index: number) => {
-		const updated = { ...localTipo };
-		const cat = updated.categorias.find((c) => c.categoria === categoriaKey);
-		if (cat) {
-			cat.precios_rango_edad.splice(index, 1);
-			setLocalTipo(updated);
-		}
-	};
-
-	const handleRangeChange = (
-		categoriaKey: string,
-		index: number,
-		field: string,
-		value: any,
-	) => {
-		const updated = { ...localTipo };
-		const cat = updated.categorias.find((c) => c.categoria === categoriaKey);
-		if (cat) {
-			cat.precios_rango_edad[index] = {
-				...cat.precios_rango_edad[index],
-				[field]:
-					field === "precio"
-						? parseFloat(value) || 0
-						: parseInt(value, 10) || 0,
-			};
-			setLocalTipo(updated);
-		}
-	};
-
-	return (
-		<Card className="rounded-3xl border-none shadow-md overflow-hidden bg-white border-2 border-primary/5 h-fit">
-			<CardHeader className="bg-primary/5 border-b py-6 px-8 flex flex-row items-center justify-between">
-				<div className="flex items-center gap-4">
-					<div className="p-3 rounded-2xl bg-primary/10 text-primary shadow-inner">
-						<Ticket className="w-6 h-6" />
-					</div>
-					<div>
-						<CardTitle className="text-xl font-black text-primary tracking-tight">
-							{localTipo.tipo_entrada_nombre}
-						</CardTitle>
-						<CardDescription className="text-sm font-medium">
-							Gestionar rangos de precio por categoría
-						</CardDescription>
-					</div>
-				</div>
-				<Button
-					onClick={() => updateTipo(localTipo)}
-					disabled={isPending}
-					className="bg-primary text-white rounded-xl font-bold shadow-lg px-6 h-10 hover:scale-105 transition-transform"
-				>
-					{isPending ? (
-						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-					) : (
-						<RefreshCw className="mr-2 h-4 w-4" />
-					)}
-					Guardar Tipo
-				</Button>
-			</CardHeader>
-			<CardContent className="p-0">
-				<div className="divide-y divide-[#F0F4F0]">
-					{localTipo.categorias.map((cat) => (
-						<div key={cat.categoria} className="p-6 space-y-4">
-							<div className="flex items-center justify-between">
-								<div className="flex flex-col">
-									<span className="text-base font-bold text-[#2C3A2C]">
-										{cat.nombre_categoria}
-									</span>
-								</div>
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => handleAddRange(cat.categoria)}
-									className="rounded-lg h-8 px-3 text-xs font-bold border-primary/20 text-primary hover:bg-primary/5"
-								>
-									<Plus className="mr-1 h-3 w-3" />
-									Añadir Rango
-								</Button>
-							</div>
-
-							<div className="space-y-2">
-								{cat.precios_rango_edad.length === 0 ? (
-									<p className="text-xs text-muted-foreground italic bg-muted/30 p-3 rounded-xl border border-dashed text-center">
-										No hay rangos definidos para esta categoría.
-									</p>
-								) : (
-									<div className="grid grid-cols-12 gap-3 mb-2 px-2">
-										<div className="col-span-3 text-[10px] font-bold text-muted-foreground uppercase">
-											Edad Mín
-										</div>
-										<div className="col-span-3 text-[10px] font-bold text-muted-foreground uppercase">
-											Edad Máx
-										</div>
-										<div className="col-span-4 text-[10px] font-bold text-muted-foreground uppercase">
-											Precio (S/)
-										</div>
-										<div className="col-span-2"></div>
-									</div>
-								)}
-								{cat.precios_rango_edad.map((range, idx) => (
-									<div
-										key={idx}
-										className="grid grid-cols-12 gap-3 items-center group animate-in fade-in slide-in-from-left-2 transition-all"
-									>
-										<Input
-											type="number"
-											className="col-span-3 h-9 rounded-lg text-sm font-medium focus-visible:ring-primary border-muted/60"
-											value={range.edad_min}
-											onChange={(e) =>
-												handleRangeChange(
-													cat.categoria,
-													idx,
-													"edad_min",
-													e.target.value,
-												)
-											}
-										/>
-										<Input
-											type="number"
-											className="col-span-3 h-9 rounded-lg text-sm font-medium focus-visible:ring-primary border-muted/60"
-											value={range.edad_max}
-											onChange={(e) =>
-												handleRangeChange(
-													cat.categoria,
-													idx,
-													"edad_max",
-													e.target.value,
-												)
-											}
-										/>
-										<div className="col-span-4 relative">
-											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary/60">
-												S/
-											</span>
-											<Input
-												type="number"
-												step="0.01"
-												className="h-9 pl-7 pr-3 rounded-lg text-sm font-black border-none bg-muted/50 focus-visible:ring-primary text-right"
-												value={range.precio}
-												onChange={(e) =>
-													handleRangeChange(
-														cat.categoria,
-														idx,
-														"precio",
-														e.target.value,
-													)
-												}
-											/>
-										</div>
-										<div className="col-span-2 flex justify-end">
-											<Button
-												variant="ghost"
-												size="icon"
-												className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-												onClick={() => handleRemoveRange(cat.categoria, idx)}
-											>
-												<Trash2 className="h-4 w-4" />
-											</Button>
-										</div>
-									</div>
-								))}
-							</div>
-						</div>
-					))}
-				</div>
-			</CardContent>
-		</Card>
-	);
-}
-
-function TarifarioView({
-	category,
-	onBack,
-}: {
-	category: any;
-	onBack: () => void;
-}) {
-	const { data: tarifas, isLoading } = useGetTarifas(category?.id);
-	const { createTarifa, deleteTarifa } = useTarifaActions();
-
-	const [isAdding, setIsAdding] = useState(false);
-	const [newTarifa, setNewTarifa] = useState({
-		tipo_entrada_id: category?.id,
-		categoria_usuario: "HABILITADO",
-		precios_rango_edad: [{ edad_min: 0, edad_max: 99, precio: 0 }],
-	});
-
-	const handleAddTarifa = () => {
-		createTarifa.mutate(newTarifa, { onSuccess: () => setIsAdding(false) });
-	};
-
-	return (
-		<div className="space-y-8 animate-in slide-in-from-right-4 duration-500 max-w-6xl mx-auto pb-10">
-			<div className="flex items-center justify-between gap-4 bg-white p-8 rounded-3xl border shadow-sm">
-				<div className="flex items-center gap-4">
-					<Button
-						variant="ghost"
-						size="icon"
-						className="rounded-xl"
-						onClick={onBack}
-					>
-						<ArrowLeft className="h-6 w-6" />
-					</Button>
-					<div>
-						<h1 className="text-3xl font-extrabold text-[#2C3A2C]">
-							Tarifario: {category?.nombre}
-						</h1>
-						<p className="text-muted-foreground font-medium">
-							Configura precios por categoría de socio y edad.
-						</p>
-					</div>
-				</div>
-				<Button
-					onClick={() => setIsAdding(true)}
-					className="bg-primary text-white rounded-xl h-11 px-6 font-bold shadow-lg"
-				>
-					<Plus className="mr-2 h-5 w-5" /> Agregar Categoría de Socio
-				</Button>
-			</div>
-
 			{isLoading ? (
 				<div className="flex h-[300px] items-center justify-center">
 					<Loader2 className="h-8 w-8 animate-spin text-primary" />
+					<span className="ml-3 text-muted-foreground font-medium">
+						Cargando categorías...
+					</span>
 				</div>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-					{(Array.isArray(tarifas)
-						? tarifas
-						: (tarifas as any)?.results || []
-					)?.map((t: any) => (
-						<Card
-							key={t.id}
-							className="rounded-3xl border-none shadow-sm overflow-hidden bg-white border-2 border-primary/5"
-						>
-							<CardHeader className="bg-primary/5 border-b flex flex-row justify-between items-center">
-								<div>
-									<CardTitle className="text-lg font-bold text-primary">
-										{t.categoria_usuario}
-									</CardTitle>
-									<CardDescription>Precios por rangos de edad</CardDescription>
-								</div>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="text-destructive hover:bg-destructive/10"
-									onClick={() => deleteTarifa.mutate(t.id)}
-								>
-									<Trash2 className="w-4 h-4" />
-								</Button>
-							</CardHeader>
-							<CardContent className="p-6">
-								<div className="space-y-3">
-									{t.precios_rango_edad.map((range: any, idx: number) => (
-										<div
-											key={idx}
-											className="flex items-center justify-between p-3 rounded-2xl bg-muted/20 border border-muted-foreground/10"
-										>
-											<div className="flex flex-col">
-												<span className="text-xs font-bold text-muted-foreground uppercase">
-													Edad: {range.edad_min} a {range.edad_max}
-												</span>
-												<span className="text-sm font-black text-primary">
-													S/ {Number(range.precio).toFixed(2)}
-												</span>
-											</div>
-											<Tag className="w-4 h-4 text-primary/40" />
-										</div>
-									))}
-								</div>
-							</CardContent>
-						</Card>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+					{(Array.isArray(categorias)
+						? categorias
+						: (categorias as any)?.results || []
+					)?.map((cat: any) => (
+						<TipoEntradaCard
+							key={cat.id}
+							cat={cat}
+							onEdit={handleEditCat}
+							onViewMatrix={(id) => setSelectedMatrixId(id)}
+						/>
 					))}
 				</div>
 			)}
 
-			{/* Modal para agregar tarifa (Socio Categoría) */}
-			<Dialog open={isAdding} onOpenChange={setIsAdding}>
-				<DialogContent className="max-w-md rounded-[2rem]">
-					<DialogHeader>
-						<DialogTitle>Nueva Tarifa por Categoría</DialogTitle>
-						<DialogDescription>
-							Asigna precios para una categoría de socio específica.
-						</DialogDescription>
-					</DialogHeader>
-					<div className="space-y-4 py-4">
-						<div className="space-y-2">
-							<Label>Categoría de Socio</Label>
-							<select
-								className="w-full h-11 rounded-xl border border-muted-foreground/20 px-3"
-								value={newTarifa.categoria_usuario}
-								onChange={(e) =>
-									setNewTarifa({
-										...newTarifa,
-										categoria_usuario: e.target.value,
-									})
-								}
-							>
-								<option value="HABILITADO">Socio Habilitado</option>
-								<option value="VITALICIO">Socio Vitalicio</option>
-								<option value="INVITADO">Invitado General</option>
-								<option value="CONVENIO">Convenio Institucional</option>
-							</select>
-						</div>
-						<div className="space-y-2">
-							<Label>Precio General (Por ahora único rango)</Label>
-							<Input
-								type="number"
-								value={newTarifa.precios_rango_edad[0].precio}
-								onChange={(e) => {
-									const prices = [...newTarifa.precios_rango_edad];
-									prices[0].precio = parseFloat(e.target.value);
-									setNewTarifa({ ...newTarifa, precios_rango_edad: prices });
-								}}
-								className="rounded-xl"
-							/>
-						</div>
-					</div>
-					<DialogFooter>
-						<Button variant="ghost" onClick={() => setIsAdding(false)}>
-							Cancelar
-						</Button>
-						<Button
-							onClick={handleAddTarifa}
-							className="bg-primary text-white rounded-xl shadow-lg"
-						>
-							Guardar Tarifa
-						</Button>
-					</DialogFooter>
-				</DialogContent>
-			</Dialog>
+			<TipoEntradaModal
+				isOpen={isCatModalOpen}
+				onOpenChange={setIsCatModalOpen}
+				editingCat={editingCat}
+			/>
+
+			<TipoEntradaMatrixModal
+				isOpen={!!selectedMatrixId}
+				onOpenChange={(open) => !open && setSelectedMatrixId(null)}
+				tipoId={selectedMatrixId}
+			/>
 		</div>
 	);
 }
+

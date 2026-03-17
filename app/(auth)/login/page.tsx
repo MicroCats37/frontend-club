@@ -6,9 +6,11 @@ import {
 	EyeOff,
 	Hash,
 	KeyRound,
+	Link as LinkIcon,
 	Loader2,
 	User,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { GenericForm } from "@/components/generic/genericForm/GenericForm";
 import { Button } from "@/components/ui/button";
@@ -207,6 +209,15 @@ export default function LoginPage() {
 												>
 													Contraseña
 												</Label>
+												<Link href="/recuperar">
+													<Button
+														variant="link"
+														size="sm"
+														className="text-primary hover:text-primary/80 font-black uppercase tracking-widest h-auto p-0 border-b-2 border-primary/10 hover:border-primary transition-all text-[11px]"
+													>
+														¿Olvidaste tu contraseña?
+													</Button>
+												</Link>
 											</div>
 											<div className="relative group">
 												<KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#8BA18B] group-focus-within:text-primary transition-colors" />

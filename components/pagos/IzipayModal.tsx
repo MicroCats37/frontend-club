@@ -24,9 +24,75 @@ declare global {
 	}
 }
 
-// Clave pública RSA del comercio (debe coincidir con el pantallazo del portal)
+// Clave publica RSA del comercio (debe coincidir con el portal de Izipay)
 const IZIPAY_RSA_KEY =
-	"MIIBIjANBgkqhikiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnbZQIF0Fys/1ib3M1XWUWRwuTQ5s/xlXG+a7BLGR3Wlt5j1/G2ppMWC3c0mSqXTCf2wyihtNm3hirr+edhpbKELcMOAZ/RdiJ9S6re9QYoxpoEDIfFBpd8lC0tzSE/XW1eoCa4YceH1fsm9R843wvzxHN51x71PLxkyt7nd+RjAY4gprwO3siyiZ+4RnX5KXO/UIeO2St4u0H4xsbigqwjoxOEJhCS+COfZFIMDihno2cXPUnQi5Ic3S6ZM5utPqWdBy0GF/FJ30h++0qsgA5VfxHnGtPKQVBOdgTT7HUR04KoSb5VNPgGtjNt4eqmewGfz4gGFPrkkqx9mwsnpcQIDAQAB";
+	"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnbZQIF0Fys/1ib3M1XWUWRwuTQ5s/xlXG+a7BLGR3Wlt5j1/G2ppMWC3c0mSqXTCf2wyihtNm3hirr+edhpbKELcMOAZ/RdiJ9S6re9QYoxpoEDIfFBpd8lC0tzSE/XW1eoCa4YceH1fsm9R843wvzxHN51x71PLxkyt7nd+RjAY4gprwO3siyiZ+4RnX5KXO/UIeO2St4u0H4xsbigqwjoxOEJhCS+COfZFIMDihno2cXPUnQi5Ic3S6ZM5utPqWdBy0GF/FJ30h++0qsgA5VfxHnGtPKQVBOdgTT7HUR04KoSb5VNPgGtjNt4eqmewGfz4gGFPrkkqx9mwsnpcQIDAQAB";
+
+const getCurrentTransactionTime = () => {
+	const timestamp = Date.now() * 1000;
+	return timestamp.toString();
+};
+
+const normalizeAmount = (value: unknown): string => {
+	const numericAmount = Number(value);
+	if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+		return "1.00";
+	}
+	return numericAmount.toFixed(2);
+};
+
+const sanitizeText = (value: unknown): string =>
+	String(value ?? "")
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.trim();
+
+const sanitizeNamePart = (value: unknown, fallback: string): string => {
+	const raw = sanitizeText(value);
+	const lettersOnly = raw.replace(/[^a-zA-Z\s]/g, " ").replace(/\s+/g, " ").trim();
+
+	// Evita mandar titulos o placeholders como nombre real
+	const lowered = lettersOnly.toLowerCase();
+	const forbidden = ["ing", "dr", "dra", "sr", "sra", "test", "usuario"];
+	if (!lettersOnly || forbidden.includes(lowered)) {
+		return fallback;
+	}
+
+	return lettersOnly;
+};
+
+const sanitizePhone = (value: unknown): string => {
+	const digits = String(value ?? "").replace(/\D/g, "");
+	return digits.length >= 7 ? digits.slice(0, 15) : "999999999";
+};
+
+const sanitizeDocument = (value: unknown): string => {
+	const digits = String(value ?? "").replace(/\D/g, "");
+	return digits.length >= 8 ? digits.slice(0, 12) : "12345678";
+};
+
+const sanitizeEmail = (value: unknown): string => {
+	const email = String(value ?? "").trim();
+	if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+		return email;
+	}
+	return "pagos@ciplima.pe";
+};
+
+const buildAddressData = (rawData: any) => ({
+	...rawData,
+	firstName: sanitizeNamePart(rawData?.firstName, "Juan"),
+	lastName: sanitizeNamePart(rawData?.lastName, "Perez"),
+	email: sanitizeEmail(rawData?.email),
+	phoneNumber: sanitizePhone(rawData?.phoneNumber),
+	street: "1295 Charleston Road",
+	city: "Lima",
+	state: "Lima",
+	country: "PE",
+	postalCode: "00001",
+	documentType: sanitizeText(rawData?.documentType) || "DNI",
+	document: sanitizeDocument(rawData?.document),
+});
 
 export function IzipayModal({
 	isOpen,
@@ -36,17 +102,13 @@ export function IzipayModal({
 }: IzipayModalProps) {
 	const [loading, setLoading] = useState(false);
 
-
-
 	const handleLaunchIzipay = async () => {
 		setLoading(true);
 		try {
-			// 1. Obtener token y configuración desde el backend
 			const response = await api.get(
 				`/api/finanzas/pagos/izipay/preparar/${ordenId}`,
 			);
 			const data = response.data;
-			console.log("DEBUG: Datos recibidos del backend:", data);
 
 			if (!data.success || !data.token) {
 				toast.error(data.error || "No se pudo generar el token de pago.");
@@ -54,7 +116,6 @@ export function IzipayModal({
 				return;
 			}
 
-			// 2. Verificar que el SDK esté cargado (con reintentos)
 			let retries = 0;
 			while (!window.Izipay && retries < 30) {
 				await new Promise((resolve) => setTimeout(resolve, 100));
@@ -67,91 +128,138 @@ export function IzipayModal({
 				return;
 			}
 
-			// 3. Configurar el objeto iziConfig con mayor robustez
-			const iziConfig = {
-				action: "pay",
-				merchantCode: data.merchantCode,
-				transactionId: data.transactionId,
+			// Si backend devuelve config completo, lo respetamos para no romper la firma del token.
+			const baseConfig = data.config && typeof data.config === "object" ? data.config : data;
+			const orderFromBackend = baseConfig.order || {};
+			const billingFromBackend = baseConfig.billing || data.billing || {};
+			const shippingFromBackend = baseConfig.shipping || data.shipping || billingFromBackend;
+
+			const finalConfig = {
+				action: baseConfig.action || "pay",
+				merchantCode: String(baseConfig.merchantCode ?? data.merchantCode ?? ""),
+				transactionId: String(baseConfig.transactionId ?? data.transactionId ?? ""),
 				order: {
-					orderNumber: data.orderNumber,
-					currency: "PEN",
-					amount: Number(data.amount), // Debe ser número
-					processType: "AT",
-					merchantBuyerId: data.billing?.document || "00000000",
-					dateTimeTransaction:
-						data.order?.dateTimeTransaction || (Date.now() * 1000).toString(),
+					...orderFromBackend,
+					orderNumber: String(orderFromBackend.orderNumber ?? data.orderNumber ?? ""),
+					currency: orderFromBackend.currency || "PEN",
+					amount: normalizeAmount(orderFromBackend.amount ?? data.amount),
+					processType: orderFromBackend.processType || "AT",
+					payMethod: "CARD,QR,YAPE_CODE,PAGO_PUSH",
+					merchantBuyerId:
+						orderFromBackend.merchantBuyerId || billingFromBackend.document || "00000000",
+					dateTimeTransaction: getCurrentTransactionTime(),
 				},
-				billing: data.billing,
-				shipping: data.shipping,
+				billing: buildAddressData(billingFromBackend),
+				shipping: buildAddressData(shippingFromBackend),
 				render: {
+					...(baseConfig.render || {}),
 					typeForm: "pop-up",
 					container: "#izipay-checkout",
-					showButtonProcessForm: true,
+					showButtonProcessForm:
+						baseConfig.render?.showButtonProcessForm ?? true,
 				},
+				language: baseConfig.language,
+				urlRedirect: baseConfig.urlRedirect,
+				appearance: baseConfig.appearance,
+				originEntry: baseConfig.originEntry,
+				customFields: Array.isArray(baseConfig.customFields)
+					? baseConfig.customFields
+					: [],
 			};
 
-			console.log("Configurando Izipay con:", iziConfig);
+			console.log("Izipay finalConfig:", finalConfig);
 
-			// 4. Instanciar e iniciar el Checkout
-			const checkout = new window.Izipay({ config: iziConfig });
+			let checkout: any;
+			try {
+				checkout = new window.Izipay({ config: finalConfig });
+			} catch (sdkInitError: any) {
+				console.error("Izipay init error detail:", sdkInitError);
+				if (sdkInitError?.Errors) {
+					console.error("Izipay init validation errors:", sdkInitError.Errors);
+					try {
+						console.error(
+							"Izipay init validation errors JSON:",
+							JSON.stringify(sdkInitError.Errors, null, 2),
+						);
+					} catch {}
+				}
+				const firstValidationError =
+					sdkInitError?.Errors?.[0]?.message ||
+					sdkInitError?.Errors?.[0]?.Message ||
+					sdkInitError?.message;
 
-			const callbackResponsePayment = async (response: any) => {
-				console.log("Respuesta Izipay:", response);
+				toast.error(
+					firstValidationError
+						? `Izipay rechazo la configuracion: ${firstValidationError}`
+						: "Izipay rechazo la configuracion inicial del checkout.",
+				);
+				onClose();
+				return;
+			}
 
-				if (response.code === "00") {
-					// 5. Confirmar el pago en el backend
+			const callbackResponsePayment = async (izipayResponse: any) => {
+				console.log("Izipay Full Response:", izipayResponse);
+				// El campo paymentMethod o brand suele indicar el método usado
+				const methodUsed = izipayResponse.paymentMethod || izipayResponse.brand || "Izipay";
+
+				if (izipayResponse.code === "00") {
 					try {
 						const confirmRes = await api.post(
 							"/api/finanzas/pagos/izipay/confirmar",
 							{
 								orden_id: ordenId,
-								kr_answer: response,
+								kr_answer: izipayResponse,
 							},
 						);
 
 						if (confirmRes.data.success) {
-							toast.success("¡Pago realizado con éxito!");
+							toast.success(`Pago con ${methodUsed} realizado con éxito.`);
 							onSuccess();
 							onClose();
 						} else {
-							toast.error(
-								confirmRes.data.error || "Error al confirmar el pago.",
-							);
+							toast.error(confirmRes.data.error || "Error al confirmar el pago.");
 						}
-					} catch (err: any) {
-						console.error("Error de confirmación:", err);
+					} catch {
 						toast.error(
-							"Error de comunicación. Si ya pagaste, recarga la página para ver el cambio.",
-							{
-								duration: 8000,
-							},
+							`Pago con ${methodUsed} detectado, pero hubo error de comunicación. Recarga la página.`,
+							{ duration: 8000 },
 						);
-						// Intentamos cerrar de todas formas para no bloquear al usuario
 						setTimeout(() => {
 							onSuccess();
 							onClose();
 						}, 2000);
 					}
 				} else {
-					toast.error(response.message || "El pago no pudo ser procesado.");
+					toast.error(izipayResponse.message || "El pago no pudo ser procesado.");
 				}
 			};
 
-			checkout.LoadForm({
-				authorization: data.token,
-				keyRSA: IZIPAY_RSA_KEY, // Pasar la llave real, no el string "RSA"
-				callbackResponse: callbackResponsePayment,
-			});
+			try {
+				checkout.LoadForm({
+					authorization:
+						baseConfig.authorization || data.token || data.authorization,
+					keyRSA: IZIPAY_RSA_KEY,
+					callbackResponse: callbackResponsePayment,
+				});
+			} catch (sdkLoadError: any) {
+				console.error("Izipay LoadForm error detail:", sdkLoadError);
+				toast.error("Izipay no pudo abrir el formulario de pago.");
+				onClose();
+			}
 		} catch (error: any) {
-			console.error("Error al iniciar Izipay:", error);
-			toast.error(
-				`Error: ${error.message || "No se pudo conectar con la pasarela"}`,
-			);
+			const detail =
+				error?.response?.data?.detail ||
+				error?.response?.data?.message ||
+				error?.response?.data?.error ||
+				error?.message ||
+				"No se pudo conectar con la pasarela";
+			toast.error(`Error: ${detail}`);
 			onClose();
 		} finally {
 			setLoading(false);
 		}
 	};
+
 	useEffect(() => {
 		if (isOpen && ordenId) {
 			handleLaunchIzipay();

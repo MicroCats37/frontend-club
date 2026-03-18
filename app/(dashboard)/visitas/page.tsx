@@ -110,14 +110,44 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 		return new Date() > new Date(visita.fecha_limite_pago);
 	}, [visita.estado, visita.fecha_limite_pago]);
 
+	const isModifiedToday = useMemo(() => {
+		if (!visita.updated_at) return false;
+		const updated = new Date(visita.updated_at);
+		const today = new Date();
+		return (
+			updated.getDate() === today.getDate() &&
+			updated.getMonth() === today.getMonth() &&
+			updated.getFullYear() === today.getFullYear() &&
+			updated.getTime() !== new Date(visita.created_at).getTime()
+		);
+	}, [visita.updated_at, visita.created_at]);
+
+	const canEdit = useMemo(() => {
+		if (isExpired) return false;
+		if (visita.estado === "CANCELADA" || visita.estado === "FINALIZADA")
+			return false;
+		const basicCheck = !visita.pagado && visita.estado !== "CONFIRMADA";
+		if (isBungalow) return true;
+		return basicCheck;
+	}, [visita.estado, visita.pagado, isExpired, isBungalow]);
+
 	return (
 		<div
 			className={`bg-white rounded-[32px] md:rounded-[40px] border p-2 shadow-sm hover:shadow-2xl transition-all group relative animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden ${
 				isExpired
 					? "border-rose-100 bg-rose-50/20"
-					: "border-gray-100 hover:border-primary/20"
+					: isModifiedToday
+						? "border-amber-200 bg-amber-50/10 shadow-amber-900/5 ring-1 ring-amber-500/5"
+						: "border-gray-100 hover:border-primary/20"
 			}`}
 		>
+			{isModifiedToday && (
+				<div className="absolute top-0 right-0 z-10">
+					<div className="bg-amber-500 text-white text-[8px] font-black px-4 py-1 rounded-bl-2xl uppercase tracking-[0.2em] shadow-sm">
+						Modificado Hoy
+					</div>
+				</div>
+			)}
 			<div className="flex flex-col lg:flex-row lg:items-center gap-2">
 				{/* 1. Left Section: Icon & Main Info */}
 				<div
@@ -262,7 +292,7 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 							expirado={isExpired}
 						/>
 					</div>
-					<Link href={`/visitas/${visita.id}`} className="w-full">
+					<Link href={`/visitas/${visita.id}`} className="w-full flex flex-col gap-2">
 						<Button
 							className={`w-full rounded-2xl h-11 md:h-12 bg-white transition-all gap-2 border font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-md ${
 								isExpired
@@ -272,6 +302,14 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 						>
 							Ver detalles <ChevronRight className="h-4 w-4" />
 						</Button>
+						{canEdit && (
+							<Button
+								variant="ghost"
+								className="w-full h-10 rounded-xl text-amber-600 hover:text-amber-700 hover:bg-amber-50 font-black text-[9px] uppercase tracking-widest transition-all"
+							>
+								Modificar ahora
+							</Button>
+						)}
 					</Link>
 				</div>
 			</div>

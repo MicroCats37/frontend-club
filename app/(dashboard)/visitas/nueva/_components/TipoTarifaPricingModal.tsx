@@ -121,7 +121,7 @@ export function TipoTarifaPricingModal({
 																</span>
 															</div>
 															<span className="text-2xl font-black text-emerald-600 tracking-tighter">
-																{formatCurrency(item.precio_con_privilegio)}
+																{formatCurrency(Math.ceil(Number(item.precio_con_privilegio)))}
 															</span>
 														</div>
 
@@ -135,7 +135,7 @@ export function TipoTarifaPricingModal({
 																</span>
 															</div>
 															<span className="text-2xl font-black text-[#2C3A2C] tracking-tighter">
-																{formatCurrency(item.precio_sin_privilegio)}
+																{formatCurrency(Math.ceil(Number(item.precio_sin_privilegio)))}
 															</span>
 														</div>
 													</div>

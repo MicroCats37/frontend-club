@@ -5,10 +5,10 @@ export const ReglaTarifaSchema = z.object({
 	nombre: z.string(),
 	motor: z.enum(["FECHAS_PUNTUALES", "RANGO", "DIAS_SEMANA"]),
 	config: z.object({
-		fechas: z.array(z.string()).optional(),
-		desde: z.string().optional(),
-		hasta: z.string().optional(),
-		dias: z.array(z.number()).optional(),
+		fechas: z.array(z.string()).nullish(),
+		desde: z.string().nullish(),
+		hasta: z.string().nullish(),
+		dias: z.array(z.number()).nullish(),
 	}),
 	es_paquete_obligatorio: z.boolean().default(false),
 	precios_capacidad: z

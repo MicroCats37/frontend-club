@@ -4,7 +4,9 @@ import type { AxiosError } from "axios";
  * Procesa errores de Axios de forma centralizada
  * Extrae mensajes de error de Django REST Framework
  */
-export function handleApiError(error: any): string {
+export function handleApiError(
+	error: any,
+): string | (Error & { fieldErrors?: Record<string, string> }) {
 	const axiosError = error as AxiosError<any>;
 
 	if (!axiosError.response) {
@@ -27,14 +29,29 @@ export function handleApiError(error: any): string {
 	}
 
 	// Errores de validación de Django Ninja / Pydantic (422)
-	if (status === 422 && Array.isArray(data.detail)) {
-		return data.detail
-			.map((err: any) => {
+	if (status === 422) {
+		const errorsSource = data.errors || data.detail;
+		if (Array.isArray(errorsSource)) {
+			// Si es un array (formato estándar de Ninja/Pydantic)
+			const fieldErrors: Record<string, string> = {};
+			const messages = errorsSource.map((err: any) => {
+				// Tomamos el último elemento de loc como el nombre del campo
+				// Pydantic loc suele ser ['body', 'field'] o ['data', 'field']
 				const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : "";
-				return field ? `${field}: ${err.msg}` : err.msg;
-			})
-			.join("; ");
+				const msg = err.msg;
+				if (field && field !== "body" && field !== "data") {
+					fieldErrors[field] = msg;
+					return `${field}: ${msg}`;
+				}
+				return msg;
+			});
+
+			// Adjuntamos los errores por campo al error para que GenericForm los use
+			const errorWithFields = new Error(messages.join("; ")) as any;
+			errorWithFields.fieldErrors = fieldErrors;
+			return errorWithFields;
+		}
 	}
 
-	return data.message || "Ocurrió un error en la solicitud.";
+	return data.message || data.detail || "Ocurrió un error en la solicitud.";
 }

@@ -271,8 +271,21 @@ export const GenericForm = <T extends FieldValues>({
 			// toast.success("¡Operación realizada con éxito!");
 			setSubmissionMessage({ type: "success", message: "¡Operación exitosa!" });
 		} catch (e: any) {
-			const msg = handleApiError(e);
+			const errorRes = handleApiError(e);
+			const msg = typeof errorRes === "string" ? errorRes : errorRes.message;
+
 			setSubmissionMessage({ type: "error", message: msg });
+
+			// Si el error contiene fallos por campo, los aplicamos al form
+			if (typeof errorRes !== "string" && errorRes.fieldErrors) {
+				Object.entries(errorRes.fieldErrors).forEach(([field, message]) => {
+					methods.setError(field as any, {
+						type: "server",
+						message: message as string,
+					});
+				});
+			}
+
 			// NOTA: No disparamos toast.error(msg) aquí porque los hooks generados
 			// (useApiCreate) ya disparan el toast internamente.
 			// Si el onSubmit es manual y no dispara toast, el usuario verá el mensaje

@@ -97,46 +97,31 @@ const GrupoMemberCard = ({
 			</div>
 
 			<div className="flex flex-col items-end gap-2">
-				{/* Estado del Vínculo */}
-				{member.estado_vinculo === "ACTIVO" ? (
-					<div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100/50">
-						<ShieldCheck className="h-4 w-4" />
-						<span className="text-[10px] font-black uppercase tracking-widest">
-							{hasPrivileges ? "Beneficiario" : "Activo"}
-						</span>
-					</div>
-				) : member.estado_vinculo === "PENDIENTE" ? (
-					<Badge
-						variant="outline"
-						className="bg-amber-50 text-amber-600 border-amber-200 gap-1.5 py-1 px-3 rounded-xl animate-pulse"
-					>
+				<Badge
+					variant="outline"
+					className={`${
+						member.persona.estado_validacion === "RECHAZADA"
+							? "bg-red-50 text-red-700 border-red-200"
+							: member.persona.estado_validacion === "PENDIENTE"
+								? "bg-amber-50 text-amber-600 border-amber-200 animate-pulse"
+								: member.persona.estado_validacion === "APROBADA"
+									? "bg-emerald-50 text-emerald-700 border-emerald-100/50"
+									: "bg-slate-50 text-slate-500 border-slate-200"
+					} gap-1.5 py-1 px-3 rounded-xl`}
+				>
+					{member.persona.estado_validacion === "APROBADA" ? (
+						<ShieldCheck className="h-3 w-3" />
+					) : member.persona.estado_validacion === "PENDIENTE" ? (
 						<Clock className="h-3 w-3" />
-						<span className="text-[10px] font-black uppercase tracking-tight">
-							Pendiente
-						</span>
-					</Badge>
-				) : member.estado_vinculo === "RECHAZADO" ? (
-					<Badge
-						variant="outline"
-						className="bg-red-50 text-red-700 border-red-200 gap-1.5 py-1 px-3 rounded-xl"
-					>
+					) : member.persona.estado_validacion === "RECHAZADA" ? (
 						<XCircle className="h-3 w-3" />
-						<span className="text-[10px] font-black uppercase tracking-tight">
-							Rechazado
-						</span>
-					</Badge>
-				) : (
-					<Badge
-						variant="outline"
-						className="bg-slate-50 text-slate-500 border-slate-200 gap-1.5 py-1 px-3 rounded-xl"
-					>
+					) : (
 						<AlertCircle className="h-3 w-3" />
-						<span className="text-[10px] font-black uppercase tracking-tight">
-							Inactivo
-						</span>
-					</Badge>
-				)
-				}
+					)}
+					<span className="text-[10px] font-black uppercase tracking-tight">
+						{member.persona.nombre_estado_validacion}
+					</span>
+				</Badge>
 
 				{/* Botón de Acción (Ascenso) */}
 				{!hasPrivileges && isAfiliado && isFamiliar && (

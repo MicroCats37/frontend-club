@@ -6,11 +6,13 @@ import {
 	LogOut,
 	TreeDeciduous,
 	UserPlus,
+	KeyRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
+import { cn } from "@/lib/utils";
 
 /**
  * Landing Page Principal - CE CIP Lima
@@ -25,7 +27,9 @@ export default function Home() {
 		setMounted(true);
 	}, []);
 
-	if (!mounted) return <div className="min-h-screen bg-[#F8FAF8]" />;
+	if (!mounted) {
+		return <div className="min-h-screen bg-[#F8FAF8]" />;
+	}
 
 	const portalHref =
 		user?.user_type === "ADMIN" || user?.user_type === "PORTERO"
@@ -96,8 +100,11 @@ export default function Home() {
 					{/* Background Decoration */}
 					<div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[120px] rounded-full -z-10" />
 
-					<div className="space-y-6 text-center max-w-4xl">
-						<div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-[#E0E7E0] shadow-sm rounded-full animate-in fade-in slide-in-from-top-4 duration-1000">
+					<div className={cn(
+						"space-y-6 text-center max-w-4xl transition-all duration-1000",
+						mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+					)}>
+						<div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-[#E0E7E0] shadow-sm rounded-full">
 							<span className="relative flex h-2 w-2">
 								<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
 								<span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
@@ -107,14 +114,14 @@ export default function Home() {
 							</span>
 						</div>
 
-						<h1 className="text-5xl lg:text-8xl font-black text-[#2C3A2C] leading-[0.9] tracking-tighter animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+						<h1 className="text-5xl lg:text-8xl font-black text-[#2C3A2C] leading-[0.9] tracking-tighter">
 							Tu oasis de paz <br />
 							<span className="text-primary italic font-serif">
 								a un solo clic.
 							</span>
 						</h1>
 
-						<p className="text-lg lg:text-xl text-[#4A5D4A] max-w-2xl mx-auto leading-relaxed font-medium opacity-80 animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
+						<p className="text-lg lg:text-xl text-[#4A5D4A] max-w-2xl mx-auto leading-relaxed font-medium opacity-80">
 							Bienvenido a la nueva experiencia digital del CE CIP Lima.
 							Gestiona tus visitas, bungalows y servicios con la agilidad que
 							mereces como colegiado.
@@ -122,28 +129,45 @@ export default function Home() {
 					</div>
 
 					{/* CTA Grid */}
-					<div className="mt-12 w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
+					<div className={cn(
+						"mt-12 w-full max-w-2xl transition-all duration-1000 delay-300",
+						mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+					)}>
 						{!isAuthenticated ? (
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<Link href="/login" className="w-full">
-									<Button
-										size="lg"
-										className="w-full h-18 text-lg font-black bg-[#2C3A2C] hover:bg-primary text-white shadow-2xl shadow-[#2C3A2C]/20 rounded-2xl group transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
-									>
-										<LogIn className="h-6 w-6 group-hover:translate-x-1 transition-transform" />
-										ENTRAR AL PORTAL
-									</Button>
-								</Link>
-								<Link href="/registro" className="w-full">
-									<Button
-										size="lg"
-										variant="outline"
-										className="w-full h-18 text-lg font-black border-2 border-[#E0E7E0] text-[#2C3A2C] bg-white hover:bg-[#F4F7F4] hover:border-primary/30 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
-									>
-										<UserPlus className="h-6 w-6" />
-										ACTIVAR CUENTA
-									</Button>
-								</Link>
+							<div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+									<Link href="/login" className="w-full">
+										<Button
+											size="lg"
+											className="w-full h-20 text-xl font-black bg-[#2C3A2C] hover:bg-primary text-white shadow-2xl shadow-[#2C3A2C]/20 rounded-3xl group transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 px-8"
+										>
+											<LogIn className="h-8 w-8 group-hover:translate-x-1 transition-transform" />
+											ENTRAR AL PORTAL
+										</Button>
+									</Link>
+									<Link href="/registro" className="w-full">
+										<Button
+											size="lg"
+											variant="outline"
+											className="w-full h-20 text-xl font-black border-2 border-[#E0E7E0] text-[#2C3A2C] bg-white hover:bg-[#F4F7F4] hover:border-primary/30 rounded-3xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 px-8"
+										>
+											<UserPlus className="h-8 w-8" />
+											ACTIVAR CUENTA
+										</Button>
+									</Link>
+								</div>
+								
+								<div className="flex justify-center">
+									<Link href="/recuperar">
+										<Button
+											variant="ghost"
+											className="h-14 px-8 rounded-2xl text-[#8BA18B] hover:text-primary hover:bg-primary/5 font-bold transition-all flex items-center gap-3 border border-transparent hover:border-primary/20"
+										>
+											<KeyRound className="h-5 w-5" />
+											OLVIDÉ MI CONTRASEÑA
+										</Button>
+									</Link>
+								</div>
 							</div>
 						) : (
 							<div className="flex justify-center">
@@ -166,7 +190,10 @@ export default function Home() {
 					</div>
 
 					{/* Benefits Grid */}
-					<div className="mt-24 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-700">
+					<div className={cn(
+						"mt-24 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full transition-all duration-1000 delay-500",
+						mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+					)}>
 						{[
 							{
 								icon: TreeDeciduous,

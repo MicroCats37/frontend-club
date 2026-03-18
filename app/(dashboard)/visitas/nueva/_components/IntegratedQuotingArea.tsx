@@ -93,7 +93,7 @@ export function IntegratedQuotingArea() {
 									Total Estimado
 								</span>
 								<span className="text-3xl font-black text-primary tracking-tighter">
-									S/ {Number(cotizacion?.total || 0).toFixed(2)}
+									S/ {Math.ceil(Number(cotizacion?.total || 0))}
 								</span>
 							</div>
 						)}
@@ -180,7 +180,7 @@ export function IntegratedQuotingArea() {
 										</div>
 										<div className="text-right">
 											<p className="text-sm font-black text-[#2C3A2C]">
-												S/ {Number(p.total_persona || 0).toFixed(2)}
+												S/ {Math.ceil(Number(p.total_persona || 0))}
 											</p>
 											<p className="text-[10px] font-bold text-muted-foreground">
 												Precio Unitario

@@ -6,6 +6,7 @@ export type VisitaTipo = "PASE_DIARIO" | "BUNGALOW";
 
 export interface GuestSelection {
 	persona_id: string;
+	dni: string;
 	nombre_completo: string;
 	tipo_entrada_id: string;
 	con_cupon: boolean;

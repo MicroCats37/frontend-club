@@ -128,7 +128,7 @@ const BungalowModal = ({
 						>
 							<span className="flex items-center gap-2">
 								<CalendarDays className="h-4 w-4 text-amber-500" />
-								Total: S/ {Number(bungalow.precio_total).toFixed(2)}
+								Total: S/ {Math.ceil(Number(bungalow.precio_total))}
 							</span>
 							{showDesglose ? (
 								<ChevronUp className="h-4 w-4" />
@@ -162,7 +162,7 @@ const BungalowModal = ({
 												</p>
 											</div>
 											<p className="text-xs font-black text-amber-600">
-												S/ {Number(dia.precio).toFixed(2)}
+												S/ {Math.ceil(Number(dia.precio))}
 											</p>
 										</div>
 									);
@@ -404,7 +404,7 @@ export function StepBungalowSelection() {
 																<span>•</span>
 																<span>
 																	S/{" "}
-																	{Number(bungalowData.precio_total).toFixed(0)}
+																	{Math.ceil(Number(bungalowData.precio_total))}
 																</span>
 															</div>
 														</button>
@@ -432,7 +432,7 @@ export function StepBungalowSelection() {
 																<span>•</span>
 																<span>
 																	S/{" "}
-																	{Number(bungalowData.precio_total).toFixed(0)}
+																	{Math.ceil(Number(bungalowData.precio_total))}
 																</span>
 															</div>
 														</button>

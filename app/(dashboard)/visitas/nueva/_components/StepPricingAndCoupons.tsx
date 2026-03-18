@@ -137,7 +137,7 @@ export function StepPricingAndCoupons() {
 										<Loader2 className="h-4 w-4 animate-spin" /> ...
 									</span>
 								) : (
-									`S/ ${Number(totalEstimado || 0).toFixed(2)}`
+									`S/ ${Math.ceil(Number(totalEstimado || 0))}`
 								)}
 							</p>
 						</div>
@@ -206,8 +206,8 @@ export function StepPricingAndCoupons() {
 										{isCotizando
 											? "..."
 											: isPriceFree
-												? "S/ 0.00"
-												: `S/ ${Number(selection.total_persona || 0).toFixed(2)}`}
+												? "S/ 0"
+												: `S/ ${Math.ceil(Number(selection.total_persona || 0))}`}
 									</span>
 								</div>
 
@@ -310,7 +310,7 @@ export function StepPricingAndCoupons() {
 						<p className="text-amber-800/60 leading-relaxed font-medium text-sm">
 							{tipoVisita === "BUNGALOW"
 								? "El pago por derecho de área común de tus invitados se gestiona directamente en el counter al momento del check-in. En esta reserva solo confirmas los nombres para el listado de ingreso."
-								: "Si aplicas un cupón libre, el costo de entrada de esa persona será S/ 0.00. Asegúrate de que los datos de tus invitados sean correctos antes de continuar a la confirmación final."}
+								: "Si aplicas un cupón libre, el costo de entrada de esa persona será S/ 0. Asegúrate de que los datos de tus invitados sean correctos antes de continuar a la confirmación final."}
 						</p>
 					</div>
 				</div>

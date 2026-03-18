@@ -114,6 +114,7 @@ export const VisitaSchema = z.object({
 	fecha_limite_cancelacion: z.string().nullable().optional(),
 	is_bungalow: z.boolean().optional(),
 	titular: PersonaDetalleSchema.optional(),
+	updated_at: z.string().optional(),
 });
 
 export const PaginatedVisitaSchema = z.object({

@@ -9,6 +9,8 @@ export interface MiGrupoItem {
 		apellidos: string;
 		nombre_completo: string;
 		edad: number;
+		estado_validacion: string | null;
+		nombre_estado_validacion: string;
 	};
 	id: string; // ID del vínculo
 	tipo: "TITULAR" | "FAMILIAR" | "CONTACTO";

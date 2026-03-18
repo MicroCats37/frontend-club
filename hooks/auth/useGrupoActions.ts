@@ -111,3 +111,19 @@ export function useVincularPorDni() {
 		},
 	});
 }
+
+export function useBuscarPersona() {
+	return useMutation({
+		mutationFn: async (dni: string) => {
+			const { data: response } = await api.get<{
+				encontrado: boolean;
+				nombres: string;
+				apellidos: string;
+				ya_en_grupo: boolean;
+				es_titular: boolean;
+				tiene_privilegios_independientes: boolean;
+			}>(`/api/usuarios/mi-grupo/buscar-persona/${dni}`);
+			return response;
+		},
+	});
+}

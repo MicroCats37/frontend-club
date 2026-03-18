@@ -13,8 +13,8 @@ import {
 	Home,
 	Loader2,
 	Moon,
-	QrCode,
 	Receipt,
+	Ticket,
 	UserCheck,
 	Users,
 	Wallet,
@@ -187,22 +187,23 @@ export default function AdminVisitaDetailPage({
 							</h1>
 							<StatusBadge estado={visita.estado} />
 						</div>
-						<p className="text-gray-400 font-bold flex items-center gap-2 text-[11px] md:text-sm">
-							<QrCode className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500" />
-							ID Pública:{" "}
-							<span className="text-[#4A5D4A] uppercase bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100 font-black">
-								{visita.id_publico || visita.id.split("-")[0]}
+						<p className="text-[#8BA18B] font-bold flex items-center gap-2 mt-1">
+							<Ticket className="h-4 w-4 text-emerald-500" />
+							ID DE CONTROL:{" "}
+							<span className="text-white bg-[#2C3A2C] px-3 py-1 rounded-xl font-black text-lg tracking-wider border border-[#2C3A2C] shadow-sm">
+								{visita.id_publico || "SIN-ID"}
 							</span>
 						</p>
 					</div>
 				</div>
+
 
 				<div className="flex flex-col sm:flex-row items-center gap-3">
 					{(visita.estado === "PENDIENTE" ||
 						visita.estado === "CONFIRMADA") && (
 						<>
 							<Button
-								className="w-full sm:w-auto rounded-xl md:rounded-2xl h-11 md:h-12 px-6 bg-green-600 hover:bg-green-700 text-white font-black text-[10px] md:text-xs uppercase tracking-widest"
+								className="w-full sm:w-auto rounded-xl md:rounded-2xl h-11 md:h-12 px-6 bg-[#2C3A2C] hover:bg-[#1a241a] text-white font-black text-[10px] md:text-xs uppercase tracking-widest transition-all shadow-md active:scale-95"
 								onClick={() =>
 									setConfirmAction({ type: "LIQUID", isOpen: true })
 								}
@@ -215,21 +216,25 @@ export default function AdminVisitaDetailPage({
 								)}
 								Liquidar / Checkout
 							</Button>
-							<Button
-								variant="destructive"
-								className="w-full sm:w-auto rounded-xl md:rounded-2xl h-11 md:h-12 px-6 font-black text-[10px] md:text-xs uppercase tracking-widest"
-								onClick={() =>
-									setConfirmAction({ type: "CANCEL", isOpen: true })
-								}
-								disabled={cancelarVisita.isPending}
-							>
-								{cancelarVisita.isPending ? (
-									<Loader2 className="animate-spin h-4 w-4 mr-2" />
-								) : (
-									<XCircle className="mr-2 h-4 w-4" />
-								)}
-								Anular Visita
-							</Button>
+							
+							{/* No permitir anular si ya está pagada (p011) */}
+							{!visita.pagado && (
+								<Button
+									variant="outline"
+									className="w-full sm:w-auto rounded-xl md:rounded-2xl h-11 md:h-12 px-6 border-red-200 text-red-600 hover:bg-red-50 font-black text-[10px] md:text-xs uppercase tracking-widest transition-all active:scale-95"
+									onClick={() =>
+										setConfirmAction({ type: "CANCEL", isOpen: true })
+									}
+									disabled={cancelarVisita.isPending}
+								>
+									{cancelarVisita.isPending ? (
+										<Loader2 className="animate-spin h-4 w-4 mr-2" />
+									) : (
+										<XCircle className="mr-2 h-4 w-4" />
+									)}
+									Anular Visita
+								</Button>
+							)}
 						</>
 					)}
 					{!visita.pagado && visita.estado !== "CANCELADA" && (
@@ -389,87 +394,102 @@ export default function AdminVisitaDetailPage({
 					{/* LISTA DE INGRESANTES (ADMIN) */}
 					<Card className="border-none shadow-sm bg-white rounded-[32px] md:rounded-[40px] overflow-hidden">
 						<div className="p-6 md:p-8">
-							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+							<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 bg-[#F8FAF8] p-6 rounded-[28px] border border-emerald-50">
 								<div className="flex items-center gap-4">
-									<div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center">
+									<div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/20">
 										<Users className="h-5 w-5 md:h-6 md:w-6" />
 									</div>
 									<div>
 										<h3 className="text-xl md:text-2xl font-black text-[#2C3A2C] tracking-tight">
-											Lista de Ingresantes
+											Gestión de Grupo
 										</h3>
-										<p className="text-gray-400 font-bold text-[11px] md:text-sm">
-											Control de acceso y acompañantes
+										<p className="text-[#8BA18B] font-bold text-[11px] md:text-sm">
+											{ingresantes.length} personas registradas
 										</p>
 									</div>
 								</div>
 								{(visita.estado === "PENDIENTE" ||
-									visita.estado === "CONFIRMADA") && (
+									visita.estado === "CONFIRMADA" ||
+									visita.estado === "EN_CURSO") && (
 									<Button
-										variant="outline"
-										className="w-full sm:w-auto rounded-xl border-amber-200 text-amber-700 hover:bg-amber-50 font-black text-[10px] uppercase gap-2 h-11 px-6"
+										variant="default"
+										className="w-full sm:w-auto rounded-xl bg-white border border-emerald-100 text-emerald-700 hover:bg-emerald-50 font-black text-[10px] uppercase gap-2 h-11 px-6 shadow-sm transition-all active:scale-95"
 										onClick={() => setIsEditModalOpen(true)}
 									>
-										<Edit2 className="h-3.5 w-3.5" /> Gestionar Lista
+										<Edit2 className="h-3.5 w-3.5" /> Editar Integrantes
 									</Button>
 								)}
 							</div>
 
-							<div className="grid grid-cols-1 gap-3">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								{ingresantes.map((ing: any) => (
 									<div
 										key={ing.id}
-										className="p-4 rounded-[24px] border border-gray-100 bg-white hover:border-primary/20 transition-all flex items-center justify-between"
+										className={`p-5 rounded-[28px] border transition-all flex flex-col gap-4 ${
+											ing.es_listado 
+											? 'border-gray-100 bg-white hover:border-emerald-200 hover:shadow-md' 
+											: 'border-red-50 bg-red-50/30 opacity-70'
+										}`}
 									>
-										<div className="flex items-center gap-4">
-											<div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center font-black text-[#2C3A2C]">
-												{ing.persona.nombres[0]}
-											</div>
-											<div>
-												<div className="flex items-center gap-2">
-													<p className="font-black text-[#2C3A2C] text-sm group-hover:text-primary transition-colors">
-														{ing.persona.nombre_completo}
-													</p>
-													{!ing.es_listado && (
-														<Badge
-															variant="outline"
-															className="text-[9px] bg-red-50 text-red-600 border-red-100 font-bold uppercase py-0 px-1.5 h-4"
-														>
-															Removido
-														</Badge>
-													)}
-													{ing.reembolso && (
-														<Badge
-															variant="outline"
-															className="text-[9px] bg-amber-50 text-amber-600 border-amber-100 font-bold uppercase py-0 px-1.5 h-4"
-														>
-															P. Reembolso
-														</Badge>
-													)}
+										<div className="flex items-center justify-between">
+											<div className="flex items-center gap-3">
+												<div className={`h-10 w-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm ${
+													ing.es_listado ? 'bg-emerald-50 text-emerald-700' : 'bg-red-100 text-red-700'
+												}`}>
+													{ing.persona.nombres[0]}
 												</div>
-												<p className="text-[10px] font-bold text-gray-400 uppercase">
-													DNI: {ing.persona.dni} •{" "}
-													{ing.tipo_entrada?.nombre || "General"}
+												<div>
+													<div className="flex items-center gap-2">
+														<p className="font-black text-[#2C3A2C] text-sm truncate max-w-[120px] sm:max-w-none">
+															{ing.persona.nombre_completo}
+														</p>
+													</div>
+													<p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+														DNI: {ing.persona.dni}
+													</p>
+												</div>
+											</div>
+											<div className="text-right">
+												<span className="block font-black text-xs text-emerald-700">
+													{ing.con_cupon
+														? "CUPÓN"
+														: `S/ ${Number(ing.precio_entrada).toFixed(2)}`}
+												</span>
+												<p className="text-[8px] font-bold text-gray-300 uppercase truncate">
+													{ing.tipo_entrada?.nombre || "GENERAL"}
 												</p>
 											</div>
 										</div>
-										<div className="flex items-center gap-4">
-											<span className="font-black text-xs text-primary">
-												{ing.con_cupon
-													? "LIBRE"
-													: `S/ ${Number(ing.precio_entrada).toFixed(2)}`}
-											</span>
+
+										<div className="flex items-center justify-between pt-2 border-t border-gray-50">
+											<div className="flex gap-2">
+												{!ing.es_listado && (
+													<Badge
+														variant="outline"
+														className="text-[8px] bg-red-50 text-red-600 border-red-100 font-bold uppercase"
+													>
+														Removido
+													</Badge>
+												)}
+												{ing.reembolso && (
+													<Badge
+														variant="outline"
+														className="text-[8px] bg-amber-50 text-amber-600 border-amber-100 font-bold uppercase"
+													>
+														Reembolso
+													</Badge>
+												)}
+											</div>
 											{ing.fecha_checkin ? (
-												<Badge className="bg-green-50 text-green-700 border-none text-[8px] font-black uppercase">
-													Ingresó
-												</Badge>
+												<div className="flex items-center gap-1.5 text-emerald-600">
+													<CheckCircle2 className="h-3.5 w-3.5" />
+													<span className="text-[9px] font-black uppercase">En Club</span>
+												</div>
 											) : (
-												<Badge
-													variant="outline"
-													className="text-[8px] font-black uppercase text-gray-300"
-												>
-													Pendiente
-												</Badge>
+												<div className="flex items-center gap-1.5 text-gray-300">
+													<Clock className="h-3.5 w-3.5" />
+													<span className="text-[9px] font-black uppercase tracking-tighter">Esperando</span>
+												</div>
 											)}
 										</div>
 									</div>
@@ -477,6 +497,7 @@ export default function AdminVisitaDetailPage({
 							</div>
 						</div>
 					</Card>
+
 				</div>
 
 				{/* LATERAL (ADMIN) */}

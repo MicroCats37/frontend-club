@@ -242,7 +242,12 @@ export function StepDateSelection() {
 		if (date < today) return true;
 
 		const day = getISODay(date);
-		if (day === 1 || day === 7) return true;
+		
+		// Lunes siempre está bloqueado (mantenimiento)
+		if (day === 1) return true;
+		
+		// Domingos solo bloqueados para BUNGALOW (pernoctación)
+		if (day === 7 && tipoVisita === "BUNGALOW") return true;
 
 		if (tipoVisita === "BUNGALOW") {
 			if (!activeTariff) return true;
@@ -415,7 +420,7 @@ export function StepDateSelection() {
 									<p className="font-bold text-[#2C3A2C] mb-1">Aviso</p>
 									<p className="text-muted-foreground leading-relaxed text-xs">
 										{tipoVisita === "PASE_DIARIO"
-											? "Los pases solo son válidos para el día seleccionado."
+											? "Los lunes el centro permanece cerrado por mantenimiento. Los pases son válidos para el resto de días seleccionados."
 											: "Lunes y Domingos no se atiende pernoctación. Los paquetes se seleccionan automáticamente por bloque."}
 									</p>
 								</div>

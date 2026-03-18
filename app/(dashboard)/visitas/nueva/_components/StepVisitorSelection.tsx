@@ -125,6 +125,7 @@ export function StepVisitorSelection() {
 		} else if (defaultTipoPaseId) {
 			addGuest({
 				persona_id: persona.id,
+				dni: persona.dni,
 				nombre_completo: persona.nombre_completo,
 				tipo_entrada_id: defaultTipoPaseId,
 				con_cupon: false,
@@ -392,8 +393,8 @@ export function StepVisitorSelection() {
 															className={`text-xl font-black ${isPriceFree ? "text-green-600" : "text-[#2C3A2C] tracking-tighter"}`}
 														>
 															{isPriceFree
-																? "S/ 0.00"
-																: `S/ ${selection.total_persona.toFixed(2)}`}
+																? "S/ 0"
+																: `S/ ${Math.ceil(selection.total_persona)}`}
 														</span>
 													</div>
 													<p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
@@ -475,9 +476,12 @@ export function StepVisitorSelection() {
 										className={`text-3xl sm:text-4xl font-black tracking-tighter transition-colors ${needsUpdate ? "text-amber-500" : "text-[#2C3A2C]"}`}
 									>
 										S/{" "}
-										{guestSelections
-											.reduce((acc, g) => acc + (g.total_persona || 0), 0)
-											.toFixed(2)}
+										{Math.ceil(
+											guestSelections.reduce(
+												(acc, g) => acc + (g.total_persona || 0),
+												0,
+											),
+										)}
 									</p>
 								</div>
 

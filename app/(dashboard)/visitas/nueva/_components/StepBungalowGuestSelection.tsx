@@ -79,6 +79,7 @@ export function StepBungalowGuestSelection() {
 
 			addGuest({
 				persona_id: persona.id,
+				dni: persona.dni,
 				nombre_completo: persona.nombre_completo,
 				tipo_entrada_id: defaultForBungalow,
 				con_cupon: false,

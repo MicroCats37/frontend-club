@@ -3,7 +3,13 @@
 import { Loader2, Plus, RefreshCw, Ticket, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
 	type TipoEntradaMatriz,
@@ -99,7 +105,10 @@ export function TipoEntradaMatrixCard({ tipo }: TipoEntradaMatrixCardProps) {
 			<CardContent className="p-0">
 				<div className="divide-y divide-[#F0F4F0]">
 					{localTipo.categorias.map((cat) => (
-						<div key={cat.categoria} className="p-8 space-y-6 group/cat hover:bg-[#FDFDFD] transition-colors">
+						<div
+							key={cat.categoria}
+							className="p-8 space-y-6 group/cat hover:bg-[#FDFDFD] transition-colors"
+						>
 							<div className="flex items-center justify-between">
 								<div className="space-y-1">
 									<h4 className="text-lg font-black text-[#2C3A2C]">
@@ -196,7 +205,9 @@ export function TipoEntradaMatrixCard({ tipo }: TipoEntradaMatrixCardProps) {
 															variant="ghost"
 															size="icon"
 															className="h-9 w-9 text-destructive/40 hover:text-destructive hover:bg-destructive/10 rounded-full opacity-0 group-hover/range:opacity-100 transition-all duration-300 hover:rotate-90"
-															onClick={() => handleRemoveRange(cat.categoria, idx)}
+															onClick={() =>
+																handleRemoveRange(cat.categoria, idx)
+															}
 														>
 															<Trash2 className="h-4.5 w-4.5" />
 														</Button>

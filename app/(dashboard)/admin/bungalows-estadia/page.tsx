@@ -237,7 +237,9 @@ export default function BungalowEstadiaPage() {
 																{/* Fondo sutil usando el color de estado */}
 																<div
 																	className="absolute inset-0 opacity-[0.03]"
-																	style={{ backgroundColor: noche.color_status }}
+																	style={{
+																		backgroundColor: noche.color_status,
+																	}}
 																/>
 
 																<div className="relative z-10">

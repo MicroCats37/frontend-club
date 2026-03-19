@@ -4,12 +4,11 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
 	AlertCircle,
+	CalendarDays,
 	CheckCircle2,
 	Clock,
 	CreditCard,
 	LayoutList,
-	Edit2,
-	CalendarDays,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -86,10 +85,13 @@ export function StepSuccess() {
 						</div>
 
 						<h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight mb-3 leading-tight">
-							¡Registro<br className="hidden md:block" /> Terminado!
+							¡Registro
+							<br className="hidden md:block" /> Terminado!
 						</h2>
 						<p className="text-emerald-100/40 font-bold text-xs max-w-[200px] leading-relaxed">
-							{tipoVisita === "BUNGALOW" ? "Estadía pre-registrada con éxito." : "Pase diario generado con éxito."}
+							{tipoVisita === "BUNGALOW"
+								? "Estadía pre-registrada con éxito."
+								: "Pase diario generado con éxito."}
 						</p>
 					</div>
 				</div>
@@ -128,15 +130,28 @@ export function StepSuccess() {
 
 							<div className="flex flex-wrap gap-2">
 								{tipoVisita === "PASE_DIARIO" ? (
-									<Badge variant="outline" className="bg-white border-gray-200 text-[#2C3A2C] text-xs font-bold px-4 py-2 rounded-xl shadow-sm">
-										{fechas.start ? format(new Date(fechas.start), "eeee dd 'de' MMMM", { locale: es }) : "—"}
+									<Badge
+										variant="outline"
+										className="bg-white border-gray-200 text-[#2C3A2C] text-xs font-bold px-4 py-2 rounded-xl shadow-sm"
+									>
+										{fechas.start
+											? format(new Date(fechas.start), "eeee dd 'de' MMMM", {
+													locale: es,
+												})
+											: "—"}
 									</Badge>
 								) : (
-									[...noches].sort((a, b) => a.getTime() - b.getTime()).map((d, i) => (
-										<Badge key={i} variant="outline" className="bg-white border-gray-200 text-[#2C3A2C] text-xs font-bold px-3 py-2 rounded-xl shadow-sm">
-											{format(d, "dd MMM", { locale: es })}
-										</Badge>
-									))
+									[...noches]
+										.sort((a, b) => a.getTime() - b.getTime())
+										.map((d, i) => (
+											<Badge
+												key={i}
+												variant="outline"
+												className="bg-white border-gray-200 text-[#2C3A2C] text-xs font-bold px-3 py-2 rounded-xl shadow-sm"
+											>
+												{format(d, "dd MMM", { locale: es })}
+											</Badge>
+										))
 								)}
 							</div>
 						</div>
@@ -151,7 +166,9 @@ export function StepSuccess() {
 											Fecha Límite Pago
 										</p>
 										<p className="text-rose-900 text-xs font-bold">
-											{format(new Date(fechaLimitePago), "PP p", { locale: es })}
+											{format(new Date(fechaLimitePago), "PP p", {
+												locale: es,
+											})}
 										</p>
 									</div>
 								</div>
@@ -173,7 +190,9 @@ export function StepSuccess() {
 						{/* Small Warning */}
 						<div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
 							<p className="text-[#2C3A2C] text-xs font-bold leading-relaxed">
-								<span className="text-amber-600 font-black uppercase text-[10px] tracking-wider block mb-1">Importante</span>
+								<span className="text-amber-600 font-black uppercase text-[10px] tracking-wider block mb-1">
+									Importante
+								</span>
 								El registro se confirma con el pago. Una vez pagado, no podrás{" "}
 								{createdVisitId && (
 									<button
@@ -184,8 +203,8 @@ export function StepSuccess() {
 										editar integrantes
 									</button>
 								)}
-								{!createdVisitId && "editar integrantes"}{" "}
-								(excepto en bungalows).
+								{!createdVisitId && "editar integrantes"} (excepto en
+								bungalows).
 							</p>
 						</div>
 					</div>

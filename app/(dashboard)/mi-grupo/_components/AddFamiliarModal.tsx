@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
 	Calendar,
 	Fingerprint,
@@ -9,13 +10,16 @@ import {
 	Users,
 	VenusAndMars,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { GenericForm } from "@/components/generic/genericForm/GenericForm";
-import {
-	type FormField,
-	type FormSection,
+import type {
+	FormField,
+	FormSection,
 } from "@/components/generic/genericForm/GenericInput";
+import { CardFieldWrapper } from "@/components/generic/genericForm/ui/CardFieldWrapper";
 import {
 	Dialog,
 	DialogContent,
@@ -23,7 +27,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	useAddFamiliar,
 	useBuscarPersona,
@@ -31,10 +34,6 @@ import {
 } from "@/hooks/auth/useGrupoActions";
 import { buildApiPayload } from "@/utils/payload/format";
 import { SmartFileField } from "./SmartFileField";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CardFieldWrapper } from "@/components/generic/genericForm/ui/CardFieldWrapper";
 
 const registrarFamiliarSchema = z.object({
 	persona: z.object({
@@ -90,17 +89,25 @@ export function AddFamiliarModal({
 	const [personaEncontrada, setPersonaEncontrada] = useState(false);
 	const [yaEnGrupo, setYaEnGrupo] = useState(false);
 	const [esTitular, setEsTitular] = useState(false);
-	const [tienePrivilegiosIndependientes, setTienePrivilegiosIndependientes] = useState(false);
+	const [tienePrivilegiosIndependientes, setTienePrivilegiosIndependientes] =
+		useState(false);
 
 	const { mutateAsync: addFamiliar, isPending: isAdding } = useAddFamiliar();
 	const { mutateAsync: vincularPorDni, isPending: isLinking } =
 		useVincularPorDni();
-	const { mutateAsync: buscarPersona, isPending: isSearching } = useBuscarPersona();
+	const { mutateAsync: buscarPersona, isPending: isSearching } =
+		useBuscarPersona();
 
 	const registrarForm = useForm<RegistrarFamiliarValues>({
 		resolver: zodResolver(registrarFamiliarSchema),
 		defaultValues: {
-			persona: { dni: "", nombres: "", apellidos: "", fecha_nacimiento: "", genero: "M" as any },
+			persona: {
+				dni: "",
+				nombres: "",
+				apellidos: "",
+				fecha_nacimiento: "",
+				genero: "M" as any,
+			},
 			parentesco: "HIJO",
 		},
 	});
@@ -137,7 +144,13 @@ export function AddFamiliarModal({
 				vincularForm.setValue("parentesco", registrarParentesco);
 			}
 		}
-	}, [dniValue, vincularDniValue, personaEncontrada, registrarForm, vincularForm]);
+	}, [
+		dniValue,
+		vincularDniValue,
+		personaEncontrada,
+		registrarForm,
+		vincularForm,
+	]);
 
 	// Efecto de búsqueda (basado en el form activo)
 	const activeDni = personaEncontrada ? vincularDniValue : dniValue;
@@ -150,24 +163,30 @@ export function AddFamiliarModal({
 					setPersonaEncontrada(true);
 					setYaEnGrupo(res.ya_en_grupo);
 					setEsTitular(res.es_titular);
-					setTienePrivilegiosIndependientes(res.tiene_privilegios_independientes);
-					
+					setTienePrivilegiosIndependientes(
+						res.tiene_privilegios_independientes,
+					);
+
 					// Pre-llenar vincular form
 					vincularForm.setValue("persona.dni", activeDni);
-					
+
 					if (res.ya_en_grupo) {
 						toast.info("Esta persona ya forma parte de tu grupo.");
 					} else if (res.es_titular || res.tiene_privilegios_independientes) {
-						toast.warning("Esta persona ya tiene acceso propio y no puede ser familiar con beneficios.");
+						toast.warning(
+							"Esta persona ya tiene acceso propio y no puede ser familiar con beneficios.",
+						);
 					} else {
-						toast.success(`Persona encontrada: ${res.nombres} ${res.apellidos}`);
+						toast.success(
+							`Persona encontrada: ${res.nombres} ${res.apellidos}`,
+						);
 					}
 				} else {
 					setPersonaEncontrada(false);
 					setYaEnGrupo(false);
 					setEsTitular(false);
 					setTienePrivilegiosIndependientes(false);
-					// Si veníamos de una persona encontrada y ahora no lo está, 
+					// Si veníamos de una persona encontrada y ahora no lo está,
 					// nos aseguramos que el registrarForm tenga el DNI
 					registrarForm.setValue("persona.dni", activeDni);
 				}
@@ -179,7 +198,13 @@ export function AddFamiliarModal({
 			setEsTitular(false);
 			setTienePrivilegiosIndependientes(false);
 		}
-	}, [activeDni, buscarPersona]);
+	}, [
+		activeDni,
+		buscarPersona, // Si veníamos de una persona encontrada y ahora no lo está,
+		// nos aseguramos que el registrarForm tenga el DNI
+		registrarForm, // Pre-llenar vincular form
+		vincularForm,
+	]);
 
 	const _isPending = isAdding || isLinking || isSearching;
 
@@ -206,7 +231,9 @@ export function AddFamiliarModal({
 					placeholder: "12345678",
 					required: true,
 					containerClassName: "col-span-12",
-					helperText: isSearching ? "Buscando..." : "Ingrese 8 dígitos para buscar",
+					helperText: isSearching
+						? "Buscando..."
+						: "Ingrese 8 dígitos para buscar",
 				},
 				{
 					name: "persona.nombres",
@@ -302,7 +329,7 @@ export function AddFamiliarModal({
 		},
 	];
 
-	const quickAddFields: FormField[] = [
+	const _quickAddFields: FormField[] = [
 		{
 			name: "dni",
 			label: "DNI de la Persona",
@@ -337,7 +364,9 @@ export function AddFamiliarModal({
 			registrarForm.reset();
 			vincularForm.reset();
 		} catch (error: any) {
-			toast.error(error.response?.data?.detail || "Error al registrar familiar.");
+			toast.error(
+				error.response?.data?.detail || "Error al registrar familiar.",
+			);
 		}
 	}
 
@@ -357,7 +386,9 @@ export function AddFamiliarModal({
 			registrarForm.reset();
 			vincularForm.reset();
 		} catch (error: any) {
-			toast.error(error.response?.data?.detail || "Error al vincular familiar.");
+			toast.error(
+				error.response?.data?.detail || "Error al vincular familiar.",
+			);
 		}
 	}
 
@@ -382,19 +413,24 @@ export function AddFamiliarModal({
 					</DialogHeader>
 
 					<div className="mt-4">
-						{personaEncontrada && !yaEnGrupo && !esTitular && !tienePrivilegiosIndependientes && (
-							<div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3 mb-4 flex gap-3 items-center animate-in fade-in slide-in-from-top-4 duration-300">
-								<div className="p-1.5 bg-blue-100 rounded-lg text-blue-600">
-									<Heart className="h-3.5 w-3.5" />
+						{personaEncontrada &&
+							!yaEnGrupo &&
+							!esTitular &&
+							!tienePrivilegiosIndependientes && (
+								<div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3 mb-4 flex gap-3 items-center animate-in fade-in slide-in-from-top-4 duration-300">
+									<div className="p-1.5 bg-blue-100 rounded-lg text-blue-600">
+										<Heart className="h-3.5 w-3.5" />
+									</div>
+									<div>
+										<p className="text-xs text-blue-900 font-bold leading-tight">
+											¡Persona encontrada!
+										</p>
+										<p className="text-[10px] text-blue-700 leading-tight">
+											Esta persona ya existe. Indica el parentesco.
+										</p>
+									</div>
 								</div>
-								<div>
-									<p className="text-xs text-blue-900 font-bold leading-tight">¡Persona encontrada!</p>
-									<p className="text-[10px] text-blue-700 leading-tight">
-										Esta persona ya existe. Indica el parentesco.
-									</p>
-								</div>
-							</div>
-						)}
+							)}
 
 						{(esTitular || tienePrivilegiosIndependientes) && !yaEnGrupo && (
 							<div className="bg-red-50/50 border border-red-100 rounded-xl p-3 mb-4 flex gap-3 items-center animate-in fade-in slide-in-from-top-4 duration-300">
@@ -402,9 +438,13 @@ export function AddFamiliarModal({
 									<Info className="h-3.5 w-3.5" />
 								</div>
 								<div>
-									<p className="text-xs text-red-900 font-bold leading-tight">Acceso independiente detectado</p>
+									<p className="text-xs text-red-900 font-bold leading-tight">
+										Acceso independiente detectado
+									</p>
 									<p className="text-[10px] text-red-700 leading-tight">
-										Esta persona es titular o ya tiene privilegios. No puede ser familiar con beneficios. Agréguela como contacto desde la sección de Invitados.
+										Esta persona es titular o ya tiene privilegios. No puede ser
+										familiar con beneficios. Agréguela como contacto desde la
+										sección de Invitados.
 									</p>
 								</div>
 							</div>
@@ -416,7 +456,9 @@ export function AddFamiliarModal({
 									<Heart className="h-3.5 w-3.5" />
 								</div>
 								<div>
-									<p className="text-xs text-amber-900 font-bold leading-tight">Ya en el grupo</p>
+									<p className="text-xs text-amber-900 font-bold leading-tight">
+										Ya en el grupo
+									</p>
 									<p className="text-[10px] text-amber-700 leading-tight">
 										Esta persona ya forma parte de tus contactos.
 									</p>
@@ -430,9 +472,16 @@ export function AddFamiliarModal({
 								schema={vincularFamiliarSchema}
 								formSections={vincularSections}
 								onSubmit={onVincularSubmit}
-								submitButtonText={_isPending ? "PROCESANDO…" : "VINCULAR PERSONA"}
+								submitButtonText={
+									_isPending ? "PROCESANDO…" : "VINCULAR PERSONA"
+								}
 								isLoading={_isPending}
-								isDisabled={yaEnGrupo || isSearching || esTitular || tienePrivilegiosIndependientes}
+								isDisabled={
+									yaEnGrupo ||
+									isSearching ||
+									esTitular ||
+									tienePrivilegiosIndependientes
+								}
 								globalFieldWrapper={CardFieldWrapper}
 								onCancel={() => {
 									onOpenChange(false);
@@ -446,28 +495,37 @@ export function AddFamiliarModal({
 								schema={registrarFamiliarSchema}
 								formSections={registrarSections}
 								onSubmit={onRegistrarSubmit}
-								submitButtonText={_isPending ? "PROCESANDO…" : "REGISTRAR FAMILIAR"}
+								submitButtonText={
+									_isPending ? "PROCESANDO…" : "REGISTRAR FAMILIAR"
+								}
 								isLoading={_isPending}
-								isDisabled={yaEnGrupo || isSearching || esTitular || tienePrivilegiosIndependientes}
+								isDisabled={
+									yaEnGrupo ||
+									isSearching ||
+									esTitular ||
+									tienePrivilegiosIndependientes
+								}
 								globalFieldWrapper={CardFieldWrapper}
 								onCancel={() => {
 									onOpenChange(false);
 									registrarForm.reset();
 									vincularForm.reset();
 								}}
-								customFields={{
-									foto_frontal: (methods: any) => (
-										<div className="mt-2 text-left">
-											<SmartFileField
-												control={methods.control}
-												name="foto_frontal"
-												label="Foto Frontal DNI"
-												error={methods.formState.errors.foto_frontal as any}
-												description="Sube una foto clara del frente del documento."
-											/>
-										</div>
-									),
-								} as any}
+								customFields={
+									{
+										foto_frontal: (methods: any) => (
+											<div className="mt-2 text-left">
+												<SmartFileField
+													control={methods.control}
+													name="foto_frontal"
+													label="Foto Frontal DNI"
+													error={methods.formState.errors.foto_frontal as any}
+													description="Sube una foto clara del frente del documento."
+												/>
+											</div>
+										),
+									} as any
+								}
 							/>
 						)}
 					</div>

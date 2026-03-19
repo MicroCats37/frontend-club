@@ -4,14 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	Eye,
 	Filter,
-	Home,
-	Plus,
 	RefreshCw,
 	Search,
 	Ticket,
 	UserCheck,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pagination } from "@/components/generic/Pagination";
@@ -43,7 +40,6 @@ export default function AdminVisitasPage() {
 	   Acciones removidas de la lista principal para limpiar la UI. 
 	   Ahora se gestionan directamente en la página de detalle.
 	*/
-
 
 	const debouncedDni = useDebounce(dni, 500);
 	const debouncedIdPublico = useDebounce(idPublico, 500);
@@ -132,7 +128,6 @@ export default function AdminVisitasPage() {
 	const handleRowClick = (id: string) => {
 		router.push(`/admin/visitas/${id}`);
 	};
-
 
 	return (
 		<div className="space-y-8 animate-in fade-in duration-500">
@@ -339,8 +334,6 @@ export default function AdminVisitasPage() {
 					totalItems={visitsData.count}
 				/>
 			)}
-
-
 		</div>
 	);
 }

@@ -1,7 +1,9 @@
+"use client";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 
 interface UpdateVisitaPasesPayload {
 	fecha_inicio?: string;
@@ -48,7 +50,7 @@ export function useUpdateVisitaPases(visitaId: string) {
 			toast.success("Lista de invitados actualizada correctamente");
 		},
 		onError: (error) => {
-			toast.error(handleApiError(error));
+			toast.error(getErrorMessage(error));
 		},
 	});
 }
@@ -69,7 +71,7 @@ export function useUpdateVisitaBungalow(visitaId: string) {
 			toast.success("Lista de invitados (Bungalow) actualizada correctamente");
 		},
 		onError: (error) => {
-			toast.error(handleApiError(error));
+			toast.error(getErrorMessage(error));
 		},
 	});
 }

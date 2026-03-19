@@ -20,7 +20,7 @@ export function AuthShell({ children, title, description }: AuthShellProps) {
 				{/* Efectos de fondo premium */}
 				<div className="absolute top-0 right-0 w-[800px] h-[800px] bg-emerald-500/10 rounded-full -mr-96 -mt-96 blur-[120px] animate-pulse duration-[10s]" />
 				<div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-primary/20 rounded-full -ml-48 -mb-48 blur-[100px] animate-pulse duration-[8s]" />
-				
+
 				{/* Composición de Iconos / Pattern */}
 				<div className="relative z-10 grid grid-cols-2 gap-12 opacity-10">
 					<Trees className="w-24 h-24 text-white stroke-[1] -rotate-12" />
@@ -44,7 +44,8 @@ export function AuthShell({ children, title, description }: AuthShellProps) {
 						<span className="text-emerald-400">Comunidad.</span>
 					</h2>
 					<p className="text-emerald-100/60 font-medium text-lg max-w-md">
-						Un espacio diseñado para el bienestar de los ingenieros y sus familias.
+						Un espacio diseñado para el bienestar de los ingenieros y sus
+						familias.
 					</p>
 				</div>
 			</div>
@@ -53,7 +54,7 @@ export function AuthShell({ children, title, description }: AuthShellProps) {
 			<div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative overflow-hidden bg-[#FDFEFC]">
 				{/* Elemento de brillo superior */}
 				<div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-				
+
 				<div className="w-full max-w-[420px] z-10 space-y-12">
 					{/* Branding Mobile/Compact */}
 					<div className="animate-in fade-in slide-in-from-bottom-4 duration-700">

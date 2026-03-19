@@ -10,8 +10,8 @@ import {
 	ShieldCheck,
 	Ticket,
 	TreeDeciduous,
-	Users,
 	UserCircle,
+	Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -155,7 +155,8 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 								</p>
 								<div className="flex items-center gap-1.5">
 									<p className="text-[10px] font-bold text-primary uppercase tracking-tight">
-										{user.categoria || (user.cip ? "Colegiado" : "Personal Staff")}
+										{user.categoria ||
+											(user.cip ? "Colegiado" : "Personal Staff")}
 									</p>
 									{user.cip && (
 										<span className="text-[10px] text-[#8BA18B]">

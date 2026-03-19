@@ -242,10 +242,10 @@ export function StepDateSelection() {
 		if (date < today) return true;
 
 		const day = getISODay(date);
-		
+
 		// Lunes siempre está bloqueado (mantenimiento)
 		if (day === 1) return true;
-		
+
 		// Domingos solo bloqueados para BUNGALOW (pernoctación)
 		if (day === 7 && tipoVisita === "BUNGALOW") return true;
 

@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useApiUpdate } from "@/hooks/useApiUpdate";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 
 export function useVisitaActions(defaultVisitaId?: string) {
 	const queryClient = useQueryClient();
@@ -63,7 +63,7 @@ export function useVisitaActions(defaultVisitaId?: string) {
 			toast.success("Visita cancelada con éxito");
 			invalidate(id);
 		},
-		onError: (err) => toast.error(handleApiError(err)),
+		onError: (err) => toast.error(getErrorMessage(err)),
 	});
 
 	/**
@@ -81,7 +81,7 @@ export function useVisitaActions(defaultVisitaId?: string) {
 			toast.success("Estadía liquidada (Checkout finalizado)");
 			invalidate(id);
 		},
-		onError: (err) => toast.error(handleApiError(err)),
+		onError: (err) => toast.error(getErrorMessage(err)),
 	});
 
 	return {

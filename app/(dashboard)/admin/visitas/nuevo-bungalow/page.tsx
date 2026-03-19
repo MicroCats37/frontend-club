@@ -425,7 +425,6 @@ export default function NuevoBungalowPage() {
 																	>
 																		<div className="flex items-center gap-2">
 																			<span>{cat.nombre}</span>
-																			
 																		</div>
 																	</SelectItem>
 																))}

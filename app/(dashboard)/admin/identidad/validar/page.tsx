@@ -33,7 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useApiCreate } from "@/hooks/useApiCreate";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 import { resolveImageUrl } from "@/lib/utils";
 import {
 	PaginatedValidacionSchema,
@@ -89,7 +89,7 @@ export default function ValidacionIdentidadPage() {
 			refetch();
 			setSelectedItem(null);
 		} catch (error) {
-			const message = handleApiError(error);
+			const message = getErrorMessage(error);
 			toast.error(message);
 		}
 	};
@@ -101,7 +101,7 @@ export default function ValidacionIdentidadPage() {
 			refetch();
 			setSelectedItem(null);
 		} catch (error) {
-			const message = handleApiError(error);
+			const message = getErrorMessage(error);
 			toast.error(message);
 		}
 	};
@@ -123,7 +123,7 @@ export default function ValidacionIdentidadPage() {
 			setIsRejecting(false);
 			setRejectionReason("");
 		} catch (error) {
-			const message = handleApiError(error);
+			const message = getErrorMessage(error);
 			toast.error(message);
 		}
 	};

@@ -3,7 +3,7 @@ import type { AxiosError, AxiosRequestConfig } from "axios";
 import { toast } from "sonner";
 import type { ZodType } from "zod";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 import { buildApiPayload } from "@/utils/payload/format";
 
 type UpdateVariables<TPayload> = { id: number | string; data: TPayload };
@@ -36,7 +36,7 @@ export function useApiUpdate<TData = unknown, TPayload = unknown>({
 				return schema ? schema.parse(responseData) : (responseData as TData);
 			} catch (error) {
 				// Captura errores de validación de Django (DRF)
-				const cleanMessage = handleApiError(error);
+				const cleanMessage = getErrorMessage(error);
 				toast.error(cleanMessage);
 				throw new Error(cleanMessage);
 			}

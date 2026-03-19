@@ -1,22 +1,24 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
 	Calendar,
 	Fingerprint,
-	Info,
-	Plus,
 	Tag,
 	User,
 	Users,
 	VenusAndMars,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 import { GenericForm } from "@/components/generic/genericForm/GenericForm";
-import {
-	type FormField,
-	type FormSection,
+import type {
+	FormField,
+	FormSection,
 } from "@/components/generic/genericForm/GenericInput";
+import { CardFieldWrapper } from "@/components/generic/genericForm/ui/CardFieldWrapper";
 import {
 	Dialog,
 	DialogContent,
@@ -24,7 +26,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	useAddContacto,
 	useBuscarPersona,
@@ -32,10 +33,6 @@ import {
 } from "@/hooks/auth/useGrupoActions";
 import { buildApiPayload } from "@/utils/payload/format";
 import { SmartFileField } from "./SmartFileField";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CardFieldWrapper } from "@/components/generic/genericForm/ui/CardFieldWrapper";
 
 const registrarInvitadoSchema = z.object({
 	persona: z.object({
@@ -94,12 +91,19 @@ export function AddInvitadoModal({
 	const { mutateAsync: addContacto, isPending: isAdding } = useAddContacto();
 	const { mutateAsync: vincularPorDni, isPending: isLinking } =
 		useVincularPorDni();
-	const { mutateAsync: buscarPersona, isPending: isSearching } = useBuscarPersona();
+	const { mutateAsync: buscarPersona, isPending: isSearching } =
+		useBuscarPersona();
 
 	const registrarForm = useForm<RegistrarInvitadoValues>({
 		resolver: zodResolver(registrarInvitadoSchema),
 		defaultValues: {
-			persona: { dni: "", nombres: "", apellidos: "", fecha_nacimiento: "", genero: "M" as any },
+			persona: {
+				dni: "",
+				nombres: "",
+				apellidos: "",
+				fecha_nacimiento: "",
+				genero: "M" as any,
+			},
 			etiqueta: "Invitado",
 		},
 	});
@@ -136,7 +140,13 @@ export function AddInvitadoModal({
 				vincularForm.setValue("etiqueta", registrarEtiqueta);
 			}
 		}
-	}, [dniValue, vincularDniValue, personaEncontrada, registrarForm, vincularForm]);
+	}, [
+		dniValue,
+		vincularDniValue,
+		personaEncontrada,
+		registrarForm,
+		vincularForm,
+	]);
 
 	// Efecto de búsqueda (basado en el form activo)
 	const activeDni = personaEncontrada ? vincularDniValue : dniValue;
@@ -148,19 +158,21 @@ export function AddInvitadoModal({
 				if (res.encontrado) {
 					setPersonaEncontrada(true);
 					setYaEnGrupo(res.ya_en_grupo);
-					
+
 					// Pre-llenar vincular form
 					vincularForm.setValue("persona.dni", activeDni);
-					
+
 					if (res.ya_en_grupo) {
 						toast.info("Esta persona ya forma parte de tu grupo.");
 					} else {
-						toast.success(`Persona encontrada: ${res.nombres} ${res.apellidos}`);
+						toast.success(
+							`Persona encontrada: ${res.nombres} ${res.apellidos}`,
+						);
 					}
 				} else {
 					setPersonaEncontrada(false);
 					setYaEnGrupo(false);
-					// Si veníamos de una persona encontrada y ahora no lo está, 
+					// Si veníamos de una persona encontrada y ahora no lo está,
 					// nos aseguramos que el registrarForm tenga el DNI
 					registrarForm.setValue("persona.dni", activeDni);
 				}
@@ -170,7 +182,13 @@ export function AddInvitadoModal({
 			setPersonaEncontrada(false);
 			setYaEnGrupo(false);
 		}
-	}, [activeDni, buscarPersona]);
+	}, [
+		activeDni,
+		buscarPersona, // Si veníamos de una persona encontrada y ahora no lo está,
+		// nos aseguramos que el registrarForm tenga el DNI
+		registrarForm, // Pre-llenar vincular form
+		vincularForm,
+	]);
 
 	const _isPending = isAdding || isLinking || isSearching;
 
@@ -188,7 +206,9 @@ export function AddInvitadoModal({
 					placeholder: "12345678",
 					required: true,
 					containerClassName: "col-span-12",
-					helperText: isSearching ? "Buscando..." : "Ingrese 8 dígitos para buscar",
+					helperText: isSearching
+						? "Buscando..."
+						: "Ingrese 8 dígitos para buscar",
 				},
 				{
 					name: "persona.nombres",
@@ -284,7 +304,7 @@ export function AddInvitadoModal({
 		},
 	];
 
-	const quickAddFields: FormField[] = [
+	const _quickAddFields: FormField[] = [
 		{
 			name: "dni",
 			label: "DNI de la Persona",
@@ -321,7 +341,9 @@ export function AddInvitadoModal({
 			registrarForm.reset();
 			vincularForm.reset();
 		} catch (error: any) {
-			toast.error(error.response?.data?.detail || "Error al registrar invitado.");
+			toast.error(
+				error.response?.data?.detail || "Error al registrar invitado.",
+			);
 		}
 	}
 
@@ -372,7 +394,9 @@ export function AddInvitadoModal({
 									<Users className="h-3.5 w-3.5" />
 								</div>
 								<div>
-									<p className="text-xs text-blue-900 font-bold leading-tight">¡Persona encontrada!</p>
+									<p className="text-xs text-blue-900 font-bold leading-tight">
+										¡Persona encontrada!
+									</p>
 									<p className="text-[10px] text-blue-700 leading-tight">
 										Esta persona ya existe. Indica la etiqueta para vincularla.
 									</p>
@@ -386,7 +410,9 @@ export function AddInvitadoModal({
 									<Users className="h-3.5 w-3.5" />
 								</div>
 								<div>
-									<p className="text-xs text-amber-900 font-bold leading-tight">Ya en el grupo</p>
+									<p className="text-xs text-amber-900 font-bold leading-tight">
+										Ya en el grupo
+									</p>
 									<p className="text-[10px] text-amber-700 leading-tight">
 										Esta persona ya forma parte de tus contactos.
 									</p>
@@ -400,7 +426,9 @@ export function AddInvitadoModal({
 								schema={vincularInvitadoSchema}
 								formSections={vincularSections}
 								onSubmit={onVincularSubmit}
-								submitButtonText={_isPending ? "PROCESANDO…" : "VINCULAR PERSONA"}
+								submitButtonText={
+									_isPending ? "PROCESANDO…" : "VINCULAR PERSONA"
+								}
 								isLoading={_isPending}
 								isDisabled={yaEnGrupo || isSearching}
 								globalFieldWrapper={CardFieldWrapper}
@@ -416,7 +444,9 @@ export function AddInvitadoModal({
 								schema={registrarInvitadoSchema}
 								formSections={registrarSections}
 								onSubmit={onRegistrarSubmit}
-								submitButtonText={_isPending ? "PROCESANDO…" : "REGISTRAR INVITADO"}
+								submitButtonText={
+									_isPending ? "PROCESANDO…" : "REGISTRAR INVITADO"
+								}
 								isLoading={_isPending}
 								isDisabled={yaEnGrupo || isSearching}
 								globalFieldWrapper={CardFieldWrapper}
@@ -425,19 +455,21 @@ export function AddInvitadoModal({
 									registrarForm.reset();
 									vincularForm.reset();
 								}}
-								customFields={{
-									foto_frontal: (methods: any) => (
-										<div className="mt-2">
-											<SmartFileField
-												control={methods.control}
-												name="foto_frontal"
-												label="Foto Frontal DNI"
-												error={methods.formState.errors.foto_frontal as any}
-												description="Sube una foto clara del frente del documento."
-											/>
-										</div>
-									),
-								} as any}
+								customFields={
+									{
+										foto_frontal: (methods: any) => (
+											<div className="mt-2">
+												<SmartFileField
+													control={methods.control}
+													name="foto_frontal"
+													label="Foto Frontal DNI"
+													error={methods.formState.errors.foto_frontal as any}
+													description="Sube una foto clara del frente del documento."
+												/>
+											</div>
+										),
+									} as any
+								}
 							/>
 						)}
 					</div>

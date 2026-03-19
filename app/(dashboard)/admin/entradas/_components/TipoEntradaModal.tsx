@@ -3,6 +3,7 @@
 import { Ticket, X } from "lucide-react";
 import { z } from "zod";
 import { GenericForm } from "@/components/generic/genericForm/GenericForm";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -10,7 +11,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { useCategoriaActions } from "@/hooks/visitas/usePasesAdmin";
 
 const TipoEntradaUpdateSchema = z.object({
@@ -83,7 +83,9 @@ export function TipoEntradaModal({
 						initialData={editingCat}
 						onSubmit={handleSubmit}
 						submitButtonText={
-							editingCat?.id ? "Actualizar Configuración" : "Crear Tipo de Entrada"
+							editingCat?.id
+								? "Actualizar Configuración"
+								: "Crear Tipo de Entrada"
 						}
 						onCancel={() => onOpenChange(false)}
 						fields={[

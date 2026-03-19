@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 
 export interface PagoManualPayload {
 	orden_id: string;
@@ -28,7 +28,7 @@ export function usePagoActions() {
 			queryClient.invalidateQueries({ queryKey: ["visita"] });
 		},
 		onError: (err) => {
-			toast.error(handleApiError(err));
+			toast.error(getErrorMessage(err));
 		},
 	});
 

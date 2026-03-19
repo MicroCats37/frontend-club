@@ -1,18 +1,18 @@
 "use client";
 
 import {
+	KeyRound,
 	LayoutDashboard,
 	LogIn,
 	LogOut,
 	TreeDeciduous,
 	UserPlus,
-	KeyRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/useAuthStore";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/useAuthStore";
 
 /**
  * Landing Page Principal - CE CIP Lima
@@ -100,10 +100,12 @@ export default function Home() {
 					{/* Background Decoration */}
 					<div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[120px] rounded-full -z-10" />
 
-					<div className={cn(
-						"space-y-6 text-center max-w-4xl transition-all duration-1000",
-						mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-					)}>
+					<div
+						className={cn(
+							"space-y-6 text-center max-w-4xl transition-all duration-1000",
+							mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+						)}
+					>
 						<div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white border border-[#E0E7E0] shadow-sm rounded-full">
 							<span className="relative flex h-2 w-2">
 								<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
@@ -129,10 +131,12 @@ export default function Home() {
 					</div>
 
 					{/* CTA Grid */}
-					<div className={cn(
-						"mt-12 w-full max-w-2xl transition-all duration-1000 delay-300",
-						mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-					)}>
+					<div
+						className={cn(
+							"mt-12 w-full max-w-2xl transition-all duration-1000 delay-300",
+							mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+						)}
+					>
 						{!isAuthenticated ? (
 							<div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
 								<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -156,7 +160,7 @@ export default function Home() {
 										</Button>
 									</Link>
 								</div>
-								
+
 								<div className="flex justify-center">
 									<Link href="/recuperar">
 										<Button
@@ -190,10 +194,12 @@ export default function Home() {
 					</div>
 
 					{/* Benefits Grid */}
-					<div className={cn(
-						"mt-24 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full transition-all duration-1000 delay-500",
-						mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-					)}>
+					<div
+						className={cn(
+							"mt-24 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full transition-all duration-1000 delay-500",
+							mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8",
+						)}
+					>
 						{[
 							{
 								icon: TreeDeciduous,

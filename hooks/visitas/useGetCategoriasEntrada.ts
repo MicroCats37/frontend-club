@@ -11,18 +11,18 @@ export interface CategoriaEntrada {
 	image_main?: string | null;
 }
 
-export interface PaginatedResponse<T> {
-	results: T[];
-	count: number;
-}
+// Eliminamos la interfaz problemática para ver si es un conflicto externo
+// export type PaginatedCategoriasResponse<T> = {
+// 	results: T[];
+// 	count: number;
+// };
 
 export function useGetCategoriasEntrada() {
-	return useQuery({
+	return useQuery<any>({
 		queryKey: ["admin", "categorias-entrada"],
 		queryFn: async () => {
-			const { data } =
-				await api.get<PaginatedResponse<CategoriaEntrada>>("/api/pases/tipos/");
-			return data;
+			const res = await api.get("/api/pases/tipos/");
+			return res.data;
 		},
 	});
 }

@@ -264,7 +264,7 @@ export function IzipayModal({
 		if (isOpen && ordenId) {
 			handleLaunchIzipay();
 		}
-	}, [isOpen]);
+	}, [isOpen, handleLaunchIzipay, ordenId]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

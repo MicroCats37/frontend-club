@@ -7,7 +7,7 @@ import { useApiCreate } from "@/hooks/useApiCreate";
 import { useApiDelete } from "@/hooks/useApiDelete";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useApiUpdate } from "@/hooks/useApiUpdate";
-import type { PaginatedResponse } from "./useGetCategoriasEntrada";
+// import type { PaginatedCategoriasResponse } from "./useGetCategoriasEntrada";
 
 export interface TarifaEntrada {
 	id: string;
@@ -38,7 +38,7 @@ export interface TipoEntradaMatriz {
 }
 
 export function useGetTarifas(tipoEntradaId?: string) {
-	return useApiQuery<PaginatedResponse<TarifaEntrada>>({
+	return useApiQuery<any>({
 		queryKey: ["admin", "tarifas", tipoEntradaId],
 		url: "/api/pases/tarifas/",
 		params: tipoEntradaId ? { tipo_entrada_id: tipoEntradaId } : {},

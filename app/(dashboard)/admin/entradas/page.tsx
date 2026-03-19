@@ -1,37 +1,12 @@
 "use client";
 
-import {
-	ArrowLeft,
-	Loader2,
-	Plus,
-	RefreshCw,
-	Settings2,
-} from "lucide-react";
+import { Loader2, Plus, RefreshCw, Settings2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetCategoriasEntrada } from "@/hooks/visitas/useGetCategoriasEntrada";
-import {
-	useGetMatrixTarifas,
-} from "@/hooks/visitas/usePasesAdmin";
-import { TipoEntradaModal } from "./_components/TipoEntradaModal";
 import { TipoEntradaCard } from "./_components/TipoEntradaCard";
 import { TipoEntradaMatrixModal } from "./_components/TipoEntradaMatrixModal";
-import { Badge } from "@/components/ui/badge";
-import { Trash2, Tag } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-
-
+import { TipoEntradaModal } from "./_components/TipoEntradaModal";
 
 export default function CategoriasEntradaPage() {
 	const {
@@ -48,8 +23,6 @@ export default function CategoriasEntradaPage() {
 		setEditingCat(cat);
 		setIsCatModalOpen(true);
 	};
-
-
 
 	return (
 		<div className="space-y-6 animate-in fade-in duration-500 max-w-6xl mx-auto pb-10">
@@ -126,4 +99,3 @@ export default function CategoriasEntradaPage() {
 		</div>
 	);
 }
-

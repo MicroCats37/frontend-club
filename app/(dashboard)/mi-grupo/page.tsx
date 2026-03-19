@@ -1,8 +1,8 @@
 "use client";
 
 import {
-	ArrowUpCircle,
 	AlertCircle,
+	ArrowUpCircle,
 	Clock,
 	Heart,
 	ShieldCheck,
@@ -46,12 +46,13 @@ const GrupoMemberCard = ({
 	return (
 		<div className="bg-white rounded-[28px] border border-[#E0E7E0] p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center gap-4 sm:gap-6 relative group">
 			<div
-				className={`h-14 w-14 sm:h-16 sm:w-16 rounded-2xl flex items-center justify-center text-xl font-black border-2 border-white shadow-sm shrink-0 transition-transform group-hover:scale-105 duration-500 ${isTitular
+				className={`h-14 w-14 sm:h-16 sm:w-16 rounded-2xl flex items-center justify-center text-xl font-black border-2 border-white shadow-sm shrink-0 transition-transform group-hover:scale-105 duration-500 ${
+					isTitular
 						? "bg-[#2C3A2C] text-white"
 						: isFamiliar
 							? "bg-blue-500 text-white"
 							: "bg-slate-100 text-slate-400"
-					}`}
+				}`}
 			>
 				{member.persona.nombres[0]}
 			</div>
@@ -74,6 +75,11 @@ const GrupoMemberCard = ({
 					{isContacto && (
 						<Badge className="bg-slate-100 text-slate-500 border-none py-0.5 px-2 text-[9px] uppercase tracking-widest leading-none">
 							Contacto
+						</Badge>
+					)}
+					{hasPrivileges && !isTitular && (
+						<Badge className="bg-emerald-500 text-white border-none py-0.5 px-2 text-[9px] uppercase tracking-widest leading-none">
+							Beneficiario
 						</Badge>
 					)}
 				</div>
@@ -200,17 +206,15 @@ export default function MiGrupoPage() {
 							<h3 className="text-lg font-black text-[#2C3A2C] mb-1 tracking-tight">
 								Gestión de Beneficiarios
 							</h3>
-							{
-								isAfiliado && (
-									<p className="text-[#8BA18B] text-xs font-medium leading-relaxed max-w-sm">
-										Tus familiares nucleares disfrutan de{" "}
-										<span className="text-emerald-600 font-bold uppercase tracking-tighter text-[10px]">
-											ingreso libre (S/ 0.00)
-										</span>{" "}
-										en todas nuestras sedes.
-									</p>
-								)
-							}
+							{isAfiliado && (
+								<p className="text-[#8BA18B] text-xs font-medium leading-relaxed max-w-sm">
+									Tus familiares nucleares disfrutan de{" "}
+									<span className="text-emerald-600 font-bold uppercase tracking-tighter text-[10px]">
+										ingreso libre (S/ 0.00)
+									</span>{" "}
+									en todas nuestras sedes.
+								</p>
+							)}
 						</div>
 					</div>
 				</div>
@@ -288,19 +292,19 @@ export default function MiGrupoPage() {
 				<div className="flex flex-col gap-4">
 					{isLoading
 						? Array(2)
-							.fill(0)
-							.map((_, i) => (
-								<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
-							))
+								.fill(0)
+								.map((_, i) => (
+									<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
+								))
 						: familia.map((member) => (
-							<GrupoMemberCard
-								key={member.persona.id}
-								member={member}
-								onUpgrade={handleOpenUpgrade}
-								canManage={true}
-								isAfiliado={isAfiliado}
-							/>
-						))}
+								<GrupoMemberCard
+									key={member.persona.id}
+									member={member}
+									onUpgrade={handleOpenUpgrade}
+									canManage={true}
+									isAfiliado={isAfiliado}
+								/>
+							))}
 				</div>
 			</div>
 
@@ -352,19 +356,19 @@ export default function MiGrupoPage() {
 					<div className="flex flex-col gap-4">
 						{isLoading
 							? Array(3)
-								.fill(0)
-								.map((_, i) => (
-									<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
-								))
+									.fill(0)
+									.map((_, i) => (
+										<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
+									))
 							: contactos.map((member) => (
-								<GrupoMemberCard
-									key={member.persona.id}
-									member={member}
-									onUpgrade={handleOpenUpgrade}
-									canManage={true}
-									isAfiliado={isAfiliado}
-								/>
-							))}
+									<GrupoMemberCard
+										key={member.persona.id}
+										member={member}
+										onUpgrade={handleOpenUpgrade}
+										canManage={true}
+										isAfiliado={isAfiliado}
+									/>
+								))}
 					</div>
 				)}
 			</div>

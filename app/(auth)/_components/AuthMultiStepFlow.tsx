@@ -1,20 +1,20 @@
 "use client";
 
 import { ShieldCheck, TicketCheck, User } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { GenericForm } from "@/components/generic/genericForm/GenericForm";
 import type { FormSection } from "@/components/generic/genericForm/GenericInput";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AuthShell } from "./AuthShell";
-import Link from "next/link";
 import {
 	useRegisterFinal,
 	useValidateCIP,
 	useValidateCode,
 } from "@/hooks/auth/useRegister";
-import { useRouter } from "next/navigation";
 import {
 	type RegisterPasswordFormData,
 	RegisterPasswordFormSchema,
@@ -23,7 +23,7 @@ import {
 	type ValidateCodeFormData,
 	ValidateCodeFormSchema,
 } from "@/schemas/auth";
-import { Button } from "@/components/ui/button";
+import { AuthShell } from "./AuthShell";
 
 type RegistrationStep = "CIP" | "CODE" | "PASSWORD";
 
@@ -57,7 +57,7 @@ export function AuthMultiStepFlow({
 	const [step, setStep] = useState<RegistrationStep>("CIP");
 	const [userCip, setUserCip] = useState("");
 	const [maskedContact, setMaskedContact] = useState("");
-	const router = useRouter();
+	const _router = useRouter();
 
 	// Mutations
 	const { mutate: validateCip, isPending: isValidatingCip } = useValidateCIP();
@@ -91,13 +91,16 @@ export function AuthMultiStepFlow({
 	const handlePasswordSubmit: SubmitHandler<RegisterPasswordFormData> = (
 		data,
 	) => {
-		register({ ...data, cip: userCip }, {
-			onSuccess: () => {
-				if (successMessages?.final) {
-					toast.success(successMessages.final);
-				}
-			}
-		});
+		register(
+			{ ...data, cip: userCip },
+			{
+				onSuccess: () => {
+					if (successMessages?.final) {
+						toast.success(successMessages.final);
+					}
+				},
+			},
+		);
 	};
 
 	const cipSections: FormSection[] = [
@@ -167,20 +170,21 @@ export function AuthMultiStepFlow({
 						{["CIP", "CODIGO", "ACCESO"].map((s, idx) => (
 							<div key={s} className="flex flex-col items-center">
 								<div
-									className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${step ===
-											(s === "CODIGO" ? "CODE" : s === "ACCESO" ? "PASSWORD" : s)
+									className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+										step ===
+										(s === "CODIGO" ? "CODE" : s === "ACCESO" ? "PASSWORD" : s)
 											? "bg-primary text-white"
 											: idx <
-												["CIP", "CODIGO", "ACCESO"].indexOf(
-													s === "CODIGO" && step === "CODE"
-														? "CODIGO"
-														: s === "ACCESO" && step === "PASSWORD"
-															? "ACCESO"
-															: step,
-												)
+													["CIP", "CODIGO", "ACCESO"].indexOf(
+														s === "CODIGO" && step === "CODE"
+															? "CODIGO"
+															: s === "ACCESO" && step === "PASSWORD"
+																? "ACCESO"
+																: step,
+													)
 												? "bg-primary/20 text-primary"
 												: "bg-gray-100 text-gray-400"
-										}`}
+									}`}
 								>
 									{idx + 1}
 								</div>

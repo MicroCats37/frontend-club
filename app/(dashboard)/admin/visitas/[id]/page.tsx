@@ -197,7 +197,6 @@ export default function AdminVisitaDetailPage({
 					</div>
 				</div>
 
-
 				<div className="flex flex-col sm:flex-row items-center gap-3">
 					{(visita.estado === "PENDIENTE" ||
 						visita.estado === "CONFIRMADA") && (
@@ -216,7 +215,7 @@ export default function AdminVisitaDetailPage({
 								)}
 								Liquidar / Checkout
 							</Button>
-							
+
 							{/* No permitir anular si ya está pagada (p011) */}
 							{!visita.pagado && (
 								<Button
@@ -426,16 +425,20 @@ export default function AdminVisitaDetailPage({
 									<div
 										key={ing.id}
 										className={`p-5 rounded-[28px] border transition-all flex flex-col gap-4 ${
-											ing.es_listado 
-											? 'border-gray-100 bg-white hover:border-emerald-200 hover:shadow-md' 
-											: 'border-red-50 bg-red-50/30 opacity-70'
+											ing.es_listado
+												? "border-gray-100 bg-white hover:border-emerald-200 hover:shadow-md"
+												: "border-red-50 bg-red-50/30 opacity-70"
 										}`}
 									>
 										<div className="flex items-center justify-between">
 											<div className="flex items-center gap-3">
-												<div className={`h-10 w-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm ${
-													ing.es_listado ? 'bg-emerald-50 text-emerald-700' : 'bg-red-100 text-red-700'
-												}`}>
+												<div
+													className={`h-10 w-10 rounded-xl flex items-center justify-center font-black text-sm shadow-sm ${
+														ing.es_listado
+															? "bg-emerald-50 text-emerald-700"
+															: "bg-red-100 text-red-700"
+													}`}
+												>
 													{ing.persona.nombres[0]}
 												</div>
 												<div>
@@ -483,12 +486,16 @@ export default function AdminVisitaDetailPage({
 											{ing.fecha_checkin ? (
 												<div className="flex items-center gap-1.5 text-emerald-600">
 													<CheckCircle2 className="h-3.5 w-3.5" />
-													<span className="text-[9px] font-black uppercase">En Club</span>
+													<span className="text-[9px] font-black uppercase">
+														En Club
+													</span>
 												</div>
 											) : (
 												<div className="flex items-center gap-1.5 text-gray-300">
 													<Clock className="h-3.5 w-3.5" />
-													<span className="text-[9px] font-black uppercase tracking-tighter">Esperando</span>
+													<span className="text-[9px] font-black uppercase tracking-tighter">
+														Esperando
+													</span>
 												</div>
 											)}
 										</div>
@@ -497,7 +504,6 @@ export default function AdminVisitaDetailPage({
 							</div>
 						</div>
 					</Card>
-
 				</div>
 
 				{/* LATERAL (ADMIN) */}

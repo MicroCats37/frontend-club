@@ -21,8 +21,8 @@ export async function setAuthCookies(
 
 	// Configuración base (si es deploy -> seguro, si no -> relajado)
 	const cookieOptions = {
-		httpOnly: isDeployment, // Desarrollo: False para debug / Prod: True (XSS protection)
-		secure: isDeployment, // Desarrollo: False (HTTP) / Prod: True (HTTPS)
+		httpOnly: false, // Desarrollo: False para debug / Prod: True (XSS protection)
+		secure: false, // Desarrollo: False (HTTP) / Prod: True (HTTPS)
 		sameSite: "lax" as const,
 		path: "/",
 	};
@@ -42,7 +42,7 @@ export async function setAuthCookies(
 	// 3. User Session (Datos NO sensibles para UI) -> Accesible por JS
 	cookieStore.set("user-session", JSON.stringify(user), {
 		httpOnly: false, // Siempre accesible para hidratar Zustand
-		secure: isDeployment,
+		secure: false,
 		sameSite: "lax",
 		path: "/",
 		maxAge: 60 * 60 * 24 * 7,

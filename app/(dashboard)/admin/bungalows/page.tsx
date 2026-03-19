@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
 	Calendar as CalendarIcon,
 	Filter,
-	Plus,
 	Search,
 	TreeDeciduous,
 } from "lucide-react";
@@ -65,7 +64,6 @@ export default function BungalowsAdminPage() {
 							Ver Calendario de Estadía
 						</Button>
 					</Link>
-
 				</div>
 			</div>
 

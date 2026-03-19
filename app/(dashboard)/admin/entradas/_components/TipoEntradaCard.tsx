@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageIcon, MoreVertical, Ticket, Settings2 } from "lucide-react";
+import { ImageIcon, MoreVertical, Settings2, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,8 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { resolveImageUrl } from "@/lib/utils";
 import { useCategoriaActions } from "@/hooks/visitas/usePasesAdmin";
+import { resolveImageUrl } from "@/lib/utils";
 
 interface TipoEntradaCardProps {
 	cat: any;
@@ -46,7 +46,7 @@ export function TipoEntradaCard({
 					</div>
 				)}
 				<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
-				
+
 				<div className="absolute top-5 right-5 z-10">
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
@@ -121,12 +121,13 @@ export function TipoEntradaCard({
 					{cat.nombre}
 				</CardTitle>
 			</CardHeader>
-			
+
 			<CardContent className="p-8 pt-0 flex-1">
 				<p className="text-sm text-[#8BA18B] font-medium leading-relaxed line-clamp-2 italic">
-					{cat.descripcion || "Sin descripción detallada para este tipo de entrada."}
+					{cat.descripcion ||
+						"Sin descripción detallada para este tipo de entrada."}
 				</p>
-				
+
 				<div className="mt-8 pt-6 border-t border-[#E0E7E0]">
 					<Button
 						onClick={() => onViewMatrix(cat.id)}

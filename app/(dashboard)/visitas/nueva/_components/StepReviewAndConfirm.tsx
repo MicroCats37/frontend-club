@@ -1,22 +1,21 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import {
 	AlertCircle,
 	Calendar,
 	CheckCircle2,
+	ChevronDown,
+	ChevronUp,
 	CreditCard,
+	Edit2,
 	Home,
 	Loader2,
 	Users,
-	Edit2,
-	ChevronDown,
-	ChevronUp,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { parseISO } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -230,10 +229,11 @@ export function StepReviewAndConfirm() {
 										Modalidad
 									</p>
 									<Badge
-										className={`px-4 py-1.5 rounded-xl font-black text-[10px] sm:text-sm ${tipoVisita === "PASE_DIARIO"
-											? "bg-amber-100 text-amber-700"
-											: "bg-blue-100 text-blue-700"
-											}`}
+										className={`px-4 py-1.5 rounded-xl font-black text-[10px] sm:text-sm ${
+											tipoVisita === "PASE_DIARIO"
+												? "bg-amber-100 text-amber-700"
+												: "bg-blue-100 text-blue-700"
+										}`}
 									>
 										{tipoVisita === "PASE_DIARIO"
 											? "Pase Diario (Full Day)"
@@ -257,9 +257,9 @@ export function StepReviewAndConfirm() {
 												<span className="text-[10px] sm:text-xs opacity-60">
 													{noches.length > 0
 														? [...noches]
-															.sort((a, b) => a.getTime() - b.getTime())
-															.map((d) => format(d, "dd MMM", { locale: es }))
-															.join(", ")
+																.sort((a, b) => a.getTime() - b.getTime())
+																.map((d) => format(d, "dd MMM", { locale: es }))
+																.join(", ")
 														: "—"}
 												</span>
 											</div>
@@ -335,7 +335,9 @@ export function StepReviewAndConfirm() {
 													<p className="font-black text-[#2C3A2C] text-xs sm:text-sm leading-tight line-clamp-1">
 														{guest.nombre_completo}
 													</p>
-													<span className="text-[10px] text-gray-400 font-bold hidden sm:inline">•</span>
+													<span className="text-[10px] text-gray-400 font-bold hidden sm:inline">
+														•
+													</span>
 													<p className="text-[10px] text-gray-400 font-bold">
 														DNI: {guest.dni}
 													</p>

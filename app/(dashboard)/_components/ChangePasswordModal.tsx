@@ -1,9 +1,11 @@
 "use client";
 
-import { ShieldCheck, Lock } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock, ShieldCheck } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { GenericForm } from "@/components/generic/genericForm/GenericForm";
+import type { FormSection } from "@/components/generic/genericForm/GenericInput";
 import {
 	Dialog,
 	DialogContent,
@@ -11,13 +13,11 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { GenericForm } from "@/components/generic/genericForm/GenericForm";
-import type { FormSection } from "@/components/generic/genericForm/GenericInput";
-import {
-	RegisterPasswordFormSchema,
-	type RegisterPasswordFormData,
-} from "@/schemas/auth/register";
 import { useChangePassword } from "@/hooks/auth/useAuth";
+import {
+	type RegisterPasswordFormData,
+	RegisterPasswordFormSchema,
+} from "@/schemas/auth/register";
 
 interface ChangePasswordModalProps {
 	open: boolean;
@@ -103,7 +103,9 @@ export function ChangePasswordModal({
 						formSections={passwordSections}
 						onSubmit={onSubmit}
 						isLoading={isPending}
-						submitButtonText={isPending ? "ACTUALIZANDO..." : "CAMBIAR CONTRASEÑA"}
+						submitButtonText={
+							isPending ? "ACTUALIZANDO..." : "CAMBIAR CONTRASEÑA"
+						}
 						onCancel={() => onOpenChange(false)}
 					/>
 				</div>

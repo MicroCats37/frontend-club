@@ -1,10 +1,9 @@
 "use client";
 
-import { Loader2, Plus, RefreshCw, Ticket, Trash2, X } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Ticket, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -12,6 +11,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
 	type TipoEntradaMatriz,
 	useGetMatrixTarifas,
@@ -40,9 +40,7 @@ export function TipoEntradaMatrixModal({
 		}
 	}, [targetTipo]);
 
-	const { mutate: updateTipo, isPending } = useMatrixUpdate(
-		tipoId || "",
-	);
+	const { mutate: updateTipo, isPending } = useMatrixUpdate(tipoId || "");
 
 	const handleAddRange = (categoriaKey: string) => {
 		if (!localTipo) return;
@@ -97,8 +95,6 @@ export function TipoEntradaMatrixModal({
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
 			<DialogContent className="w-full sm:max-w-[95vw] lg:max-w-[1200px] max-h-[96vh] rounded-[2.5rem] p-0 border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-white/95 backdrop-blur-xl flex flex-col overflow-hidden">
-
-
 				<DialogHeader className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 sm:p-10 pb-4 sm:pb-6 shrink-0 border-b border-white/20">
 					<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:pr-12">
 						<div className="flex items-center gap-4 sm:gap-6">
@@ -132,7 +128,10 @@ export function TipoEntradaMatrixModal({
 				<div className="flex-1 overflow-y-auto p-4 sm:p-10 pt-4 sm:pt-6 custom-scrollbar bg-white/50">
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 pb-10">
 						{localTipo.categorias.map((cat) => (
-							<Card key={cat.categoria} className="rounded-[2rem] border-none shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] overflow-hidden bg-white border border-[#E0E7E0]/50 h-fit group/cat">
+							<Card
+								key={cat.categoria}
+								className="rounded-[2rem] border-none shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] overflow-hidden bg-white border border-[#E0E7E0]/50 h-fit group/cat"
+							>
 								<CardHeader className="bg-[#F8FAF8] border-b p-6 flex flex-row items-center justify-between">
 									<div className="space-y-1">
 										<CardTitle className="text-lg font-black text-[#2C3A2C]">
@@ -177,7 +176,9 @@ export function TipoEntradaMatrixModal({
 														className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end sm:items-center group/range p-3 sm:p-1 hover:bg-primary/5 rounded-2xl sm:rounded-xl transition-all border border-transparent hover:border-primary/10"
 													>
 														<div className="col-span-3 space-y-1">
-															<label className="text-[8px] font-black text-[#8BA18B] uppercase tracking-tight sm:hidden ml-1">Desde</label>
+															<label className="text-[8px] font-black text-[#8BA18B] uppercase tracking-tight sm:hidden ml-1">
+																Desde
+															</label>
 															<Input
 																type="number"
 																className="h-9 sm:h-9 rounded-lg text-xs font-bold border-[#E0E7E0] text-center bg-white"
@@ -193,7 +194,9 @@ export function TipoEntradaMatrixModal({
 															/>
 														</div>
 														<div className="col-span-3 space-y-1">
-															<label className="text-[8px] font-black text-[#8BA18B] uppercase tracking-tight sm:hidden ml-1">Hasta</label>
+															<label className="text-[8px] font-black text-[#8BA18B] uppercase tracking-tight sm:hidden ml-1">
+																Hasta
+															</label>
 															<Input
 																type="number"
 																className="h-9 sm:h-9 rounded-lg text-xs font-bold border-[#E0E7E0] text-center bg-white"
@@ -209,7 +212,9 @@ export function TipoEntradaMatrixModal({
 															/>
 														</div>
 														<div className="col-span-5 sm:col-span-4 space-y-1">
-															<label className="text-[8px] font-black text-[#8BA18B] uppercase tracking-tight sm:hidden ml-1">Tarifa (S/)</label>
+															<label className="text-[8px] font-black text-[#8BA18B] uppercase tracking-tight sm:hidden ml-1">
+																Tarifa (S/)
+															</label>
 															<div className="relative group/input">
 																<span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary/40">
 																	S/
@@ -235,7 +240,9 @@ export function TipoEntradaMatrixModal({
 																variant="ghost"
 																size="icon"
 																className="h-8 w-8 text-destructive/40 hover:text-destructive hover:bg-destructive/10 rounded-full sm:opacity-0 group-hover/range:opacity-100 transition-all"
-																onClick={() => handleRemoveRange(cat.categoria, idx)}
+																onClick={() =>
+																	handleRemoveRange(cat.categoria, idx)
+																}
 															>
 																<Trash2 className="h-4 w-4" />
 															</Button>

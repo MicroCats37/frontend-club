@@ -53,7 +53,9 @@ const CardWrapper: React.FC<SectionWrapperProps> = ({
 	icon: Icon,
 	className,
 }) => (
-	<div className={`border rounded-xl p-3 md:p-4 bg-card shadow-sm ${className || ""}`}>
+	<div
+		className={`border rounded-xl p-3 md:p-4 bg-card shadow-sm ${className || ""}`}
+	>
 		<div className="flex flex-col gap-0.5 mb-3 pb-2 border-b">
 			<div className="flex items-center gap-2">
 				{Icon && (
@@ -61,10 +63,14 @@ const CardWrapper: React.FC<SectionWrapperProps> = ({
 						<Icon className="w-3.5 h-3.5" />
 					</div>
 				)}
-				<h3 className="font-semibold text-sm md:text-base tracking-tight">{title}</h3>
+				<h3 className="font-semibold text-sm md:text-base tracking-tight">
+					{title}
+				</h3>
 			</div>
 			{description && (
-				<p className="text-[10px] md:text-xs text-muted-foreground ml-0.5">{description}</p>
+				<p className="text-[10px] md:text-xs text-muted-foreground ml-0.5">
+					{description}
+				</p>
 			)}
 		</div>
 		{children}

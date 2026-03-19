@@ -55,3 +55,12 @@ export function handleApiError(
 
 	return data.message || data.detail || "Ocurrió un error en la solicitud.";
 }
+
+/**
+ * Helper para obtener siempre un string de mensaje de un error procesado por handleApiError.
+ * Útil para toasts o lugares que solo aceptan strings/ReactNodes.
+ */
+export function getErrorMessage(error: any): string {
+	const result = handleApiError(error);
+	return typeof result === "string" ? result : result.message;
+}

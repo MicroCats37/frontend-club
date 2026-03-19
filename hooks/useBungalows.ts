@@ -6,7 +6,7 @@ import { useApiDelete } from "@/hooks/useApiDelete";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useApiUpdate } from "@/hooks/useApiUpdate";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 import {
 	type BatchGaleriaItem,
 	type Bungalow,
@@ -123,7 +123,7 @@ export const useUpdateBungalowEstado = () => {
 			if (context?.previousData) {
 				queryClient.setQueryData(["bungalows"], context.previousData);
 			}
-			const message = handleApiError(err);
+			const message = getErrorMessage(err);
 			toast.error(message || "No se pudo actualizar el estado");
 		},
 		onSettled: () => {

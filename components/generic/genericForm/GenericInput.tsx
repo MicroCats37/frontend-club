@@ -52,10 +52,14 @@ export const DefaultFieldWrapper: React.FC<FieldWrapperProps> = ({
 				<p className="text-sm text-destructive font-medium">{error.message}</p>
 			)}
 			{field.helperText && !field.hidden && !error && (
-				<p className="text-xs text-blue-600 font-medium px-1">{field.helperText}</p>
+				<p className="text-xs text-blue-600 font-medium px-1">
+					{field.helperText}
+				</p>
 			)}
 			{field.description && !field.hidden && field.type !== "checkbox" && (
-				<p className="text-xs text-muted-foreground px-1">{field.description}</p>
+				<p className="text-xs text-muted-foreground px-1">
+					{field.description}
+				</p>
 			)}
 		</div>
 	);

@@ -5,7 +5,7 @@ import type { AxiosError, AxiosRequestConfig } from "axios";
 import { toast } from "sonner";
 import type { ZodType } from "zod";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 import { buildApiPayload } from "@/utils/payload/format";
 
 interface UseApiCreateProps<TData, TVariables> {
@@ -34,7 +34,7 @@ export function useApiCreate<TData = unknown, TVariables = unknown>({
 
 				return schema ? schema.parse(data) : (data as TData);
 			} catch (error) {
-				const cleanMessage = handleApiError(error);
+				const cleanMessage = getErrorMessage(error);
 				toast.error(cleanMessage);
 				throw new Error(cleanMessage);
 			}

@@ -1,19 +1,25 @@
 "use client";
 
-import { useAuthStore } from "@/store/useAuthStore";
-import { 
-	User, 
-	IdCard, 
-	Briefcase, 
-	Hash, 
+import {
+	Briefcase,
+	Fingerprint,
+	Hash,
+	IdCard,
 	Lock,
 	ShieldCheck,
-	Fingerprint
+	User,
 } from "lucide-react";
 import { useState } from "react";
-import { ChangePasswordModal } from "../_components/ChangePasswordModal";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { useAuthStore } from "@/store/useAuthStore";
+import { ChangePasswordModal } from "../_components/ChangePasswordModal";
 
 export default function PerfilPage() {
 	const user = useAuthStore((state) => state.user);
@@ -57,8 +63,12 @@ export default function PerfilPage() {
 	return (
 		<div className="space-y-8 animate-in fade-in duration-500">
 			<div>
-				<h1 className="text-3xl font-black text-[#2C3A2C] tracking-tight">Mi Perfil</h1>
-				<p className="text-[#8BA18B]">Gestiona tu información personal y configuración de seguridad.</p>
+				<h1 className="text-3xl font-black text-[#2C3A2C] tracking-tight">
+					Mi Perfil
+				</h1>
+				<p className="text-[#8BA18B]">
+					Gestiona tu información personal y configuración de seguridad.
+				</p>
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -70,18 +80,27 @@ export default function PerfilPage() {
 							<User className="h-5 w-5 text-primary" />
 							Información Personal
 						</CardTitle>
-						<CardDescription>Datos básicos registrados en tu cuenta.</CardDescription>
+						<CardDescription>
+							Datos básicos registrados en tu cuenta.
+						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							{userDetails.map((detail) => (
-								<div key={detail.label} className="flex items-start gap-4 p-4 rounded-xl bg-[#F8FAF8] border border-[#E0E7E0]/50">
+								<div
+									key={detail.label}
+									className="flex items-start gap-4 p-4 rounded-xl bg-[#F8FAF8] border border-[#E0E7E0]/50"
+								>
 									<div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border border-[#E0E7E0] shadow-sm text-primary">
 										<detail.icon className="h-5 w-5" />
 									</div>
 									<div>
-										<p className="text-[10px] font-bold text-[#8BA18B] uppercase tracking-wider">{detail.label}</p>
-										<p className="font-semibold text-[#2C3A2C]">{detail.value}</p>
+										<p className="text-[10px] font-bold text-[#8BA18B] uppercase tracking-wider">
+											{detail.label}
+										</p>
+										<p className="font-semibold text-[#2C3A2C]">
+											{detail.value}
+										</p>
 									</div>
 								</div>
 							))}
@@ -97,14 +116,19 @@ export default function PerfilPage() {
 							<ShieldCheck className="h-5 w-5 text-primary" />
 							Seguridad
 						</CardTitle>
-						<CardDescription>Protege tu acceso actualizando tu contraseña.</CardDescription>
+						<CardDescription>
+							Protege tu acceso actualizando tu contraseña.
+						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-6">
 						<div className="p-4 rounded-xl bg-primary/5 border border-primary/10 text-sm text-[#4A5D4A]">
-							<p>Mantener tu contraseña actualizada mejora significativamente la seguridad de tu cuenta.</p>
+							<p>
+								Mantener tu contraseña actualizada mejora significativamente la
+								seguridad de tu cuenta.
+							</p>
 						</div>
 
-						<Button 
+						<Button
 							onClick={() => setIsChangePasswordOpen(true)}
 							className="w-full h-12 font-bold shadow-md hover:shadow-lg transition-all"
 						>
@@ -115,7 +139,7 @@ export default function PerfilPage() {
 				</Card>
 			</div>
 
-			<ChangePasswordModal 
+			<ChangePasswordModal
 				open={isChangePasswordOpen}
 				onOpenChange={setIsChangePasswordOpen}
 			/>

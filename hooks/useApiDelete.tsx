@@ -4,7 +4,7 @@ import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { toast } from "sonner";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 
 export function useApiDelete<TData = void>({
 	baseUrl,
@@ -23,7 +23,7 @@ export function useApiDelete<TData = void>({
 				return data as TData;
 			} catch (error) {
 				// Captura errores de "No se puede eliminar este registro" de Django
-				const cleanMessage = handleApiError(error);
+				const cleanMessage = getErrorMessage(error);
 				toast.error(cleanMessage);
 				throw new Error(cleanMessage);
 			}

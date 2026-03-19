@@ -8,7 +8,7 @@ import type { AxiosError } from "axios";
 import { toast } from "sonner";
 import type { ZodType } from "zod";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 
 // Tu nuevo helper
 
@@ -45,7 +45,7 @@ export function useApiQuery<T, TData = T>({
 				const { data } = await api.get(url, { params });
 				return schema.parse(data);
 			} catch (error) {
-				const cleanMessage = handleApiError(error);
+				const cleanMessage = getErrorMessage(error);
 				toast.error(cleanMessage);
 				console.error(cleanMessage);
 				throw new Error(cleanMessage);

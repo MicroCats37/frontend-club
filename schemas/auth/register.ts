@@ -16,7 +16,7 @@ export type ValidateCIPData = z.infer<typeof ValidateCIPSchema>;
 export const ValidateCIPResponseSchema = z.object({
 	detail: z.string(),
 	masked_contact: z.string(),
-	debug_code: z.string().optional(), // Solo desarrollo
+	debug_code: z.string().optional().nullable(), // Solo desarrollo
 });
 
 // ==========================================

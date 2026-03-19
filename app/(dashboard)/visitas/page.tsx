@@ -292,7 +292,10 @@ const VisitaRow = ({ visita }: { visita: Visita }) => {
 							expirado={isExpired}
 						/>
 					</div>
-					<Link href={`/visitas/${visita.id}`} className="w-full flex flex-col gap-2">
+					<Link
+						href={`/visitas/${visita.id}`}
+						className="w-full flex flex-col gap-2"
+					>
 						<Button
 							className={`w-full rounded-2xl h-11 md:h-12 bg-white transition-all gap-2 border font-black text-[10px] uppercase tracking-widest shadow-sm hover:shadow-md ${
 								isExpired

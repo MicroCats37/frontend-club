@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import api from "@/lib/api/config";
-import { handleApiError } from "@/lib/api/error-handler";
+import { getErrorMessage, handleApiError } from "@/lib/api/error-handler";
 import {
 	type PaginatedTipoTarifa,
 	PaginatedTipoTarifaSchema,
@@ -86,7 +86,7 @@ export function useCreateTipoTarifa() {
 			toast.success("Tipo de tarifa creado");
 		},
 		onError: (err) => {
-			const msg = handleApiError(err);
+			const msg = getErrorMessage(err);
 			toast.error(msg || "No se pudo crear el tipo de tarifa");
 		},
 	});
@@ -112,7 +112,7 @@ export function useUpdateTipoTarifa() {
 			toast.success("Tipo de tarifa actualizado");
 		},
 		onError: (err) => {
-			const msg = handleApiError(err);
+			const msg = getErrorMessage(err);
 			toast.error(msg || "No se pudo actualizar el tipo de tarifa");
 		},
 	});
@@ -130,7 +130,7 @@ export function useDeleteTipoTarifa() {
 			toast.success("Tipo de tarifa eliminado");
 		},
 		onError: (err) => {
-			const msg = handleApiError(err);
+			const msg = getErrorMessage(err);
 			toast.error(msg || "No se pudo eliminar el tipo de tarifa");
 		},
 	});
@@ -161,7 +161,7 @@ export function useSyncTarifasByCapacity() {
 			toast.success("Precios sincronizados por capacidad");
 		},
 		onError: (err) => {
-			const msg = handleApiError(err);
+			const msg = getErrorMessage(err);
 			toast.error(msg || "No se pudo sincronizar los precios");
 		},
 	});
@@ -182,7 +182,7 @@ export function useSyncBungalowTarifas(bungalowId: number | string) {
 			toast.success("Precios actualizados correctamente");
 		},
 		onError: (err) => {
-			const msg = handleApiError(err);
+			const msg = getErrorMessage(err);
 			toast.error(msg || "No se pudo actualizar los precios");
 		},
 	});

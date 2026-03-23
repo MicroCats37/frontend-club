@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
 	Dialog,
@@ -102,7 +102,7 @@ export function IzipayModal({
 }: IzipayModalProps) {
 	const [loading, setLoading] = useState(false);
 
-	const handleLaunchIzipay = async () => {
+	const handleLaunchIzipay = useCallback(async () => {
 		setLoading(true);
 		try {
 			const response = await api.get(
@@ -181,7 +181,7 @@ export function IzipayModal({
 							"Izipay init validation errors JSON:",
 							JSON.stringify(sdkInitError.Errors, null, 2),
 						);
-					} catch {}
+					} catch { }
 				}
 				const firstValidationError =
 					sdkInitError?.Errors?.[0]?.message ||
@@ -238,7 +238,7 @@ export function IzipayModal({
 				checkout.LoadForm({
 					authorization:
 						baseConfig.authorization || data.token || data.authorization,
-					keyRSA: IZIPAY_RSA_KEY,
+					keyRSA: 'RSA',
 					callbackResponse: callbackResponsePayment,
 				});
 			} catch (sdkLoadError: any) {
@@ -258,7 +258,7 @@ export function IzipayModal({
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [ordenId, onClose, onSuccess]);
 
 	useEffect(() => {
 		if (isOpen && ordenId) {

@@ -241,8 +241,8 @@ export default function VisitaDetailPage({
 								<p className="text-xl font-black text-[#2C3A2C] tracking-tight">
 									{visita.fecha_inicio
 										? format(new Date(visita.fecha_inicio), "PPP", {
-												locale: es,
-											})
+											locale: es,
+										})
 										: "—"}
 								</p>
 							</div>
@@ -259,8 +259,8 @@ export default function VisitaDetailPage({
 								<p className="text-xl font-black text-[#2C3A2C] tracking-tight">
 									{visita.fecha_fin
 										? format(new Date(visita.fecha_fin), "PPP", {
-												locale: es,
-											})
+											locale: es,
+										})
 										: "—"}
 								</p>
 							</div>
@@ -422,68 +422,41 @@ export default function VisitaDetailPage({
 
 				{/* SIDEBAR: Totals & Payments (Span 12 -> 4) */}
 				<div className="col-span-12 lg:col-span-4 space-y-6 md:space-y-8">
-					{/* ECONOMY CARD (Bento Item 4) */}
+					{/* ECONOMY CARD (Bento Item 4) - UNIFIED FINANCES */}
 					<div className="bg-[#2C3A2C] text-white p-8 md:p-10 rounded-[32px] md:rounded-[40px] shadow-2xl relative overflow-hidden group">
 						<div className="absolute -top-10 -right-10 opacity-10 group-hover:scale-110 transition-transform duration-1000">
 							<TrendingUp className="h-48 w-48" />
 						</div>
 
 						<h4 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-12 flex items-center gap-2">
-							<div className="h-1 w-4 bg-emerald-500 rounded-full" /> Estado
+							<div className="h-1 w-4 bg-emerald-500 rounded-full" /> Centro de Control
 							Financiero
 						</h4>
 
 						<div className="space-y-6 mb-12 relative z-10">
 							<div className="flex justify-between items-center text-white/60 text-[13px] font-bold uppercase tracking-widest">
-								<span>Pase Base</span>
+								<span>Resumen de Cobros</span>
 								<span>S/ {Number(visita.monto_total).toFixed(2)}</span>
-							</div>
-							<div className="flex justify-between items-center text-emerald-400 text-[13px] font-bold uppercase tracking-widest">
-								<span>Bonificaciones</span>
-								<span className="italic">- S/ 0.00</span>
 							</div>
 							<Separator className="bg-white/10" />
 							<div className="pt-4">
 								<p className="text-[11px] font-black text-white/40 uppercase tracking-[0.3em] mb-3">
-									Monto Final
+									Monto Final a Liquidar
 								</p>
 								<p className="text-5xl md:text-6xl font-black tracking-tighter text-white">
-									S/ {Number(visita.monto_total).toFixed(2)}
+									S/ {Number((visita as any).saldo_total || visita.monto_total).toFixed(2)}
 								</p>
 							</div>
 						</div>
 
-						<Badge
-							className={`w-full justify-center rounded-2xl font-black text-[11px] py-2.5 tracking-[0.2em] border-none shadow-2xl ${visita.pagado ? "bg-emerald-500" : "bg-amber-500"} text-white`}
-						>
-							{visita.pagado ? "RESERVA ACTIVA" : "PAGO PENDIENTE"}
-						</Badge>
-					</div>
-
-					{/* PAYMENT ACTION (Bento Item 5) */}
-					{!visita.pagado && (
-						<div className="bg-white border-none p-8 md:p-10 rounded-[32px] md:rounded-[40px] shadow-xl shadow-gray-200/40 relative overflow-hidden group">
-							<div className="absolute top-0 right-0 h-full w-32 bg-amber-50/50 -skew-x-12 translate-x-16 pointer-events-none" />
-							<div className="flex items-center justify-between mb-8">
-								<div>
-									<p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-										Saldo a Liquidar
-									</p>
-									<p className="text-4xl font-black text-[#2C3A2C] tracking-tighter">
-										S/{" "}
-										{Number(
-											(visita as any).saldo_total || visita.monto_total,
-										).toFixed(2)}
-									</p>
-								</div>
-								<div className="h-14 w-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 shrink-0">
-									<Ticket className="h-8 w-8" />
-								</div>
-							</div>
-
-							{!isPaymentExpired ? (
+						<div className="relative z-10 pt-4">
+							{visita.pagado ? (
+								<Badge className="w-full justify-center rounded-2xl font-black text-[11px] py-4 tracking-[0.2em] border-none shadow-2xl bg-emerald-500 text-white gap-2">
+									<CheckCircle2 className="h-4 w-4" /> RESERVA ACTIVA - PAGADO
+								</Badge>
+							) : !isPaymentExpired ? (
 								<Button
-									className="w-full h-14 rounded-2xl bg-[#2C3A2C] text-white hover:bg-black font-black uppercase tracking-[0.15em] text-[11px] transition-all shadow-xl shadow-emerald-900/10 active:scale-95"
+									className="w-full h-16 rounded-2xl bg-white text-[#2C3A2C] hover:bg-emerald-50 font-black uppercase tracking-[0.15em] text-[12px] transition-all shadow-xl active:scale-95 group/btn"
 									onClick={() => {
 										const idOrden =
 											reservaBungalow?.orden_cobro?.id ||
@@ -494,21 +467,24 @@ export default function VisitaDetailPage({
 										else toast.info("No hay órdenes de cobro pendientes.");
 									}}
 								>
-									Continuar al Pago <ArrowRight className="ml-3 h-4 w-4" />
+									Continuar al Pago <ArrowRight className="ml-3 h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
 								</Button>
 							) : (
-								<div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 flex items-center gap-4">
-									<XCircle className="h-6 w-6 text-rose-500 shrink-0" />
-									<p className="text-[10px] font-bold text-rose-700 leading-tight uppercase tracking-widest">
+								<div className="bg-rose-500/10 backdrop-blur-sm p-6 rounded-2xl border border-rose-500/30 flex items-center gap-4">
+									<XCircle className="h-6 w-6 text-rose-400 shrink-0" />
+									<p className="text-[10px] font-bold text-rose-100 leading-tight uppercase tracking-widest">
 										Plazo de pago expirado. Favor contactar al administrador.
 									</p>
 								</div>
 							)}
-							<p className="text-[9px] font-bold text-gray-300 uppercase mt-8 text-center tracking-[0.2em]">
-								Secure Access • SSL Encryption
-							</p>
+							
+							{!visita.pagado && !isPaymentExpired && (
+								<p className="text-[9px] font-bold text-white/20 uppercase mt-6 text-center tracking-[0.2em]">
+									Seguridad SSL • Procesado por Izipay
+								</p>
+							)}
 						</div>
-					)}
+					</div>
 
 					{/* INFO BOX (Bento Item 6) */}
 					<div className="bg-white p-8 rounded-[32px] md:rounded-[40px] border border-gray-100 shadow-sm">
@@ -523,7 +499,7 @@ export default function VisitaDetailPage({
 						<p className="text-[11px] font-medium text-gray-400 leading-relaxed italic">
 							Es obligatorio que todos los invitados porten su documento de
 							identidad físico para el control de accesos. El check-in de
-							bungalows inicia a las 19:00 PM.
+							bungalows inicia a las 8:00 AM.
 						</p>
 					</div>
 				</div>

@@ -81,7 +81,7 @@ export const ReceiptModal = ({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-w-2xl p-0 overflow-hidden rounded-[32px] border-none shadow-2xl">
+			<DialogContent className="max-w-2xl p-0 overflow-hidden rounded-[32px] border-none shadow-2xl max-h-[96vh] flex flex-col">
 				<div className="bg-[#2C3A2C] p-6 text-white flex justify-between items-center">
 					<div className="flex items-center gap-3">
 						<div className="bg-white/10 p-2 rounded-xl">
@@ -96,17 +96,9 @@ export const ReceiptModal = ({
 							</p>
 						</div>
 					</div>
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={onClose}
-						className="text-white/60 hover:text-white hover:bg-white/10 rounded-full"
-					>
-						<X className="h-5 w-5" />
-					</Button>
 				</div>
 
-				<div className="p-8 space-y-8 bg-white max-h-[80vh] overflow-y-auto no-scrollbar print:max-h-none print:p-12">
+				<div className="flex-1 p-8 space-y-8 bg-white overflow-y-auto print:p-12">
 					<div className="flex justify-between items-start">
 						<div className="space-y-1">
 							<p className="font-black text-xl text-[#2C3A2C] tracking-tight">
@@ -128,7 +120,7 @@ export const ReceiptModal = ({
 
 					<div className="h-px bg-gray-100" />
 
-					<div className="grid grid-cols-2 gap-8">
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
 						<div className="space-y-2">
 							<h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
 								Responsable
@@ -142,7 +134,7 @@ export const ReceiptModal = ({
 								<Info className="h-3 w-3" /> DNI: {visita.titular?.dni || "---"}
 							</p>
 						</div>
-						<div className="space-y-2 text-right">
+						<div className="space-y-2 text-left sm:text-right">
 							<h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
 								Detalle de Visita
 							</h4>
@@ -190,13 +182,12 @@ export const ReceiptModal = ({
 										</div>
 										<Badge
 											variant="outline"
-											className={`rounded-lg py-0.5 px-3 font-black text-[9px] uppercase tracking-wider ${
-												orden.estado === "PAGADA"
+											className={`rounded-lg py-0.5 px-3 font-black text-[9px] uppercase tracking-wider ${orden.estado === "PAGADA"
 													? "bg-emerald-50 text-emerald-700 border-emerald-100"
 													: orden.estado === "VENCIDA"
 														? "bg-rose-50 text-rose-700 border-rose-100"
 														: "bg-amber-50 text-amber-700 border-amber-100"
-											}`}
+												}`}
 										>
 											{orden.estado === "PAGADA" ? "PAGADO" : orden.estado}
 										</Badge>
@@ -279,16 +270,16 @@ export const ReceiptModal = ({
 					</div>
 
 					<div className="border-t-2 border-dashed border-gray-100 pt-8 space-y-4">
-						<div className="flex justify-between items-center">
-							<p className="text-gray-400 text-xs font-bold leading-relaxed max-w-xs">
+						<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+							<p className="text-gray-400 text-[10px] sm:text-xs font-bold leading-relaxed max-w-xs">
 								Este documento es un comprobante interno de control. No tiene
 								validez legal como factura fiscal ante SUNAT.
 							</p>
-							<div className="text-right">
+							<div className="text-left sm:text-right w-full sm:w-auto">
 								<p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
 									Total Pagado
 								</p>
-								<p className="text-4xl font-black text-[#2C3A2C]">
+								<p className="text-3xl sm:text-4xl font-black text-[#2C3A2C]">
 									S/ {pagadoAcumulado.toFixed(2)}
 								</p>
 							</div>
@@ -296,17 +287,17 @@ export const ReceiptModal = ({
 					</div>
 				</div>
 
-				<div className="bg-gray-50 p-6 flex gap-4 border-t border-gray-100">
+				<div className="bg-gray-50 p-6 flex flex-col sm:flex-row gap-4 border-t border-gray-100">
 					<Button
 						onClick={handlePrint}
-						className="flex-1 bg-[#2C3A2C] hover:bg-black text-white font-black h-12 rounded-2xl shadow-xl shadow-gray-200 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+						className="w-full sm:flex-1 bg-[#2C3A2C] hover:bg-black text-white font-black h-12 rounded-2xl shadow-xl shadow-gray-200 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
 					>
 						<Printer className="h-4 w-4" /> Imprimir / PDF
 					</Button>
 					<Button
 						variant="outline"
 						onClick={onClose}
-						className="flex-1 h-12 rounded-2xl font-black uppercase tracking-widest text-xs border-gray-200"
+						className="w-full sm:flex-1 h-12 rounded-2xl font-black uppercase tracking-widest text-xs border-gray-200"
 					>
 						Cerrar
 					</Button>

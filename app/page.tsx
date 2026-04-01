@@ -7,8 +7,10 @@ import {
 	LogOut,
 	TreeDeciduous,
 	UserPlus,
+	Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,8 +21,10 @@ import { useAuthStore } from "@/store/useAuthStore";
  * Rediseñada para una mejor UX y visualización condicional de sesión.
  */
 export default function Home() {
+	const router = useRouter();
 	const { isAuthenticated, user, logout } = useAuthStore();
 	const [mounted, setMounted] = useState(false);
+	const [isNavigating, setIsNavigating] = useState(false);
 
 	// Evitar errores de hidratación con persistencia
 	useEffect(() => {
@@ -52,16 +56,22 @@ export default function Home() {
 				<nav className="flex items-center gap-3">
 					{!isAuthenticated ? (
 						<>
-							<Link href="/login">
-								<Button
-									variant="ghost"
-									className="text-[#4A5D4A] hover:text-primary hover:bg-primary/5 font-bold rounded-xl hidden sm:flex px-6 h-11"
-								>
-									Iniciar Sesión
-								</Button>
-							</Link>
+							<Button
+								variant="ghost"
+								disabled={isNavigating}
+								onClick={() => {
+									setIsNavigating(true);
+									router.push("/login");
+								}}
+								className="text-[#4A5D4A] hover:text-primary hover:bg-primary/5 font-bold rounded-xl hidden sm:flex px-6 h-11"
+							>
+								Iniciar Sesión
+							</Button>
 							<Link href="/registro">
-								<Button className="bg-[#2C3A2C] hover:bg-primary text-white font-bold rounded-xl px-6 h-11 shadow-lg shadow-[#2C3A2C]/10 transition-all hover:scale-[1.02] active:scale-95">
+								<Button
+									disabled={isNavigating}
+									className="bg-[#2C3A2C] hover:bg-primary text-white font-bold rounded-xl px-6 h-11 shadow-lg shadow-[#2C3A2C]/10 transition-all hover:scale-[1.02] active:scale-95"
+								>
 									Activar Cuenta
 								</Button>
 							</Link>
@@ -74,12 +84,21 @@ export default function Home() {
 									{user?.nombres?.split(" ")[0]}
 								</span>
 							</span>
-							<Link href={portalHref}>
-								<Button className="bg-primary hover:bg-primary/90 text-white font-extrabold rounded-xl px-6 h-11 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2">
+							<Button
+								disabled={isNavigating}
+								onClick={() => {
+									setIsNavigating(true);
+									router.push(portalHref);
+								}}
+								className="bg-primary hover:bg-primary/90 text-white font-extrabold rounded-xl px-6 h-11 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-2"
+							>
+								{isNavigating ? (
+									<Loader2 className="h-4 w-4 animate-spin" />
+								) : (
 									<LayoutDashboard className="h-4 w-4" />
-									MI PORTAL
-								</Button>
-							</Link>
+								)}
+								MI PORTAL
+							</Button>
 							<Button
 								variant="ghost"
 								size="icon"
@@ -140,18 +159,31 @@ export default function Home() {
 						{!isAuthenticated ? (
 							<div className="flex flex-col gap-6 w-full max-w-2xl mx-auto">
 								<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-									<Link href="/login" className="w-full">
-										<Button
-											size="lg"
-											className="w-full h-20 text-xl font-black bg-[#2C3A2C] hover:bg-primary text-white shadow-2xl shadow-[#2C3A2C]/20 rounded-3xl group transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 px-8"
-										>
-											<LogIn className="h-8 w-8 group-hover:translate-x-1 transition-transform" />
-											ENTRAR AL PORTAL
-										</Button>
-									</Link>
+									<Button
+										size="lg"
+										disabled={isNavigating}
+										onClick={() => {
+											setIsNavigating(true);
+											router.push("/login");
+										}}
+										className="w-full h-20 text-xl font-black bg-[#2C3A2C] hover:bg-primary text-white shadow-2xl shadow-[#2C3A2C]/20 rounded-3xl group transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 px-8"
+									>
+										{isNavigating ? (
+											<div className="flex items-center gap-4 animate-pulse">
+												<Loader2 className="h-8 w-8 animate-spin" />
+												<span>CARGANDO...</span>
+											</div>
+										) : (
+											<>
+												<LogIn className="h-8 w-8 group-hover:translate-x-1 transition-transform" />
+												<span>ENTRAR AL PORTAL</span>
+											</>
+										)}
+									</Button>
 									<Link href="/registro" className="w-full">
 										<Button
 											size="lg"
+											disabled={isNavigating}
 											variant="outline"
 											className="w-full h-20 text-xl font-black border-2 border-[#E0E7E0] text-[#2C3A2C] bg-white hover:bg-[#F4F7F4] hover:border-primary/30 rounded-3xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 px-8"
 										>
@@ -175,20 +207,37 @@ export default function Home() {
 							</div>
 						) : (
 							<div className="flex justify-center">
-								<Link href={portalHref} className="w-full sm:w-auto">
-									<Button
-										size="lg"
-										className="w-full sm:w-80 h-20 text-xl font-black bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/30 rounded-[2rem] group transition-all hover:scale-[1.05] active:scale-95 flex flex-col items-center justify-center leading-none"
-									>
-										<div className="flex items-center gap-3 mb-1">
-											<LayoutDashboard className="h-6 w-6 group-hover:rotate-6 transition-transform" />
-											<span>IR A MI PORTAL</span>
+								<Button
+									size="lg"
+									disabled={isNavigating}
+									onClick={() => {
+										setIsNavigating(true);
+										router.push(portalHref);
+									}}
+									className={cn(
+										"w-full sm:w-80 h-20 text-xl font-black bg-primary hover:bg-primary/90 text-white shadow-2xl shadow-primary/30 rounded-[2rem] group transition-all flex flex-col items-center justify-center leading-none",
+										isNavigating ? "opacity-70 scale-95 cursor-not-allowed" : "hover:scale-[1.05] active:scale-95"
+									)}
+								>
+									{isNavigating ? (
+										<div className="flex flex-col items-center gap-1">
+											<Loader2 className="h-7 w-7 animate-spin" />
+											<span className="text-[10px] font-bold opacity-70 tracking-widest uppercase">
+												ABRIENDO PORTAL...
+											</span>
 										</div>
-										<span className="text-[10px] font-bold opacity-70 tracking-widest uppercase">
-											Hola, {user?.nombres?.split(" ")[0]}
-										</span>
-									</Button>
-								</Link>
+									) : (
+										<>
+											<div className="flex items-center gap-3 mb-1">
+												<LayoutDashboard className="h-6 w-6 group-hover:rotate-6 transition-transform" />
+												<span>IR A MI PORTAL</span>
+											</div>
+											<span className="text-[10px] font-bold opacity-70 tracking-widest uppercase">
+												Hola, {user?.nombres?.split(" ")[0]}
+											</span>
+										</>
+									)}
+								</Button>
 							</div>
 						)}
 					</div>

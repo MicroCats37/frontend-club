@@ -46,13 +46,12 @@ const GrupoMemberCard = ({
 	return (
 		<div className="bg-white rounded-[28px] border border-[#E0E7E0] p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex items-center gap-4 sm:gap-6 relative group">
 			<div
-				className={`h-14 w-14 sm:h-16 sm:w-16 rounded-2xl flex items-center justify-center text-xl font-black border-2 border-white shadow-sm shrink-0 transition-transform group-hover:scale-105 duration-500 ${
-					isTitular
-						? "bg-[#2C3A2C] text-white"
-						: isFamiliar
-							? "bg-blue-500 text-white"
-							: "bg-slate-100 text-slate-400"
-				}`}
+				className={`h-14 w-14 sm:h-16 sm:w-16 rounded-2xl flex items-center justify-center text-xl font-black border-2 border-white shadow-sm shrink-0 transition-transform group-hover:scale-105 duration-500 ${isTitular
+					? "bg-[#2C3A2C] text-white"
+					: isFamiliar
+						? "bg-blue-500 text-white"
+						: "bg-slate-100 text-slate-400"
+					}`}
 			>
 				{member.persona.nombres[0]}
 			</div>
@@ -105,15 +104,14 @@ const GrupoMemberCard = ({
 			<div className="flex flex-col items-end gap-2">
 				<Badge
 					variant="outline"
-					className={`${
-						member.persona.estado_validacion === "RECHAZADA"
-							? "bg-red-50 text-red-700 border-red-200"
-							: member.persona.estado_validacion === "PENDIENTE"
-								? "bg-amber-50 text-amber-600 border-amber-200 animate-pulse"
-								: member.persona.estado_validacion === "APROBADA"
-									? "bg-emerald-50 text-emerald-700 border-emerald-100/50"
-									: "bg-slate-50 text-slate-500 border-slate-200"
-					} gap-1.5 py-1 px-3 rounded-xl`}
+					className={`${member.persona.estado_validacion === "RECHAZADA"
+						? "bg-red-50 text-red-700 border-red-200"
+						: member.persona.estado_validacion === "PENDIENTE"
+							? "bg-amber-50 text-amber-600 border-amber-200 animate-pulse"
+							: member.persona.estado_validacion === "APROBADA"
+								? "bg-emerald-50 text-emerald-700 border-emerald-100/50"
+								: "bg-slate-50 text-slate-500 border-slate-200"
+						} gap-1.5 py-1 px-3 rounded-xl`}
 				>
 					{member.persona.estado_validacion === "APROBADA" ? (
 						<ShieldCheck className="h-3 w-3" />
@@ -134,22 +132,18 @@ const GrupoMemberCard = ({
 					<Button
 						variant="ghost"
 						size="sm"
-						className={`h-9 px-4 rounded-xl font-black text-[10px] uppercase tracking-tighter border border-transparent transition-all ${
-							member.estado_vinculo === "RECHAZADO"
-								? "text-red-600 hover:bg-red-50 hover:border-red-100"
-								: member.estado_vinculo === "PENDIENTE"
-									? "text-amber-600 hover:bg-amber-50 hover:border-amber-100"
-									: "text-blue-600 hover:bg-blue-50 hover:border-blue-100"
-						}`}
+						className={`h-9 px-4 rounded-xl font-black text-[10px] uppercase tracking-tighter border border-transparent transition-all ${member.estado_vinculo === "RECHAZADO"
+							? "text-red-600 hover:bg-red-50 hover:border-red-100"
+							: member.estado_vinculo === "PENDIENTE"
+								? "text-amber-600 hover:bg-amber-50 hover:border-amber-100"
+								: "text-blue-600 hover:bg-blue-50 hover:border-blue-100"
+							}`}
 						onClick={() => onUpgrade(member)}
-						disabled={member.estado_vinculo === "PENDIENTE"}
 					>
 						<ArrowUpCircle className="h-3 w-3 mr-1" />
-						{member.estado_vinculo === "RECHAZADO"
+						{member.persona.estado_validacion === "RECHAZADO"
 							? "Reintentar Ascenso"
-							: member.estado_vinculo === "PENDIENTE"
-								? "En Trámite..."
-								: "Ascender a Beneficiario"}
+							: "Ascender a Beneficiario"}
 					</Button>
 				)}
 			</div>
@@ -292,19 +286,19 @@ export default function MiGrupoPage() {
 				<div className="flex flex-col gap-4">
 					{isLoading
 						? Array(2)
-								.fill(0)
-								.map((_, i) => (
-									<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
-								))
+							.fill(0)
+							.map((_, i) => (
+								<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
+							))
 						: familia.map((member) => (
-								<GrupoMemberCard
-									key={member.persona.id}
-									member={member}
-									onUpgrade={handleOpenUpgrade}
-									canManage={true}
-									isAfiliado={isAfiliado}
-								/>
-							))}
+							<GrupoMemberCard
+								key={member.persona.id}
+								member={member}
+								onUpgrade={handleOpenUpgrade}
+								canManage={true}
+								isAfiliado={isAfiliado}
+							/>
+						))}
 				</div>
 			</div>
 
@@ -356,19 +350,19 @@ export default function MiGrupoPage() {
 					<div className="flex flex-col gap-4">
 						{isLoading
 							? Array(3)
-									.fill(0)
-									.map((_, i) => (
-										<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
-									))
+								.fill(0)
+								.map((_, i) => (
+									<Skeleton key={i} className="h-24 w-full rounded-[28px]" />
+								))
 							: contactos.map((member) => (
-									<GrupoMemberCard
-										key={member.persona.id}
-										member={member}
-										onUpgrade={handleOpenUpgrade}
-										canManage={true}
-										isAfiliado={isAfiliado}
-									/>
-								))}
+								<GrupoMemberCard
+									key={member.persona.id}
+									member={member}
+									onUpgrade={handleOpenUpgrade}
+									canManage={true}
+									isAfiliado={isAfiliado}
+								/>
+							))}
 					</div>
 				)}
 			</div>
